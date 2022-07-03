@@ -7,7 +7,8 @@ from manta import *
 # solver params
 dim = 2
 particleNumber = 3
-res = 16
+sres=1;
+res = 16*sres
 gs = vec3(res,res,res)
 gs.z=1
 s = Solver(name='main', gridSize = gs, dim=dim)
@@ -52,7 +53,8 @@ for t in range(2500):
     extrapolateMACFromWeight( vel=vel , distance=2, weight=tmpVec3 ) 
     markFluidCells( parts=pp, flags=flags )
 
-    addGravity(flags=flags, vel=vel, gravity=(0,-0.002,0))
+    # resolution dependent; the grid size isn't normalized
+    addGravity(flags=flags, vel=vel, gravity=(0,-0.002*sres,0))
 
     # pressure solve
     setWallBcs(flags=flags, vel=vel)    
@@ -65,6 +67,7 @@ for t in range(2500):
     # FLIP velocity update
     flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=0.97 )
     
-    gui.screenshot( r'c:\prj-external-libs\mantaflow\out\flipt_%04d.png' % t );
-    s.step()
+    #gui.screenshot( r'c:\prj-external-libs\mantaflow\out\flipt_%04d.png' % t ); # slow
+    
+    s.step() 
 

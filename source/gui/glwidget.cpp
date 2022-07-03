@@ -295,7 +295,7 @@ bool GLWidget::keyProcess(int key, int modifier, bool down)
 }
 
 void GLWidget::screenshot(QString file) {
-	grabFrameBuffer().save(file);
+	grabFrameBuffer().save(file, nullptr, -1);
 }
 
 void GLWidget::updatePlane(int plane) {

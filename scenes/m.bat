@@ -1,2 +1,3 @@
 
-..\bin\manta %1
+..\build\RelWithDebInfo\manta.exe %1
+
