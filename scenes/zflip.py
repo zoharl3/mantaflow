@@ -65,6 +65,6 @@ for t in range(2500):
     # FLIP velocity update
     flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=0.97 )
     
-    #gui.screenshot( 'flipt_%04d.png' % t );
+    gui.screenshot( r'c:\prj-external-libs\mantaflow\out\flipt_%04d.png' % t );
     s.step()
 
