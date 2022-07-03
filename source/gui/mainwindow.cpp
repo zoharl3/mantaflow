@@ -210,10 +210,11 @@ bool MainWnd::event(QEvent* e) {
 
 void MainWnd::keyPressEvent(QKeyEvent* e) {
 	if (e->key() == Qt::Key_Escape) {
+		exit(0); // zl
 		mRequestClose = true;
 		emit killMain();
 		this->close();
-	} else if (e->key() == Qt::Key_Space) {
+	} else if (0&& e->key() == Qt::Key_Space) {
 		if (mRequestClose) {
 			emit killMain();
 			this->close();
@@ -221,7 +222,7 @@ void MainWnd::keyPressEvent(QKeyEvent* e) {
 			emit painterEvent(mPaused ? Painter::UpdateFull : Painter::UpdateRequest);
 			mGlWidget->updateGL();
 		}
-	} else if (e->key() == Qt::Key_P) {
+	} else if (e->key() == Qt::Key_P || e->key() == Qt::Key_Space) {
 		if (mRequestClose) {
 			emit killMain();
 			this->close();
@@ -229,7 +230,7 @@ void MainWnd::keyPressEvent(QKeyEvent* e) {
 			emit play();
 		else    
 			emit pause();
-	} else if (e->key() == Qt::Key_L) {
+	} else if (e->key() == Qt::Key_L || e->key() == Qt::Key_Right) {
 		if (mRequestClose) {
 			emit killMain();
 			this->close();

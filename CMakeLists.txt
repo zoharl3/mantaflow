@@ -25,8 +25,8 @@ set(MANTAVERSION "0.13")
 # - allow override from command line on OsX, eg use "cmake ..  -DCMAKE_PREFIX_PATH=/Users/someone/qt5.2.1/5.2.1/clang_64/
 
 if(WIN32)
-	set(WIN_QT_PATH        "C:/Qt/5.9/msvc2013_64_opengl") # qt5/win64
-	set(WIN_PYTHON_PATH    "C:/Python36") # choose python version with PYTHON_VERSION above
+	#set(WIN_QT_PATH        "C:/Qt/5.9/msvc2013_64_opengl") # qt5/win64
+	set(WIN_PYTHON_PATH    "C:/Python37") # choose python version with PYTHON_VERSION above
 	set(CMAKE_LIBRARY_PATH "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64")
 	set(CMAKE_PREFIX_PATH ${WIN_QT_PATH})
 endif()
@@ -454,7 +454,7 @@ if(WIN32)
 	find_package(PythonLibs ${PYTHON_VER_ID} QUIET)
 	if(NOT PYTHONLIBS_FOUND)
 		set(PYTHON_INCLUDE_DIRS "${WIN_PYTHON_PATH}/include")
-		set(PYTHON_LIBRARIES "${WIN_PYTHON_PATH}/libs/python${PYTHON_VER_ID}.lib")
+		set(PYTHON_LIBRARIES optimized "${WIN_PYTHON_PATH}/libs/python${PYTHON_VER_ID}.lib" debug "${WIN_PYTHON_PATH}/libs/python${PYTHON_VER_ID}_d.lib")
 	endif()
 else()
 	# try to configure from python itself first
