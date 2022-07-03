@@ -49,6 +49,7 @@ for t in range(2500):
     
     # FLIP 
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) 
+    
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
     
     #extrapolateMACFromWeight( vel=vel , distance=2, weight=tmpVec3 ) 
