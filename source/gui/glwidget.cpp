@@ -27,7 +27,7 @@ GLWidget::GLWidget(QWidget* p): QGLWidget(QGLFormat(QGL::SampleBuffers), p), mRo
 {
 	mPlaneDim = 2; // Y plane
 	mPlane = -1;
-	mCamPos = Vec3(0, 0, -2);
+	mCamPos = Vec3(0, 0, -1.5);
 	for (int i=0; i<MoveDirNum; i++) 
 		mMoveState[i] = false;
 	mMoveFast = false;
@@ -224,6 +224,10 @@ bool GLWidget::keyProcess(int key, int modifier, bool down)
 		// data grids, first int
 		else if (key == Qt::Key_X && shift)         { /* int display mdoes, not yet used */ }
 		else if (key == Qt::Key_X)                  { emit painterEvent(Painter::EventNextInt);  updatePlane(mPlane); }
+
+		else if ( key == Qt::Key_C && ctrl )
+			exit(0);
+
 		// real
 		else if (key == Qt::Key_C && shift)         { emit painterEvent(Painter::EventNextRealDisplayMode); /* real display modes */ }
 		else if (key == Qt::Key_C)                  { emit painterEvent(Painter::EventNextReal); updatePlane(mPlane); } 

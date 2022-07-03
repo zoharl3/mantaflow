@@ -332,7 +332,7 @@ void knUnprojectNormalComp (FlagGrid& flags, MACGrid& vel, Grid<Real>& phi, Real
 }
 // a simple extrapolation step , used for cases where there's no levelset
 // (note, less accurate than fast marching extrapolation.)
-// into obstacle is a special mode for second order obstable boundaries (extrapolating
+// into obstacle is a special mode for second order obstacle boundaries (extrapolating
 // only fluid velocities, not those at obstacles)
 PYTHON() void extrapolateMACSimple (FlagGrid& flags, MACGrid& vel, int distance = 4, 
 		LevelsetGrid* phiObs=NULL , bool intoObs = false ) 

@@ -303,7 +303,7 @@ KERNEL() void KnSetWallBcsFrac(const FlagGrid& flags, const MACGrid& vel, MACGri
 }
 
 //! set zero normal velocity boundary condition on walls
-// (optionally with second order accuracy using the obstacle SDF , fractions grid currentlyl not needed)
+// (optionally with second order accuracy using the obstacle SDF , fractions grid currently not needed)
 PYTHON() void setWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* obvel = 0, const MACGrid* fractions = 0, const Grid<Real>* phiObs = 0, int boundaryWidth=0) {
 	if(!phiObs || !fractions) {
 		KnSetWallBcs(flags, vel, obvel);

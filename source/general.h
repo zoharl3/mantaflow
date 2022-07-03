@@ -46,7 +46,7 @@ public:
 #		ifdef DEBUG
 		// print error
 		std::cerr << "Aborting: "<< s <<" \n";
-		// then force immedieate crash in debug mode
+		// then force immediate crash in debug mode
 		*(volatile int*)(0) = 1; 
 #		endif
    }

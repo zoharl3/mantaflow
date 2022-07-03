@@ -50,7 +50,10 @@ for t in range(2500):
     # FLIP 
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) 
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
-    extrapolateMACFromWeight( vel=vel , distance=2, weight=tmpVec3 ) 
+    
+    #extrapolateMACFromWeight( vel=vel , distance=2, weight=tmpVec3 ) 
+    #extrapolateMACSimple( flags=flags, vel=vel )
+    
     markFluidCells( parts=pp, flags=flags )
 
     # resolution dependent; the grid size isn't normalized
@@ -59,13 +62,12 @@ for t in range(2500):
     # pressure solve
     setWallBcs(flags=flags, vel=vel)    
     solvePressure(flags=flags, vel=vel, pressure=pressure)
-    setWallBcs(flags=flags, vel=vel)
 
     # we dont have any levelset, ie no extrapolation, so make sure the velocities are valid
-    extrapolateMACSimple( flags=flags, vel=vel )
+    #extrapolateMACSimple( flags=flags, vel=vel )
     
     # FLIP velocity update
-    flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=0.97 )
+    flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=0 )
     
     #gui.screenshot( r'c:\prj-external-libs\mantaflow\out\flipt_%04d.png' % t ); # slow
     

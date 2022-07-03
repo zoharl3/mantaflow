@@ -476,7 +476,7 @@ void KnDeleteInObstacle(std::vector<S>& p, const FlagGrid& flags) {
 	} 
 }
 
-// try to get closer to actual obstacle boundary
+// try to get closer to obstacle boundary
 static inline Vec3 bisectBacktracePos(const FlagGrid& flags, const Vec3& oldp, const Vec3& newp)
 {
 	Real s = 0.;

@@ -208,8 +208,9 @@ bool MainWnd::event(QEvent* e) {
 	return QMainWindow::event(e);
 }
 
+// there's also GLWidget::keyProcess()
 void MainWnd::keyPressEvent(QKeyEvent* e) {
-	if (e->key() == Qt::Key_Escape) {
+	if ( e->key() == Qt::Key_Escape ) {
 		exit(0); // zl
 		mRequestClose = true;
 		emit killMain();
