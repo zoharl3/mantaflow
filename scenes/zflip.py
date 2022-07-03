@@ -6,12 +6,10 @@ from manta import *
 
 # solver params
 dim = 2
-particleNumber = 2
+particleNumber = 3
 res = 16
 gs = vec3(res,res,res)
-if (dim==2):
-    gs.z=1
-    particleNumber = 2 # use more particles in 2d
+gs.z=1
 s = Solver(name='main', gridSize = gs, dim=dim)
 s.timestep = 0.5
 
@@ -27,9 +25,10 @@ pVel     = pp.create(PdataVec3)
 
 # scene setup
 flags.initDomain(boundaryWidth=0) 
-# enable one of the following
-fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) # breaking dam
-#fluidbox = Box( parent=s, p0=gs*vec3(0.4,0.72,0.4), p1=gs*vec3(0.6,0.92,0.6)) # centered falling block
+
+t = vec3(0,.2,0)
+fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.6,1) ) ) # breaking dam
+
 phiInit = fluidbox.computeLevelset()
 flags.updateFromLevelset(phiInit)
 # phiInit is not needed from now on!
@@ -48,7 +47,7 @@ for t in range(2500):
     mantaMsg('\nFrame %i, simulation time %f' % (s.frame, s.timeTotal))
     
     # FLIP 
-    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) 
+    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) 
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
     extrapolateMACFromWeight( vel=vel , distance=2, weight=tmpVec3 ) 
     markFluidCells( parts=pp, flags=flags )

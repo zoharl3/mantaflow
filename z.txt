@@ -4,21 +4,8 @@ set PYTHONHOME=c:\Python37\
 
 - run
 bin\manta c:\prj\fluid\_others3\mantaflow-master\scenes\flip01_simple.py
-
+    - see batch files in scenes/
+    
 - How to Create a Mantaflow Fluid Simulation in Blender (2.82) - YouTube
 https://www.youtube.com/watch?v=YdUWqkqcxzw&ab_channel=BlenderMadeEasy
 
-- patch CMakeLists.txt
-    - Need to comment the corresponding vars that I set (e.g. WIN_QT_PATH).
-    - Added python debug lib
-set(PYTHON_LIBRARIES "${WIN_PYTHON_PATH}/libs/python${PYTHON_VER_ID}.lib" "${WIN_PYTHON_PATH}/libs/python${PYTHON_VER_ID}_d.lib")
-        - I need to fix it so debug and release will have just their specific lib. Right now, I deleted the redundant lib for debug; else it crashes on start.
-
-- c++
-    - To avoid the crash when closing the window, I added exit(0) to the end of guiMain()
-    - add to guiMain():
-        gui.getWindow()->showMaximized();
-    - keys
-        } else if (0&& e->key() == Qt::Key_Space) {
-        } else if (e->key() == Qt::Key_P || e->key() == Qt::Key_Space) {
-        } else if (e->key() == Qt::Key_L || e->key() == Qt::Key_Right) {
