@@ -6,7 +6,7 @@ from manta import *
 
 # solver params
 dim = 2
-particleNumber = 3
+particleNumber = 2
 sres=1;
 res = 16*sres
 gs = vec3(res,res,res)
