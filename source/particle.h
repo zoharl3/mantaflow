@@ -199,7 +199,7 @@ public:
 	PYTHON() int load(const std::string name);
 
 	//! save to text file
-	void writeParticlesText(const std::string name) const;
+	PYTHON() void writeParticlesText(const std::string name) const;
 	//! other output formats
 	void writeParticlesRawPositionsGz(const std::string name) const;
 	void writeParticlesRawVelocityGz(const std::string name) const;

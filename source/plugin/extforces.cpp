@@ -57,7 +57,7 @@ KERNEL(bnd=1) void KnApplyForce(const FlagGrid& flags, MACGrid& vel, Vec3 force,
 		vel(i,j,k).z = (additive) ? vel(i,j,k).z+force.z : force.z;
 }
 
-//! add gravity forces to all fluid cells, optionally  adapts to different grid sizes automatically
+//! add gravity forces to all fluid cells, optionally adapts to different grid sizes automatically
 PYTHON() void addGravity(const FlagGrid& flags, MACGrid& vel, Vec3 gravity, const Grid<Real>* exclude=NULL, bool scale=true) {
 	float gridScale = (scale) ? flags.getDx() : 1;
 	Vec3 f = gravity * flags.getParent()->getDt() / gridScale;

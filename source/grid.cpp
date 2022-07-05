@@ -18,6 +18,7 @@
 #include <limits>
 #include <sstream>
 #include <cstring>
+#include <iomanip>
 
 #include "commonkernels.h"
 
