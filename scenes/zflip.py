@@ -79,7 +79,6 @@ for t in range(3): # 2500
     print( 'forces' )
     addGravity(flags=flags, vel=vel, gravity=(0,gravity,0))
 
-    print( 'vel (x=v, y=u):' )
     vel.printGrid()
 
     # pressure solve
@@ -87,7 +86,6 @@ for t in range(3): # 2500
     setWallBcs(flags=flags, vel=vel)    
     #solvePressure(flags=flags, vel=vel, pressure=pressure)
 
-    print( 'vel (x=v, y=u):' )
     vel.printGrid()
 
     # we dont have any levelset, ie no extrapolation, so make sure the velocities are valid
@@ -97,7 +95,6 @@ for t in range(3): # 2500
     print( 'FLIP velocity update' )
     flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=0 )
     
-    print( 'vel (x=v, y=u):' )
     vel.printGrid()
     
     gui.screenshot( out + 'flipt_%04d.png' % t ); # slow

@@ -9,3 +9,7 @@ bin\manta c:\prj\fluid\_others3\mantaflow-master\scenes\flip01_simple.py
 - How to Create a Mantaflow Fluid Simulation in Blender (2.82) - YouTube
 https://www.youtube.com/watch?v=YdUWqkqcxzw&ab_channel=BlenderMadeEasy
 
+- A grid is created in FluidSolver::getGridPointer(). 
+    - A MAC seems to be allocated as a regular size grid. The data is kept in the centers, and the walls are interpolated, instead of the other way around.
+    
+    
