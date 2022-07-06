@@ -63,6 +63,8 @@ for t in range(5): # 2500
     emphasize( ' - t=%d' % t );
     mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
     
+    flags.printGrid()
+    
     # FLIP 
     print( 'advectInGrid' )
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) 
@@ -103,6 +105,8 @@ for t in range(5): # 2500
     flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=0 )
     
     vel.printGrid()
+    
+    pp.printParts()
     
     gui.screenshot( out + 'flipt_%04d.png' % t ); # slow
     

@@ -141,16 +141,21 @@ BasicParticleSystem::BasicParticleSystem(FluidSolver* parent)
 
 void BasicParticleSystem::writeParticlesText(const string name) const
 {
+	stringstream ss;
+	ss << this->size()<<", pdata: "<< mPartData.size()<<" ("<<mPdataInt.size()<<","<<mPdataReal.size()<<","<<mPdataVec3.size()<<") \n";
+	for(IndexInt i=0; i<this->size(); ++i) {
+		ss << i<<": "<< this->getPos(i) <<" , "<< this->getStatus(i) <<". ";
+		for(IndexInt pd=0; pd<(IndexInt)mPdataInt.size() ; ++pd) ss << mPdataInt [pd]->get(i)<<" ";
+		for(IndexInt pd=0; pd<(IndexInt)mPdataReal.size(); ++pd) ss << mPdataReal[pd]->get(i)<<" ";
+		for(IndexInt pd=0; pd<(IndexInt)mPdataVec3.size(); ++pd) ss << mPdataVec3[pd]->get(i)<<" ";
+		ss << "\n";
+	}
+
+	printf( "writeParticlesText: %s", ss.str().c_str() );
+
 	ofstream ofs(name.c_str());
 	if(!ofs.good()) errMsg("can't open file!");
-	ofs << this->size()<<", pdata: "<< mPartData.size()<<" ("<<mPdataInt.size()<<","<<mPdataReal.size()<<","<<mPdataVec3.size()<<") \n";
-	for(IndexInt i=0; i<this->size(); ++i) {
-		ofs << i<<": "<< this->getPos(i) <<" , "<< this->getStatus(i) <<". ";
-		for(IndexInt pd=0; pd<(IndexInt)mPdataInt.size() ; ++pd) ofs << mPdataInt [pd]->get(i)<<" ";
-		for(IndexInt pd=0; pd<(IndexInt)mPdataReal.size(); ++pd) ofs << mPdataReal[pd]->get(i)<<" ";
-		for(IndexInt pd=0; pd<(IndexInt)mPdataVec3.size(); ++pd) ofs << mPdataVec3[pd]->get(i)<<" ";
-		ofs << "\n";
-	}
+	ofs << ss.str();
 	ofs.close();
 }
 
