@@ -63,10 +63,10 @@ for t in range(3): # 2500
     emphasize( ' - t=%d' % t );
     mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
     
-    pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
-    
     # FLIP 
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) 
+    
+    pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
     
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
     
@@ -79,14 +79,14 @@ for t in range(3): # 2500
     print( 'forces' )
     addGravity(flags=flags, vel=vel, gravity=(0,gravity,0))
 
-    vel.printGrid()
+    #vel.printGrid()
 
     # pressure solve
     print( 'pressure' )
     setWallBcs(flags=flags, vel=vel)    
     #solvePressure(flags=flags, vel=vel, pressure=pressure)
 
-    vel.printGrid()
+    #vel.printGrid()
 
     # we dont have any levelset, ie no extrapolation, so make sure the velocities are valid
     #extrapolateMACSimple( flags=flags, vel=vel )
@@ -102,5 +102,6 @@ for t in range(3): # 2500
     s.step() 
 
 print( 'press enter...' )
-keyboard.read_key()
+#keyboard.read_key()
+input()
 
