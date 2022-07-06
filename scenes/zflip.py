@@ -59,16 +59,20 @@ if (GUI):
     #gui.pause()
     
 #main loop
-for t in range(3): # 2500
+for t in range(5): # 2500
     emphasize( ' - t=%d' % t );
     mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
     
     # FLIP 
+    print( 'advectInGrid' )
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) 
     
     pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
     
+    print( 'mapPartsToMAC' )
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
+    
+    vel.printGrid()
     
     #extrapolateMACFromWeight( vel=vel , distance=2, weight=tmpVec3 ) 
     #extrapolateMACSimple( flags=flags, vel=vel )
@@ -79,11 +83,14 @@ for t in range(3): # 2500
     print( 'forces' )
     addGravity(flags=flags, vel=vel, gravity=(0,gravity,0))
 
-    #vel.printGrid()
+    vel.printGrid()
 
+    # set solid
+    setWallBcs(flags=flags, vel=vel) # clears velocity from solid
+    print( 'setWallBcs' )
+    
     # pressure solve
     print( 'pressure' )
-    setWallBcs(flags=flags, vel=vel)    
     #solvePressure(flags=flags, vel=vel, pressure=pressure)
 
     #vel.printGrid()
