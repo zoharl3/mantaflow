@@ -666,7 +666,7 @@ void knMapLinearMACGridToVec3_FLIP(const BasicParticleSystem& p, const FlagGrid&
 	Vec3 v1 = oldVel.getInterpolated(p[idx].pos);
 	Vec3 v2 = vel.getInterpolated(p[idx].pos);
 	Vec3 delta = v2 - v1;
-	pvel[idx] = flipRatio * ( v + delta ) + (1.0 - flipRatio) * v2;
+	pvel[idx] = flipRatio * ( v + delta ) + ( 1.0 - flipRatio ) * v2;
 }
 
 PYTHON() void flipVelocityUpdate(const FlagGrid& flags, const MACGrid& vel, const MACGrid& velOld,

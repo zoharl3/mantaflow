@@ -21,7 +21,7 @@ res = 5
 gs = vec3(res,res,res)
 gs.z=1
 s = Solver( name='main', gridSize = gs, dim=dim )
-s.timestep = .5
+s.timestep = 1 # .5, 1(easier to debug)
 gravity = -10 * 1e-2; # 1e-2, 1e-3; adaptive
 
 print( '(unscaled) gravity:', gravity )
@@ -86,7 +86,7 @@ for t in range( 1, int( 3 +1) ): # 2500
     print( 'pressure' )
     #solvePressure(flags=flags, vel=vel, pressure=pressure)
 
-    #vel.printGrid()
+    vel.printGrid()
 
     # we dont have any levelset, ie no extrapolation, so make sure the velocities are valid
     #extrapolateMACSimple( flags=flags, vel=vel )
@@ -94,6 +94,8 @@ for t in range( 1, int( 3 +1) ): # 2500
     # FLIP velocity update
     print( 'FLIP velocity update' )
     flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 0 )
+    
+    vel.printGrid()
     
     # advect particles 
     print( 'advectInGrid' )

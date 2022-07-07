@@ -463,6 +463,7 @@ std::vector<Vec3> GridAdvectKernel(
 			return;
 		}
 	}
+//printf( "p[%d].pos=", idx ); cout << p[idx].pos << endl;
 	u[idx] = vel.getInterpolated(p[idx].pos) * dt;
 };
 

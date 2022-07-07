@@ -31,7 +31,12 @@ void integratePointSet(VelKernel& k, int mode) {
     const int N = x.size();
         
     if (mode == IntEuler) {
-        for(int i=0; i<N; i++) x[i].pos += u[i];
+        for(int i=0; i<N; i++) { 
+// assuming dt=1
+printf( "p%d.pos + u = pos \n  ", i );
+cout << x[i].pos << " + " << u[i] << " = " << u[i] + x[i].pos << endl;
+            x[i].pos += u[i];
+        }
     } 
     else if (mode == IntRK2) {
         PosType x0(x);
