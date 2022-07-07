@@ -61,13 +61,9 @@ if (GUI):
     #gui.pause()
     
 #main loop
-for t in range( int(5) ): # 2500
-    emphasize( '- t=%d' % (t+1) );
+for t in range( 1, int(16+1) ): # 2500
+    emphasize( '- t=%d' % t );
     mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
-    
-    #flags.printGrid()
-    
-    #pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
     
     print( 'mapPartsToMAC' )
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
@@ -97,14 +93,18 @@ for t in range( int(5) ): # 2500
     
     # FLIP velocity update
     print( 'FLIP velocity update' )
-    flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 0 )
+    flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 1 )
     
     # advect particles 
     print( 'advectInGrid' )
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK4
 
-    vel.printGrid()
-    pp.printParts()
+    if 1:
+        flags.printGrid()
+        vel.printGrid()
+    
+        #pp.printParts()
+        pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
     
     gui.screenshot( out + 'flipt_%04d.png' % t ); # slow
     
