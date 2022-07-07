@@ -58,15 +58,11 @@ if (GUI):
     #gui.pause()
     
 #main loop
-for t in range(115): # 2500
+for t in range( int(2e2) ): # 2500
     emphasize( ' - t=%d' % t );
     mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
     
     #flags.printGrid()
-    
-    # FLIP 
-    print( 'advectInGrid' )
-    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) 
     
     #pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
     
@@ -74,9 +70,6 @@ for t in range(115): # 2500
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
     
     #vel.printGrid()
-    
-    #extrapolateMACFromWeight( vel=vel , distance=2, weight=tmpVec3 ) 
-    #extrapolateMACSimple( flags=flags, vel=vel )
     
     markFluidCells( parts=pp, flags=flags )
 
@@ -101,10 +94,14 @@ for t in range(115): # 2500
     
     # FLIP velocity update
     print( 'FLIP velocity update' )
-    flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=0 )
+    flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1 )
     
     #vel.printGrid()
     
+    # advect particles 
+    print( 'advectInGrid' )
+    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) 
+
     #pp.printParts()
     
     gui.screenshot( out + 'flipt_%04d.png' % t ); # slow
