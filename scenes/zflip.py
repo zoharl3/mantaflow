@@ -16,13 +16,13 @@ os.system( 'rm %s*' % out )
 
 # solver params
 dim = 2
-particleNumber = 3
-res = 16
+particleNumber = 2
+res = 5
 gs = vec3(res,res,res)
 gs.z=1
 s = Solver( name='main', gridSize = gs, dim=dim )
 s.timestep = .5
-gravity = -10 * 1e-3; # 1e-2, 1e-3; adaptive
+gravity = -10 * 1e-2; # 1e-2, 1e-3; adaptive
 
 print( '(unscaled) gravity:', gravity )
 print( 'timestep:', s.timestep )
@@ -42,15 +42,18 @@ flags.initDomain(boundaryWidth=0)
 
 t = vec3(0.15, 0.15,0)
 #fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.7,1) ) ) # breaking dam
-#fluidbox = Box( parent=s, p0=gs*( t+vec3(0,0,0) ), p1=gs*( t+vec3(0.4,0.2,1) ) )
-fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) # breaking dam
+
+t = vec3(0.2, 0.4,0)
+fluidbox = Box( parent=s, p0=gs*( t+vec3(0,0,0) ), p1=gs*( t+vec3(0.2,0.2,1) ) ) # square
+
+#fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) # breaking dam
 
 phiInit = fluidbox.computeLevelset()
 flags.updateFromLevelset(phiInit)
 # phiInit is not needed from now on!
 
 # note, there's no resamplig here, so we need _LOTS_ of particles...
-sampleFlagsWithParticles( flags=flags, parts=pp, discretization=particleNumber, randomness=0.2 ) # .2
+sampleFlagsWithParticles( flags=flags, parts=pp, discretization=particleNumber, randomness=0. ) # .2
     
 if (GUI):
     gui = Gui()
@@ -58,8 +61,8 @@ if (GUI):
     #gui.pause()
     
 #main loop
-for t in range( int(2e2) ): # 2500
-    emphasize( ' - t=%d' % t );
+for t in range( int(5) ): # 2500
+    emphasize( '- t=%d' % (t+1) );
     mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
     
     #flags.printGrid()
@@ -85,7 +88,7 @@ for t in range( int(2e2) ): # 2500
     
     # pressure solve
     print( 'pressure' )
-    solvePressure(flags=flags, vel=vel, pressure=pressure)
+    #solvePressure(flags=flags, vel=vel, pressure=pressure)
 
     #vel.printGrid()
 
@@ -94,15 +97,14 @@ for t in range( int(2e2) ): # 2500
     
     # FLIP velocity update
     print( 'FLIP velocity update' )
-    flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1 )
-    
-    #vel.printGrid()
+    flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 0 )
     
     # advect particles 
     print( 'advectInGrid' )
-    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) 
+    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK4
 
-    #pp.printParts()
+    vel.printGrid()
+    pp.printParts()
     
     gui.screenshot( out + 'flipt_%04d.png' % t ); # slow
     
