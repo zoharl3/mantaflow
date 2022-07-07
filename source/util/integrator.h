@@ -33,8 +33,8 @@ void integratePointSet(VelKernel& k, int mode) {
     if (mode == IntEuler) {
         for(int i=0; i<N; i++) { 
 // assuming dt=1
-printf( "p%d.pos + u = pos \n  ", i );
-cout << x[i].pos << " + " << u[i] << " = " << u[i] + x[i].pos << endl;
+//printf( "p%d.pos + u = pos \n  ", i );
+//cout << x[i].pos << " + " << u[i] << " = " << u[i] + x[i].pos << endl;
             x[i].pos += u[i];
         }
     } 

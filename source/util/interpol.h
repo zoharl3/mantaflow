@@ -147,9 +147,9 @@ inline Vec3 interpolMAC(const Vec3* data, const Vec3i& size, const int Z, const 
                       (ref[X].y  *s_t0 + ref[X+Y].y  *s_t1 )*s1) +
                 f1 * ((ref[Z].y  *s_t0 + ref[Z+Y].y  *s_t1 )*s0 + 
                       (ref[X+Z].y*s_t0 + ref[X+Y+Z].y*s_t1 )*s1 );
-printf( "xi=%d, yi=%d\n", xi, yi );
-cout << "  pos: " << pos << endl;
-printf( "  r0=%.4f, rY=%.4f, rX=%.4f, rXY=%.4f\n", ref[0].y, ref[Y].y, ref[X].y, ref[X+Y].y );
+//printf( "xi=%d, yi=%d\n", xi, yi );
+//cout << "  pos: " << pos << endl;
+//printf( "  r0=%.4f, rY=%.4f, rX=%.4f, rXY=%.4f\n", ref[0].y, ref[Y].y, ref[X].y, ref[X+Y].y );
     }
     {   // Z
         const Vec3* ref = &data[((s_zi*size.y+yi)*size.x+xi)];
