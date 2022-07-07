@@ -61,14 +61,14 @@ if (GUI):
     #gui.pause()
     
 #main loop
-for t in range( 1, int( 5 +1) ): # 2500
+for t in range( 1, int( 3 +1) ): # 2500
     emphasize( '- t=%d' % t );
     mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
     
     print( 'mapPartsToMAC' )
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
     
-    #vel.printGrid()
+    vel.printGrid()
     
     markFluidCells( parts=pp, flags=flags )
 
