@@ -13,3 +13,7 @@ https://www.youtube.com/watch?v=YdUWqkqcxzw&ab_channel=BlenderMadeEasy
     - A MAC seems to be allocated as a regular size grid. The data is kept in the centers, and the walls are interpolated, instead of the other way around.
 - knMapLinearVec3ToMACGrid() has a kernel macro in the definition. This macro has a variadic param, and it's executed for every point.
 - setInterpolMAC() interpolates MAC from particles. The four grid points are ref[0], ref[X], ref[Y], ref[X+Y]. 
+
+- cmake
+    - there's an option DEBUG_PYTHON_WITH_RELEASE for the linked lib
+    

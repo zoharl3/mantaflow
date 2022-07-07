@@ -202,7 +202,7 @@ KERNEL() void KnSetWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* o
     if ( i > 0 && curObs && flags.isFluid( i - 1, j, k ) )
         vel( i, j, k ).x = bcsVel.x;
     if ( j > 0 && flags.isObstacle( i, j - 1, k ) ) {
-printf( "setting to zero vel(%d, %d)=%g since near obstacle\n", i, j, vel( i, j, k ).y );
+//printf( "setting to zero vel(%d, %d)=%g since near obstacle\n", i, j, vel( i, j, k ).y );
         vel( i, j, k ).y = bcsVel.y;
 	}
     if ( j > 0 && curObs && flags.isFluid( i, j - 1, k ) )

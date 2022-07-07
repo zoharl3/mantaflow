@@ -188,9 +188,10 @@ inline void setInterpolMAC(Vec3* data, const Vec3i& size, const int Z, const Vec
         ref[Z].y += wz*val.y; ref[X+Z].y += wxz*val.y; ref[Y+Z].y += wyz*val.y; ref[X+Y+Z].y += wxyz*val.y;
         sum[0].y += w0; sum[X].y += wx; sum[Y].y += wy; sum[X+Y].y += wxy;
         ref[0].y += w0*val.y; ref[X].y += wx*val.y; ref[Y].y += wy*val.y; ref[X+Y].y += wxy*val.y;
-printf( "xi=%d, yi=%d\n", xi, yi );
-cout << "pos: " << pos << " val: " << val << endl;
-printf( "%.4f, %.4f, %.4f, %.4f\n", w0, wx, wy, wxy );
+
+// printf( "xi=%d, yi=%d\n", xi, yi );
+// cout << "pos: " << pos << " val: " << val << endl;
+// printf( "%.4f, %.4f, %.4f, %.4f\n", w0, wx, wy, wxy );
     }
     {   // Z
         const IndexInt idx = (IndexInt)(s_zi*size.y+yi)*size.x+xi;
