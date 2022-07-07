@@ -61,7 +61,7 @@ if (GUI):
     #gui.pause()
     
 #main loop
-for t in range( 1, int(16+1) ): # 2500
+for t in range( 1, int( 5 +1) ): # 2500
     emphasize( '- t=%d' % t );
     mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
     
@@ -93,7 +93,7 @@ for t in range( 1, int(16+1) ): # 2500
     
     # FLIP velocity update
     print( 'FLIP velocity update' )
-    flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 1 )
+    flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 0 )
     
     # advect particles 
     print( 'advectInGrid' )
