@@ -101,7 +101,7 @@ for t in range( 1, int( 1e3 +1) ): # 2500
     
     # advect particles 
     print( 'advectInGrid' )
-    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK4
+    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) # IntEuler, IntRK4
 
     
     if 0:
@@ -111,7 +111,7 @@ for t in range( 1, int( 1e3 +1) ): # 2500
         #pp.printParts()
         pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
     
-    gui.screenshot( out + 'flipt_%04d.png' % t ); # slow
+    #gui.screenshot( out + 'flipt_%04d.png' % t ); # slow
     
     s.step()
         
