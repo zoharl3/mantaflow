@@ -8,7 +8,7 @@ from manta import *
 
 out = r'c:/prj-external-libs/mantaflow/out/'
 
-os.system( 'rm %s*' % out )
+os.system( 'rm %s*.uni' % out )
 
 # solver params
 dim = 3
@@ -22,7 +22,7 @@ s.timestep = 0.8
 minParticles = pow(2,dim)
 
 # save particles for separate surface generation pass?
-saveParts = 1
+saveParts = True
 
 # size of particles 
 radiusFactor = 1.0
@@ -53,6 +53,11 @@ bWidth=1
 flags.initDomain(boundaryWidth=bWidth)
 fluidVel = 0
 fluidSetVel = 0
+
+if 0 and (GUI): # mutex crash?
+    gui = Gui()
+    gui.show()
+    #gui.pause()
 
 if setup==0:
     # breaking dam
@@ -88,11 +93,6 @@ pTest.setConst( 0.1 )
 if saveParts:
     pressure.save( out + 'ref_flipParts_0000.uni' );
 
-if 1 and (GUI):
-    gui = Gui()
-    #gui.show() # mutex crash without?
-    gui.pause() # mutex crash without?
-    
 #main loop
 for t in range(250):
     mantaMsg('\nFrame %i, simulation time %f' % (s.frame, s.timeTotal))

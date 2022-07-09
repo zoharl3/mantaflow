@@ -12,7 +12,8 @@ from text_color import *
 
 out = r'c:/prj-external-libs/mantaflow/out/'
 
-os.system( 'rm %s*' % out )
+os.system( 'rm %s*.png' % out )
+os.system( 'rm %s*.txt' % out )
 
 # solver params
 dim = 2

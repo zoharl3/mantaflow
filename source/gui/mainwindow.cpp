@@ -148,7 +148,8 @@ void MainWnd::setPauseStatus(bool v)
 bool MainWnd::event(QEvent* e) {
 	if (e->type() == (QEvent::Type)EventGuiShow) {
 		if (!mRequestClose) {
-			this->show();
+			//this->show();
+			this->showMaximized();
 			emit painterEvent(Painter::UpdateFull);
 			mGlWidget->updateGL();
 		}

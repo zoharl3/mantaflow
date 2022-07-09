@@ -98,8 +98,6 @@ void guiMain(int argc, char* argv[]) {
 	gGuiThread = &gui;
 	gMainThread = &worker;
 	
-	gui.getWindow()->showMaximized(); // add to script instead?
-
 	// connect thread wakeup and termination signals
 	QObject::connect(&worker, SIGNAL(sendToGui(int)), &gui, SLOT(sendEvent(int)));
 	QObject::connect(gui.getWindow(), SIGNAL(wakeMain()), &worker, SLOT(wakeUp()));
