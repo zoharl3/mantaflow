@@ -266,7 +266,7 @@ bool bobjFluidObject::loadMeshData(const MTime& time,
 	MFnMesh meshFn;
 
 	// open file
-	gzf = (gzFile) safeGzopen(filename, "rb1");
+	gzf = (gzFile) gzopen(filename, "rb1");
 	if (!gzf)
 		bailOut("cannot open file " << filename);
 	
@@ -617,7 +617,7 @@ MStatus bobjFluidObject::compute(const MPlug& plug, MDataBlock& data)
 MStatus initializePlugin(MObject obj)
 {
 	MStatus   status;
-	MFnPlugin plugin(obj, PYTHON_COMPANY, "3.0", "Any");
+	MFnPlugin plugin(obj, "manta", "3.0", "Any");
 
 	status = plugin.registerNode("bobjFluidObject", bobjFluidObject::id,
 						 bobjFluidObject::creator, bobjFluidObject::initialize);
