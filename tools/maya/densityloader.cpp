@@ -221,7 +221,8 @@ void FluidGridObject::loadDensity(const char* mask, int offset, MTime& time, MOb
 	MFnFluid fluid(obj);
 		
 	// read file
-	gzFile gzf = (gzFile) safeGzopen(filename, "rb");
+	//gzFile gzf = (gzFile) safeGzopen(filename, "rb");
+	gzFile gzf = (gzFile) gzopen(filename, "rb");
 	if (!gzf) {
         cerr << "can't open file "<< filename << endl;	    
         return;
@@ -315,7 +316,7 @@ void FluidGridObject::loadDensity(const char* mask, int offset, MTime& time, MOb
 MStatus initializePlugin(MObject obj)
 {
 	MStatus   status;
-	MFnPlugin plugin(obj, PYTHON_COMPANY, "6.0", "Any");
+	MFnPlugin plugin(obj, "manta", "6.0", "Any");
 
 	status = plugin.registerNode("fluidGridObject", FluidGridObject::id, FluidGridObject::creator, FluidGridObject::initialize);
 	if (!status) {

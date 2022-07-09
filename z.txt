@@ -18,3 +18,8 @@ https://www.youtube.com/watch?v=YdUWqkqcxzw&ab_channel=BlenderMadeEasy
 - cmake
     - there's an option DEBUG_PYTHON_WITH_RELEASE for the linked lib
     
+- To replay generated scenes:
+flip03_gen.py
+
+- maya plugins
+    - I created a cmake

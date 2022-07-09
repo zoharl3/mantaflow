@@ -1,2 +1,3 @@
 
-..\build\debug\manta zflip.py
+..\build\Debug\manta.exe %1
+
