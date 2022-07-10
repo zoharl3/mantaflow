@@ -20,6 +20,7 @@ cmake ^
 -DOPENVDB_ROOT="c:/Program Files/OpenVDB/" ^
 -DHOUDINI_ROOT="C:/Program Files/Side Effects Software/Houdini 19.0.657/" ^
 -DTBB=ON ^
+-DNUMPY=ON ^
 -Wno-dev ..
 
 rem -A x64 -T v141

@@ -1,6 +1,8 @@
 #
 # Simulation of a flame with smoke (and with adaptive time-stepping)
 #
+# Needs to show color (shift+c) in the gui
+
 from manta import *
 
 # solver params

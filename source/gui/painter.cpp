@@ -167,7 +167,7 @@ template<class T>
 int GridPainter<T>::getDispMode() {
 	if (!mObject || !mLocalGrid) return RealDispOff;
 	if (mDispMode.find(mObject) == mDispMode.end()) {
-		int dm = RealDispOff; // same for vec & real
+		int dm = RealDispStd; // same for vec & real
 		// initialize exceptions, eg levelset
 		if (mLocalGrid->getType() & GridBase::TypeLevelset) dm = RealDispLevelset;
 		mDispMode[mObject] = dm; 

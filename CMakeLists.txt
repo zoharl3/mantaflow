@@ -496,9 +496,16 @@ message("Using python include path '${PYTHON_INCLUDE_DIRS}' and libs '${PYTHON_L
 if(NUMPY)
 	# if the python command below doesnt work, manually set path, e.g., use "numpy.get_include()" to find path 
 	# set(NUMPY_INCLUDE_DIR "${PYTHON_INCLUDE_DIRS}/dist-packages/numpy/core/include") 
-	execute_process(COMMAND python${PYTHON_VER_ID} -c "import numpy, sys; sys.stdout.write(numpy.get_include())" OUTPUT_VARIABLE NUMPY_INCLUDE_DIR) 
+    
+    #set( CMD python${PYTHON_VER_ID} " -c import numpy, sys\; sys.stdout.write( numpy.get_include() )" )
+    #set( CMD "python" " -c \"import numpy, sys\; sys.stdout.write( numpy.get_include() )\"" )
+    set( CMD "python" )
+    set( ARG "get_numpy_path.py" )
+	execute_process(COMMAND ${CMD} ${ARG} WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} OUTPUT_VARIABLE NUMPY_INCLUDE_DIR) 
+    
+    message( "NUMPY_INCLUDE_DIR: " ${NUMPY_INCLUDE_DIR} )
 	if("${NUMPY_INCLUDE_DIR}" STREQUAL "")
-		message(FATAL_ERROR "No numpy path found, please manually set NUMPY_INCLUDE_DIR in CMakeLists.txt")
+		message(FATAL_ERROR "No numpy path found, please manually set NUMPY_INCLUDE_DIR in CMakeLists.txt using get_numpy_path.py")
 	endif()
 	message("Using numpy include path '${NUMPY_INCLUDE_DIR}' ")  
 	list(APPEND INCLUDE_PATHS ${NUMPY_INCLUDE_DIR}) 

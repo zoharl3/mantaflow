@@ -25,3 +25,14 @@ flip03_gen.py
     - I created a cmake
     - densityloader expects grid density not particles (see the 4-byte header).
     
+- maya
+    - Use bifrost graph editor to create an object from openvdb.
+    - Sample data in 
+c:\prj-external-libs\mantaflow\out\
+    - Sample maya scenes: manta*.ma, tornado.ma
+    
+    
+    
+    
+    
+    

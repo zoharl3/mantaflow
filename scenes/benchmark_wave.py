@@ -14,7 +14,7 @@
 import os
 import numpy as np
 
-measured = np.load(os.path.dirname(os.path.abspath(__file__))+'/benchmark_wave_measured.npz')
+measured = np.load('benchmark_wave_measured.npz')
 def g_tweaked(t, grav):
         r = np.interp(t, measured['t'], measured['r'])
         return vec3(-np.sin(-r)*grav, np.cos(-r)*grav, 0)

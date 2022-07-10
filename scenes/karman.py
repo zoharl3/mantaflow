@@ -1,3 +1,7 @@
+
+# show color
+
+
 from manta import *
 
 secOrderBc = True
