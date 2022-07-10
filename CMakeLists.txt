@@ -11,7 +11,7 @@
 #******************************************************************************
 
 project (MantaFlow)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
@@ -27,8 +27,8 @@ set(MANTAVERSION "0.13")
 if(WIN32)
 	#set(WIN_QT_PATH        "C:/Qt/5.9/msvc2013_64_opengl") # qt5/win64
 	set(WIN_PYTHON_PATH    "C:/Python37") # choose python version with PYTHON_VERSION above
-	set(CMAKE_LIBRARY_PATH "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64")
-	set(CMAKE_PREFIX_PATH ${WIN_QT_PATH})
+	#set(CMAKE_LIBRARY_PATH "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64") # messes boost with vcpkg
+	#set(CMAKE_PREFIX_PATH ${WIN_QT_PATH})
 endif()
 
 if(APPLE)
@@ -325,7 +325,6 @@ if(NOPYTHON)
 	add_definitions( -DNOPYTHON=1 )
 endif()
 
-
 # Multithreading
 if(MT)
 	add_definitions( -DMANTA_MT=1 )
@@ -366,15 +365,15 @@ if(OPENVDB)
 	add_definitions(-DOPENVDB=1)
 	message("Note - mantaflow assumes OpenVDB is installed in '<manta-dir>/openVDB'. For windows you can find an example zip package on the mantaflow homepage under downloads.")
 
-	find_package(OpenVDB REQUIRED)
 	find_package(Boost)
-	set(BOOST_INCLUDE_DIR "${BOOST_INCLUDE_DIR}" CACHE PATH "")
-	list(APPEND INCLUDE_PATHS ${BOOST_INCLUDE_DIR})
-	if(BOOST_FOUND)
+	set(Boost_INCLUDE_DIR "${Boost_INCLUDE_DIR}" CACHE PATH "")
+	list(APPEND INCLUDE_PATHS ${Boost_INCLUDE_DIR})
+	if(Boost_FOUND)
 		message("Found Boost")
 		set(Boost_LIBRARY_DIRS Boost_LIBRARY_DIRS CACHE PATH "")
 	endif()
 	
+    find_package(OpenVDB REQUIRED)
 	if(OPENVDB_FOUND)
 		message("Found OpenVDB") 
 		list(APPEND INCLUDE_PATHS ${OPENVDB_INCLUDE_DIR})
@@ -391,7 +390,7 @@ if(OPENVDB)
 		endif()
 	endif()
 	
-	# for windos try houdini, otherwise use openExr directly
+	# for windows try houdini, otherwise use openExr directly
 	if(WIN32)
 		find_package(Houdini REQUIRED)
 		if(HOUDINI_FOUND)

@@ -14,9 +14,9 @@ cd build
 -DPYTHON_VERSION=37 ^
 -DGUI=ON ^
 -DWIN_QT_PATH=c:\Qt\online\5.10.0\msvc2017_64\ ^
--Wno-dev -G"Visual Studio 16" -A"x64" ..
-
-rem -Wno-dev -G"Visual Studio 16" -A"x64" -T v141 ..
+-DOPENVDB=1 ^
+-DTBB=1 ^
+-Wno-dev -G"Visual Studio 16" -A"x64" -T v141 ..
 
 cd ..
 

@@ -48,7 +48,7 @@ pindex = s.create(ParticleIndexSystem)
 gpi    = s.create(IntGrid)
 
 # scene setup, 0=breaking dam, 1=drop into pool
-setup = 1
+setup = 0
 bWidth=1
 flags.initDomain(boundaryWidth=bWidth)
 fluidVel = 0

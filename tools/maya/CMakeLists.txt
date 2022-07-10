@@ -1,7 +1,7 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-project(maya_menta)
+project(maya_manta)
 
 # OSX specific flags
 if(APPLE)

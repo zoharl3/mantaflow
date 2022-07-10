@@ -23,3 +23,5 @@ flip03_gen.py
 
 - maya plugins
     - I created a cmake
+    - densityloader expects grid density not particles (see the 4-byte header).
+    

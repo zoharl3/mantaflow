@@ -265,7 +265,7 @@ void FluidGridObject::loadDensity(const char* mask, int offset, MTime& time, MOb
             return;
         }
         cerr << "DDF2 format, read ok" << endl;    
-    } else if(!strcmp(id, "MNT1")) {
+    } else if( !strcmp(id, "MNT1")) {
         UniHeader hdr;
         gzread(gzf, &hdr, sizeof(UniHeader));
         if (hdr.elementType != 1) { gzclose(gzf); return; }
@@ -278,8 +278,11 @@ void FluidGridObject::loadDensity(const char* mask, int offset, MTime& time, MOb
         if (numRead != sizeField) {
             free(field); return;
         }
-        cerr << "MNT1 format, read ok" << endl;    
-    }
+        cerr << "MNT1 format, read ok" << endl;
+    } else {
+		cerr << "Unknown format: " << id << endl;
+		return;
+	}
 
 	// set dimensions
 	unsigned xres, yres, zres;
