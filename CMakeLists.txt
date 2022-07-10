@@ -398,7 +398,7 @@ if(OPENVDB)
 			list(APPEND INCLUDE_PATHS ${HOUDINI_INCLUDE_DIRS})
 			list(APPEND INCLUDE_PATHS ${HOUDINI_INCLUDE_DIRS}/OpenEXR)
 			list(APPEND F_LIB_PATHS ${HOUDINI_LIBRARY_DIRS})
-			list(APPEND F_LIBS "Half.lib")
+			#list(APPEND F_LIBS "Half.lib")
 		endif()
 	else()
 		# for open exr - should be in the default path, add includes if necessary
@@ -739,7 +739,7 @@ set_source_files_properties(${PREPPED_SOURCES} ${PP_REGCPP} PROPERTIES COMPILE_F
 
 # sanity check for openvdb support
 if(OPENVDB AND NOT COMPILER_SUPPORTS_CXX14)
-	message(FATAL_ERROR "Compilation with OpenVDB requires a compiler with C++14 support")
+	#message(FATAL_ERROR "Compilation with OpenVDB requires a compiler with C++14 support")
 endif()
 
 # necessary for newer LLVM clang versions, to prevent abundance of "Namify" template warnings... for compatibility disable unknown warnings
