@@ -41,6 +41,7 @@ for t in range(400):
 
 	# small example function in test.cpp
 	numpyTest( density, npArray, 0.01 ) # just adds constant value everywhere
+    #simpleNumpyTest( density, npArray, 0.01 ) # just adds constant value everywhere
 
 	# grid conversion from numpyconvert.cpp plugins
 	copyArrayToGridReal( target=tmp, source=npArray )

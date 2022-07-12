@@ -30,6 +30,7 @@ flip03_gen.py
     - Sample data in 
 c:\prj-external-libs\mantaflow\out\
     - Sample maya scenes: manta*.ma, tornado.ma
+    - Change the file path of the read_openVDB node in bifrost editor
     
     
     
