@@ -3,27 +3,30 @@
 cls
 
 @SETLOCAL
-@SET CMAKE_EXEC="c:\prog\cmake-gui\bin\cmake.exe"
-@IF EXIST %CMAKE_EXEC% GOTO START
-@GOTO ERROR
 
-:START
 mkdir build
 cd build
-%CMAKE_EXEC% ^
+
+cmake ^
+-DCMAKE_TOOLCHAIN_FILE=C:/prj-external-libs/vcpkg/scripts/buildsystems/vcpkg.cmake ^ -DVCPKG_TARGET_TRIPLET=x64-windows ^
 -DPYTHON_VERSION=37 ^
 -DGUI=ON ^
--DWIN_QT_PATH=c:\Qt\online\5.10.0\msvc2017_64\ ^
--DOPENVDB=1 ^
--DTBB=1 ^
--Wno-dev -G"Visual Studio 16" -A"x64" -T v141 ..
+-DDEBUG=ON ^
+-DDOUBLEPRECISION=ON ^
+-DPREPDEBUG=ON ^
+-DDEBUG_PYTHON_WITH_RELEASE=ON ^
+-DPython_LIBRARY="c:/python37/libs/python37.lib" ^
+-DPython_INCLUDE_DIR="c:/python37/include/" ^
+-DOPENVDB=ON ^
+-DOPENVDB_BLOSC=ON ^
+-DOPENVDB_ROOT="c:/Program Files/OpenVDB/" ^
+-DHOUDINI_ROOT="C:/Program Files/Side Effects Software/Houdini 19.0.657/" ^
+-DTBB=ON ^
+-DNUMPY=ON ^
+-Wno-dev ..
+
+rem -A x64 -T v141
 
 cd ..
 
-@GOTO EOF
-
-@:ERROR
-@echo ERROR: CMake not found.
-
-:EOF
 pause

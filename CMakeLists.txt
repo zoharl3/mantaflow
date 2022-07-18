@@ -31,6 +31,8 @@ if(WIN32)
 	set(WIN_PYTHON_PATH    "C:/Python37") # choose python version with PYTHON_VERSION above
 	#set(CMAKE_LIBRARY_PATH "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64") # messes vcpkg's boost
 	#set(CMAKE_PREFIX_PATH ${WIN_QT_PATH}) # messes vcpkg's boost
+    
+    set( CMAKE_CONFIGURATION_TYPES "Debug" "RelWithDebInfo" )
 endif()
 
 if(APPLE)
@@ -451,19 +453,18 @@ endif(DOXYGEN_FOUND)
 
 # Python 
 # note - if configuration fails, comment out the auto block below, and manually set the following two paths:
-#set(PYTHON_INCLUDE_DIRS "PYTHON_PATH/include")
-#set(PYTHON_LIBRARIES "PYTHON_PATH/libs/pythonX.Y.lib/so")
+#set(Python_INCLUDE_DIRS "PYTHON_PATH/include")
+#set(Python_LIBRARIES "PYTHON_PATH/libs/pythonX.Y.lib/so")
 # auto block
 if(WIN32)
-	# convenience override for windows, typically the auto find doesnt work, so fall back to WIN_PYTHON_PATH
-	find_package(PythonLibs ${PYTHON_VER_ID} QUIET)
-	if(NOT PYTHONLIBS_FOUND)
-		set(PYTHON_INCLUDE_DIRS "${WIN_PYTHON_PATH}/include")
-		set(PYTHON_LIBRARIES optimized "${WIN_PYTHON_PATH}/libs/python${PYTHON_VER_ID}.lib" debug "${WIN_PYTHON_PATH}/libs/python${PYTHON_VER_ID}_d.lib")
-	endif()
+	find_package(Python COMPONENTS Development REQUIRED)
+    message(STATUS "Python:")
+    message(STATUS "    Python_INCLUDE_DIRS: ${Python_INCLUDE_DIRS}")
+    message(STATUS "    Python_LIBRARIES: ${Python_LIBRARIES}")
+    message(STATUS "    Python_LIBRARY_DIRS: ${Python_LIBRARY_DIRS}")
 else()
 	# try to configure from python itself first
-	execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('INCLUDEPY'))" OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS) 
+	execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('INCLUDEPY'))" OUTPUT_VARIABLE Python_INCLUDE_DIRS) 
 	execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('LIBDIR'))"    OUTPUT_VARIABLE PYTHON_LIB1) 
 	if(APPLE)
 		# LDLIBRARY doesnt seem to work for Macs...
@@ -471,8 +472,8 @@ else()
 	else()
 		execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('LDLIBRARY'))" OUTPUT_VARIABLE PYTHON_LIB2) 
 	endif()
-	set(PYTHON_LIBRARIES "${PYTHON_LIB1}/${PYTHON_LIB2}")
-	if(EXISTS "${PYTHON_INCLUDE_DIRS}" AND EXISTS "${PYTHON_LIBRARIES}")
+	set(Python_LIBRARIES "${PYTHON_LIB1}/${PYTHON_LIB2}")
+	if(EXISTS "${Python_INCLUDE_DIRS}" AND EXISTS "${Python_LIBRARIES}")
 		message("Found python configuration")
 	else()
 		# otherwise, fall back to cmake find
@@ -487,15 +488,15 @@ else()
 	endif()
 endif()
 # end auto block, python config done
-list(APPEND INCLUDE_PATHS ${PYTHON_INCLUDE_DIRS})
-list(APPEND F_LIBS ${PYTHON_LIBRARIES})
-message("Using python include path '${PYTHON_INCLUDE_DIRS}' and libs '${PYTHON_LIBRARIES}' ") 
+list(APPEND INCLUDE_PATHS ${Python_INCLUDE_DIRS})
+list(APPEND F_LIBS ${Python_LIBRARIES})
+message("Using python include path '${Python_INCLUDE_DIRS}' and libs '${Python_LIBRARIES}' ") 
 
 #******************************************************************************
 # optional - compile with numpy support?
 if(NUMPY)
 	# if the python command below doesnt work, manually set path, e.g., use "numpy.get_include()" to find path 
-	# set(NUMPY_INCLUDE_DIR "${PYTHON_INCLUDE_DIRS}/dist-packages/numpy/core/include") 
+	# set(NUMPY_INCLUDE_DIR "${Python_INCLUDE_DIRS}/dist-packages/numpy/core/include") 
     
     #set( CMD python${PYTHON_VER_ID} " -c import numpy, sys\; sys.stdout.write( numpy.get_include() )" )
     #set( CMD "python" " -c \"import numpy, sys\; sys.stdout.write( numpy.get_include() )\"" )
