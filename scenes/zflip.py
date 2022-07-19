@@ -60,8 +60,9 @@ sampleFlagsWithParticles( flags=flags, parts=pp, discretization=particleNumber, 
     
 if (GUI):
     gui = Gui()
+    gui.setRealGrid( 0 )
     gui.show()
-    #gui.pause()
+    gui.pause()
     
 #main loop
 for t in range( 1, int( 1e3 +1) ): # 2500
@@ -104,6 +105,21 @@ for t in range( 1, int( 1e3 +1) ): # 2500
     print( 'advectInGrid' )
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) # IntEuler, IntRK4
 
+    # position solver
+    if 0:
+        copyFlagsToFlags(flags, flagsPos)
+        mapMassToGrid(flags=flagsPos, density=density, parts=pp, source=pMass, deltaX=deltaX, phiObs=phiObs, dt=s.timestep, particleMass=mass, noDensityClamping =  resampleParticles)          
+        
+        # resample particles
+        if 0:
+            gridParticleIndex(parts=pp, indexSys=pindex, flags=flags, index=gpi, counter=gCnt)
+            apicMapPartsToMAC(flags=flags, vel=vel, parts=pp, partVel=pVel, cpx=apic_pCx, cpy=apic_pCy, cpz=apic_pCz, mass=apic_mass)
+            resampeOverfullCells(vel=vel, density=density, index=gpi, indexSys=pindex, part=pp, pVel=pVel, dt=s.timestep)
+    
+        # position solver
+        solvePressureSystem(rhs=density, vel=vel, pressure=Lambda, flags=flagsPos, cgAccuracy = 1e-3)
+        computeDeltaX(deltaX=deltaX, Lambda=Lambda, flags=flagsPos)
+        mapMACToPartPositions(flags=flagsPos, deltaX=deltaX, parts=pp, dt=s.timestep)
     
     if 0:
         flags.printGrid()

@@ -217,6 +217,7 @@ set(PP_SOURCES
 	source/plugin/vortexplugins.cpp
 	source/plugin/waveletturbulence.cpp
 	source/plugin/waves.cpp
+    source/plugin/implicitdensityprojection.cpp
 	source/python/defines.py
 	source/test.cpp
 )

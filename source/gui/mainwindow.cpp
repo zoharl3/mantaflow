@@ -273,6 +273,10 @@ void MainWnd::showHelp() {
 	mKbwView->show();
 }
 
+void MainWnd::setRealGrid( int dm ) {
+	emit painterEvent(Painter::EventSetRealGridDisplayMode, dm); 
+}
+
 void MainWnd::nextRealGrid() {
 	emit painterEvent(Painter::EventNextReal); 
 }

@@ -1,4 +1,25 @@
 
+- Code
+    - color and vector modes
+        - enum RealDisplayModes { RealDispOff=0, RealDispStd, RealDispLevelset, RealDispShadeVol, RealDispShadeSurf, NumRealDispModes }; 
+            - GridPainter<T>::setDispMode(int dm)
+            - Gui::nextRealGrid()
+        - enum VecDisplayModes  { VecDispOff=0, VecDispCentered, VecDispStaggered, VecDispUv, NumVecDispModes };
+        - A vector of painters is created in MainWnd::MainWnd().
+            - The paintEvent signal is connected to them.
+        - I added the event EventSetRealGrid.
+    - keys
+    - mainwindow.cpp
+        - if ( e->key() == Qt::Key_Escape ) {
+    - glwidget.cpp
+        - if ( key == Qt::Key_C && ctrl )
+    - A grid is created in FluidSolver::getGridPointer(). 
+    - A MAC seems to be allocated as a regular size grid. The data is kept in the centers, and the walls are interpolated, instead of the other way around.
+    - knMapLinearVec3ToMACGrid() has a kernel macro in the definition. This macro has a variadic param, and it's executed for every point.
+    - setInterpolMAC() interpolates MAC from particles. The four grid points are ref[0], ref[X], ref[Y], ref[X+Y]. 
+    - The output precision is set in Vector3D<S>::toString() in vectorbase.h.
+
+
 - Needs env var
 set PYTHONHOME=c:\Python37\
 
@@ -8,12 +29,6 @@ bin\manta c:\prj\fluid\_others3\mantaflow-master\scenes\flip01_simple.py
     
 - How to Create a Mantaflow Fluid Simulation in Blender (2.82) - YouTube
 https://www.youtube.com/watch?v=YdUWqkqcxzw&ab_channel=BlenderMadeEasy
-
-- A grid is created in FluidSolver::getGridPointer(). 
-    - A MAC seems to be allocated as a regular size grid. The data is kept in the centers, and the walls are interpolated, instead of the other way around.
-- knMapLinearVec3ToMACGrid() has a kernel macro in the definition. This macro has a variadic param, and it's executed for every point.
-- setInterpolMAC() interpolates MAC from particles. The four grid points are ref[0], ref[X], ref[Y], ref[X+Y]. 
-- The output precision is set in Vector3D<S>::toString() in vectorbase.h.
 
 - cmake
     - there's an option DEBUG_PYTHON_WITH_RELEASE for the linked lib

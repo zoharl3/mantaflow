@@ -26,7 +26,7 @@ namespace Manta {
 	
 void LockedObjPainter::doEvent(int e, int param) {
 	// try to obtain valid handle
-	 if (!mObject)
+	if (!mObject)
 		 nextObject();
 		
 	// filter update events
@@ -233,7 +233,10 @@ void GridPainter<Real>::processSpecificKeyEvent(PainterEvent e, int param) {
 	} else if (e == EventScaleRealUpSm && mObject) {
 		setScale( getScale() * 1.1 );
 	} else if (e == EventNextRealDisplayMode) {
-		setDispMode( (getDispMode()+1)%NumRealDispModes );
+		setDispMode( (getDispMode()+1) % NumRealDispModes );
+		mHideLocal = (getDispMode()==RealDispOff); 
+	} else if (e == EventNextRealDisplayMode) {
+		setDispMode( param % NumRealDispModes );
 		mHideLocal = (getDispMode()==RealDispOff); 
 	}
 }
