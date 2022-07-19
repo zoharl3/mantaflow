@@ -235,7 +235,7 @@ void GridPainter<Real>::processSpecificKeyEvent(PainterEvent e, int param) {
 	} else if (e == EventNextRealDisplayMode) {
 		setDispMode( (getDispMode()+1) % NumRealDispModes );
 		mHideLocal = (getDispMode()==RealDispOff); 
-	} else if (e == EventNextRealDisplayMode) {
+	} else if (e == EventSetRealGridDisplayMode) {
 		setDispMode( param % NumRealDispModes );
 		mHideLocal = (getDispMode()==RealDispOff); 
 	}
@@ -256,6 +256,9 @@ void GridPainter<Vec3>::processSpecificKeyEvent(PainterEvent e, int param) {
 		setScale( getScale() * 1.1 );
 	} else if (e == EventNextVecDisplayMode) {
 		setDispMode( (getDispMode()+1)%NumVecDispModes );
+		mHideLocal = (getDispMode()==VecDispOff); 
+	} else if (e == EventSetVecGridDisplayMode) {
+		setDispMode( param % NumVecDispModes );
 		mHideLocal = (getDispMode()==VecDispOff); 
 	}
 }

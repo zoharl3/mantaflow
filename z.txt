@@ -7,7 +7,7 @@
         - enum VecDisplayModes  { VecDispOff=0, VecDispCentered, VecDispStaggered, VecDispUv, NumVecDispModes };
         - A vector of painters is created in MainWnd::MainWnd().
             - The paintEvent signal is connected to them.
-        - I added the event EventSetRealGrid.
+        - I added the event EventSetRealGridDisplay and method Gui::setRealGridDisplay()
     - keys
     - mainwindow.cpp
         - if ( e->key() == Qt::Key_Escape ) {

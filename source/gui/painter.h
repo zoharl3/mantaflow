@@ -42,7 +42,7 @@ public:
 		EventNextMesh, EventMeshMode, EventToggleGridDisplay, EventScaleMeshUp, EventScaleMeshDown, EventMeshColorMode,
 		EventNextSystem, EventToggleParticles, EventNextParticleDisplayMode, EventToggleBackgroundMesh, EventSetMax,
 		EventScalePdataDown, EventScalePdataUp,
-		EventSetRealGridDisplayMode};
+		EventSetRealGridDisplayMode, EventSetVecGridDisplayMode};
 
 	//! display modes, note - 0=off,1=std are shared for real & vec grids! same semantics
 	enum RealDisplayModes { RealDispOff=0, RealDispStd, RealDispLevelset, RealDispShadeVol, RealDispShadeSurf, NumRealDispModes }; 

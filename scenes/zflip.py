@@ -37,9 +37,30 @@ tmpVec3  = s.create(VecGrid)
 pp       = s.create(BasicParticleSystem) 
 # add velocity data to particles
 pVel     = pp.create(PdataVec3) 
+phiObs   = s.create(LevelsetGrid, name='phiObs')
 
+#position solver stuff
+usePositionSolver = True
+density = s.create(RealGrid)
+Lambda = s.create(RealGrid)
+deltaX = s.create(MACGrid)
+flagsPos = s.create(FlagGrid)
+pMass = pp.create(PdataReal)
+mass = 1.0 / (particleNumber * particleNumber * particleNumber) 
+if (dim==2):
+	mass = 1.0 / (particleNumber * particleNumber) 
+
+resampleParticles = False # must be boolean type
+
+if (resampleParticles):
+	pindex = s.create(ParticleIndexSystem) 
+	gpi = s.create(IntGrid)
+	gCnt = s.create(IntGrid)
+    
 # scene setup
-flags.initDomain(boundaryWidth=0) 
+copyFlagsToFlags(flags, flagsPos)
+#flags.initDomain(boundaryWidth=0) 
+flags.initDomain(boundaryWidth=1, phiWalls=phiObs)
 
 t = vec3(0.15, 0.15,0)
 #fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.7,1) ) ) # my dam
@@ -60,7 +81,8 @@ sampleFlagsWithParticles( flags=flags, parts=pp, discretization=particleNumber, 
     
 if (GUI):
     gui = Gui()
-    gui.setRealGrid( 0 )
+    gui.setRealGridDisplay( 0 )
+    gui.setVec3GridDisplay( 0 )
     gui.show()
     gui.pause()
     
@@ -106,12 +128,14 @@ for t in range( 1, int( 1e3 +1) ): # 2500
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) # IntEuler, IntRK4
 
     # position solver
-    if 0:
+    if 1:
+        print( 'position solver' )
         copyFlagsToFlags(flags, flagsPos)
-        mapMassToGrid(flags=flagsPos, density=density, parts=pp, source=pMass, deltaX=deltaX, phiObs=phiObs, dt=s.timestep, particleMass=mass, noDensityClamping =  resampleParticles)          
+        mapMassToGrid(flags=flagsPos, density=density, parts=pp, source=pMass, deltaX=deltaX, phiObs=phiObs, dt=s.timestep, particleMass=mass, noDensityClamping=resampleParticles)
         
         # resample particles
-        if 0:
+        if resampleParticles:
+            print( 'resample particles' )
             gridParticleIndex(parts=pp, indexSys=pindex, flags=flags, index=gpi, counter=gCnt)
             apicMapPartsToMAC(flags=flags, vel=vel, parts=pp, partVel=pVel, cpx=apic_pCx, cpy=apic_pCy, cpz=apic_pCz, mass=apic_mass)
             resampeOverfullCells(vel=vel, density=density, index=gpi, indexSys=pindex, part=pp, pVel=pVel, dt=s.timestep)

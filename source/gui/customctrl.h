@@ -120,7 +120,8 @@ public:
 	PYTHON() void screenshot(std::string filename);
 
 	// control display upon startup
-	PYTHON() void setRealGrid( int dm );
+	PYTHON() void setRealGridDisplay( int dm );
+	PYTHON() void setVec3GridDisplay( int dm );
 	PYTHON() void nextRealGrid();
 	PYTHON() void nextVec3Grid();
 	PYTHON() void nextParts();

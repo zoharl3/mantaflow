@@ -53,7 +53,8 @@ public slots:
 	void screenshot(QString file);
 	void clickLine(QPoint pos, float p0, float p1,float p2, float q0, float q1, float q2);
 	
-	void setRealGrid( int dm );
+	void setRealGridDisplay( int dm );
+	void setVec3GridDisplay( int dm );
 	void nextRealGrid();
 	void nextVec3Grid();
 	void nextMesh();

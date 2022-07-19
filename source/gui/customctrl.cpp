@@ -162,12 +162,17 @@ void Gui::screenshot(string filename) {
 }
 
 // zl if the parameters would have been different, then I could have done instead like in MainWnd::clickLine()
-void Gui::setRealGrid( int dm )
+void Gui::setRealGridDisplay( int dm )
 {
-	printf( "Gui::setRealGrid(%d)\n", dm );
+	printf( "Gui::setRealGridDisplay(%d)\n", dm );
 	auto w = mGuiPtr->getWindow();
-	//w->setRealGrid( dm );
-	QMetaObject::invokeMethod( mGuiPtr->getWindow(), "setRealGrid", dm );
+	//w->setRealGridDisplayMode( dm );
+	QMetaObject::invokeMethod( mGuiPtr->getWindow(), "setRealGridDisplay", Q_ARG(int, dm) );
+}
+
+void Gui::setVec3GridDisplay( int dm )
+{
+	QMetaObject::invokeMethod( mGuiPtr->getWindow(), "setVec3GridDisplay", Q_ARG(int, dm) );
 }
 
 void Gui::nextRealGrid() { QMetaObject::invokeMethod(mGuiPtr->getWindow(), "nextRealGrid" ); }
