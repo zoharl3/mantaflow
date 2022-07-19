@@ -25,8 +25,6 @@ cmake ^
 -DNUMPY=ON ^
 -Wno-dev ..
 
-rem -A x64 -T v141
-
 cd ..
 
 pause

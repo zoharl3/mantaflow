@@ -32,6 +32,7 @@ https://www.youtube.com/watch?v=YdUWqkqcxzw&ab_channel=BlenderMadeEasy
 
 - cmake
     - there's an option DEBUG_PYTHON_WITH_RELEASE for the linked lib
+    - I currently set DEBUG=1, which e.g. affects TBB. I don't think the cmake was written for multi-version, and it needs to be changed for release.
     
 - To replay generated scenes:
 flip03_gen.py
@@ -47,7 +48,8 @@ c:\prj-external-libs\mantaflow\out\
     - Sample maya scenes: manta*.ma, tornado.ma
     - Change the file path of the read_openVDB node in bifrost editor
     
-    
+- ui
+    - clicking a grid cell gives info
     
     
     

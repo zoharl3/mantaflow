@@ -17,8 +17,8 @@ os.system( 'rm %s*.txt' % out )
 
 # solver params
 dim = 2
-particleNumber = 3
-res = 25
+particleNumber = 2
+res = 7
 gs = vec3(res,res,res)
 gs.z=1
 s = Solver( name='main', gridSize = gs, dim=dim )
@@ -50,7 +50,7 @@ mass = 1.0 / (particleNumber * particleNumber * particleNumber)
 if (dim==2):
 	mass = 1.0 / (particleNumber * particleNumber) 
 
-resampleParticles = False # must be boolean type
+resampleParticles = False # must be a boolean type
 
 if (resampleParticles):
 	pindex = s.create(ParticleIndexSystem) 
@@ -58,16 +58,15 @@ if (resampleParticles):
 	gCnt = s.create(IntGrid)
     
 # scene setup
-copyFlagsToFlags(flags, flagsPos)
-#flags.initDomain(boundaryWidth=0) 
-flags.initDomain(boundaryWidth=1, phiWalls=phiObs)
+flags.initDomain(boundaryWidth=0) 
 
-t = vec3(0.15, 0.15,0)
-#fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.7,1) ) ) # my dam
+#t = vec3(0.15, 0.15,0)
+t = vec3(0, 0,0)
+fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.4,1) ) ) # square
 
-fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0) ), p1=gs*( vec3(0.4,0.8,1) ) ) # my dam
+#fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0) ), p1=gs*( vec3(0.4,0.8,1) ) ) # my dam
 
-t = vec3(0.2, 0.4,0)
+#t = vec3(0.2, 0.4,0)
 #fluidbox = Box( parent=s, p0=gs*( t+vec3(0,0,0) ), p1=gs*( t+vec3(0.2,0.2,1) ) ) # square
 
 #fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) # manta dam
@@ -76,15 +75,17 @@ phiInit = fluidbox.computeLevelset()
 flags.updateFromLevelset(phiInit)
 # phiInit is not needed from now on!
 
-# note, there's no resamplig here, so we need _LOTS_ of particles...
-sampleFlagsWithParticles( flags=flags, parts=pp, discretization=particleNumber, randomness=0.2 ) # .2
+sampleFlagsWithParticles( flags=flags, parts=pp, discretization=particleNumber, randomness=0. ) # .2
     
-if (GUI):
+copyFlagsToFlags(flags, flagsPos)
+flags.initDomain(boundaryWidth=0, phiWalls=phiObs)
+
+if GUI:
     gui = Gui()
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show()
-    gui.pause()
+    #gui.pause()
     
 #main loop
 for t in range( 1, int( 1e3 +1) ): # 2500
@@ -98,9 +99,10 @@ for t in range( 1, int( 1e3 +1) ): # 2500
     
     markFluidCells( parts=pp, flags=flags )
 
-    # adaptive
-    print( 'forces' )
-    addGravity(flags=flags, vel=vel, gravity=(0,gravity,0))
+    # forces
+    if 0:
+        print( 'forces' )
+        addGravity(flags=flags, vel=vel, gravity=(0,gravity,0)) # adaptive
 
     #vel.printGrid()
 
@@ -109,8 +111,9 @@ for t in range( 1, int( 1e3 +1) ): # 2500
     print( 'setWallBcs' )
     
     # pressure solve
-    print( 'pressure' )
-    solvePressure(flags=flags, vel=vel, pressure=pressure)
+    if 0:
+        print( 'pressure' )
+        solvePressure(flags=flags, vel=vel, pressure=pressure)
 
     #vel.printGrid()
 
@@ -137,14 +140,23 @@ for t in range( 1, int( 1e3 +1) ): # 2500
         if resampleParticles:
             print( 'resample particles' )
             gridParticleIndex(parts=pp, indexSys=pindex, flags=flags, index=gpi, counter=gCnt)
-            apicMapPartsToMAC(flags=flags, vel=vel, parts=pp, partVel=pVel, cpx=apic_pCx, cpy=apic_pCy, cpz=apic_pCz, mass=apic_mass)
+            #apicMapPartsToMAC(flags=flags, vel=vel, parts=pp, partVel=pVel, cpx=apic_pCx, cpy=apic_pCy, cpz=apic_pCz, mass=apic_mass)
             resampeOverfullCells(vel=vel, density=density, index=gpi, indexSys=pindex, part=pp, pVel=pVel, dt=s.timestep)
     
         # position solver
         solvePressureSystem(rhs=density, vel=vel, pressure=Lambda, flags=flagsPos, cgAccuracy = 1e-3)
         computeDeltaX(deltaX=deltaX, Lambda=Lambda, flags=flagsPos)
         mapMACToPartPositions(flags=flagsPos, deltaX=deltaX, parts=pp, dt=s.timestep)
+        
+        # print
+        if 1:
+            flags.printGrid()
+            flagsPos.printGrid()
+            density.printGrid()
+            Lambda.printGrid()
+            gui.pause()
     
+    # print/write
     if 0:
         flags.printGrid()
         vel.printGrid()
