@@ -131,7 +131,7 @@ for t in range( 1, int( 1e3 +1) ): # 2500
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) # IntEuler, IntRK4
 
     # position solver
-    if 1:
+    if 0:
         print( 'position solver' )
         copyFlagsToFlags(flags, flagsPos)
         mapMassToGrid(flags=flagsPos, density=density, parts=pp, source=pMass, deltaX=deltaX, phiObs=phiObs, dt=s.timestep, particleMass=mass, noDensityClamping=resampleParticles)
