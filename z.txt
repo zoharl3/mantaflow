@@ -18,7 +18,7 @@
     - knMapLinearVec3ToMACGrid() has a kernel macro in the definition. This macro has a variadic param, and it's executed for every point.
     - setInterpolMAC() interpolates MAC from particles. The four grid points are ref[0], ref[X], ref[Y], ref[X+Y]. 
     - The output precision is set in Vector3D<S>::toString() in vectorbase.h.
-
+        - "[%+4.2f,%+4.2f]"
 
 - Needs env var
 set PYTHONHOME=c:\Python37\
