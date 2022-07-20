@@ -18,7 +18,7 @@ os.system( 'rm %s*.txt' % out )
 # solver params
 dim = 2
 particleNumber = 2
-res = 7
+res = 32
 gs = vec3(res,res,res)
 gs.z=1
 s = Solver( name='main', gridSize = gs, dim=dim )
@@ -61,10 +61,10 @@ if (resampleParticles):
 flags.initDomain(boundaryWidth=0) 
 
 #t = vec3(0.15, 0.15,0)
-t = vec3(0.3, 0.3, 0)
-fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.4,1) ) ) # square
+#t = vec3(0.3, 0.3, 0)
+#fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.4,1) ) ) # square
 
-#fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0) ), p1=gs*( vec3(0.4,0.8,1) ) ) # my dam
+fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0) ), p1=gs*( vec3(0.4,0.8,1) ) ) # my dam
 
 #t = vec3(0.2, 0.4,0)
 #fluidbox = Box( parent=s, p0=gs*( t+vec3(0,0,0) ), p1=gs*( t+vec3(0.2,0.2,1) ) ) # square
@@ -85,7 +85,7 @@ if GUI:
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show()
-    #gui.pause()
+    gui.pause()
     
 #main loop
 for t in range( 1, int( 1e3 +1) ): # 2500
@@ -111,7 +111,7 @@ for t in range( 1, int( 1e3 +1) ): # 2500
     print( 'setWallBcs' )
     
     # pressure solve
-    if 0:
+    if 1:
         print( 'pressure' )
         solvePressure(flags=flags, vel=vel, pressure=pressure)
 
@@ -156,7 +156,8 @@ for t in range( 1, int( 1e3 +1) ): # 2500
             #flagsPos.printGrid()
             density.printGrid()
             Lambda.printGrid()
-            gui.pause()
+            deltaX.printGrid()
+            #gui.pause()
     
     # print/write
     if 0:
@@ -172,5 +173,5 @@ for t in range( 1, int( 1e3 +1) ): # 2500
         
 print( 'press enter...' )
 #keyboard.read_key()
-#input()
+input()
 
