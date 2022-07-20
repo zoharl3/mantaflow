@@ -52,7 +52,8 @@ KERNEL(bnd=1) void KnApplyForce(const FlagGrid& flags, MACGrid& vel, Vec3 force,
 	if (flags.isFluid(i-1,j,k) || (curFluid && flags.isEmpty(i-1,j,k))) 
 		vel(i,j,k).x = (additive) ? vel(i,j,k).x+force.x : force.x;
 	if (flags.isFluid(i,j-1,k) || (curFluid && flags.isEmpty(i,j-1,k))) 
-		vel(i,j,k).y = (additive) ? vel(i,j,k).y+force.y : force.y;
+		//vel(i,j,k).y = (additive) ? vel(i,j,k).y+force.y : force.y;
+	    vel(i,j,k).y = (additive) ? vel(i,j,k).y+force.y*(j>vel.getSizeY()/2?1:-1) : force.y; // zl symmetric gravity pusing to the center
 	if (vel.is3D() && (flags.isFluid(i,j,k-1) || (curFluid && flags.isEmpty(i,j,k-1))))
 		vel(i,j,k).z = (additive) ? vel(i,j,k).z+force.z : force.z;
 }

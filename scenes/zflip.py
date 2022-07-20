@@ -61,7 +61,7 @@ if (resampleParticles):
 flags.initDomain(boundaryWidth=0) 
 
 #t = vec3(0.15, 0.15,0)
-t = vec3(0, 0,0)
+t = vec3(0.3, 0.3, 0)
 fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.4,1) ) ) # square
 
 #fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0) ), p1=gs*( vec3(0.4,0.8,1) ) ) # my dam
@@ -100,9 +100,9 @@ for t in range( 1, int( 1e3 +1) ): # 2500
     markFluidCells( parts=pp, flags=flags )
 
     # forces
-    if 0:
+    if 1:
         print( 'forces' )
-        addGravity(flags=flags, vel=vel, gravity=(0,gravity,0)) # adaptive
+        addGravity(flags=flags, vel=vel, gravity=(0,gravity,0)) # adaptive to grid size
 
     #vel.printGrid()
 
@@ -135,6 +135,7 @@ for t in range( 1, int( 1e3 +1) ): # 2500
         print( 'position solver' )
         copyFlagsToFlags(flags, flagsPos)
         mapMassToGrid(flags=flagsPos, density=density, parts=pp, source=pMass, deltaX=deltaX, phiObs=phiObs, dt=s.timestep, particleMass=mass, noDensityClamping=resampleParticles)
+        #gui.pause()
         
         # resample particles
         if resampleParticles:
@@ -144,6 +145,7 @@ for t in range( 1, int( 1e3 +1) ): # 2500
             resampeOverfullCells(vel=vel, density=density, index=gpi, indexSys=pindex, part=pp, pVel=pVel, dt=s.timestep)
     
         # position solver
+        print( 'solve pressure due to density' )
         solvePressureSystem(rhs=density, vel=vel, pressure=Lambda, flags=flagsPos, cgAccuracy = 1e-3)
         computeDeltaX(deltaX=deltaX, Lambda=Lambda, flags=flagsPos)
         mapMACToPartPositions(flags=flagsPos, deltaX=deltaX, parts=pp, dt=s.timestep)
@@ -170,5 +172,5 @@ for t in range( 1, int( 1e3 +1) ): # 2500
         
 print( 'press enter...' )
 #keyboard.read_key()
-input()
+#input()
 

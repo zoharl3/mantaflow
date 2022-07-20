@@ -512,7 +512,7 @@ template<class T> void Grid<T>::printGrid(int zSlice, bool printIndex, int bnd) 
 			if(printIndex && !this->is3D()) out << "  "<<i<<","<<j<<":";
 			auto v = (*this)[idx];
 			//out << showpoint;
-			//out << fixed;
+			out << fixed;
 			//out << setw(4);
 			out << setprecision(2);
 			out << v; 
