@@ -152,8 +152,8 @@ for t in range( 1, int( 1e3 +1) ): # 2500
         
         # print
         if 1:
-            flags.printGrid()
-            flagsPos.printGrid()
+            #flags.printGrid()
+            #flagsPos.printGrid()
             density.printGrid()
             Lambda.printGrid()
             gui.pause()
