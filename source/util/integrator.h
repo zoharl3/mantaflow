@@ -50,7 +50,10 @@ void integratePointSet(VelKernel& k, int mode) {
         PosType x0(x);
         std::vector<Vec3> uTotal(u);
         
-        for(int i=0; i<N; i++) x[i].pos = x0[i].pos + 0.5*u[i];
+        for(int i=0; i<N; i++) {
+            x[i].pos = x0[i].pos + 0.5*u[i];
+            uTotal[i] += u[i]; // zl was missing?
+        }
         
         k.run();
         for(int i=0; i<N; i++) {
