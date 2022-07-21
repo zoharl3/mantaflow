@@ -17,7 +17,7 @@ os.system( 'rm %s*.txt' % out )
 
 # solver params
 dim = 2
-particleNumber = 2
+particleNumber = 3
 res = 32
 gs = vec3(res,res,res)
 gs.z=1
@@ -47,7 +47,7 @@ deltaX = s.create(MACGrid)
 flagsPos = s.create(FlagGrid)
 pMass = pp.create(PdataReal)
 mass = 1.0 / (particleNumber * particleNumber * particleNumber) 
-if (dim==2):
+if dim == 2:
 	mass = 1.0 / (particleNumber * particleNumber) 
 
 resampleParticles = False # must be a boolean type
@@ -75,7 +75,7 @@ phiInit = fluidbox.computeLevelset()
 flags.updateFromLevelset(phiInit)
 # phiInit is not needed from now on!
 
-sampleFlagsWithParticles( flags=flags, parts=pp, discretization=particleNumber, randomness=0. ) # .2
+sampleFlagsWithParticles( flags=flags, parts=pp, discretization=particleNumber, randomness=0.2 ) # 0.2
     
 copyFlagsToFlags(flags, flagsPos)
 flags.initDomain(boundaryWidth=0, phiWalls=phiObs)
@@ -88,7 +88,7 @@ if GUI:
     gui.pause()
     
 #main loop
-for t in range( 1, int( 1e3 +1) ): # 2500
+for t in range( 1, int( 2e3 +1) ): # 2500
     emphasize( '- t=%d' % t );
     mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
     
@@ -118,7 +118,7 @@ for t in range( 1, int( 1e3 +1) ): # 2500
     #vel.printGrid()
 
     # we dont have any levelset, ie no extrapolation, so make sure the velocities are valid
-    extrapolateMACSimple( flags=flags, vel=vel )
+    extrapolateMACSimple( flags=flags, vel=vel, distance=res ) # 4
     
     # FLIP velocity update
     print( 'FLIP velocity update' )
@@ -128,7 +128,7 @@ for t in range( 1, int( 1e3 +1) ): # 2500
     
     # advect particles 
     print( 'advectInGrid' )
-    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK2, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
+    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
 
     # position solver
     if 0:
@@ -151,7 +151,7 @@ for t in range( 1, int( 1e3 +1) ): # 2500
         mapMACToPartPositions(flags=flagsPos, deltaX=deltaX, parts=pp, dt=s.timestep)
         
         # print
-        if 1:
+        if 0:
             #flags.printGrid()
             #flagsPos.printGrid()
             density.printGrid()

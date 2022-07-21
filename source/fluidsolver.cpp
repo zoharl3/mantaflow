@@ -142,8 +142,13 @@ PbClass* FluidSolver::create(PbType t, PbTypeVec T, const string& name) {
 void FluidSolver::step() {
 	// update simulation time with adaptive time stepping 
 	// (use eps value to prevent roundoff errors)
-	mTimePerFrame += mDt;
-	mTimeTotal    += mDt;
+	if ( 0 ) { // zl
+	    mTimePerFrame += mDt;
+	    mTimeTotal    += mDt;
+	} else {
+	    mTimePerFrame += 1;
+	    mTimeTotal    += 1;
+	}
 
 	if( (mTimePerFrame+VECTOR_EPSILON) >mFrameLength) {
 		mFrame++;
