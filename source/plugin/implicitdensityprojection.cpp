@@ -155,9 +155,17 @@ void mapMassRealHelper(FlagGrid& flags, Grid<T>& density, const BasicParticleSys
 	Grid<Real> tmp(flags.getParent());
 	FlagGrid flagsTmp(flags);
 	density.clear();
+//cout << "before knComputeDensity\n";
+//deltaX.printGrid();
+//flags.printGrid();
 
 	knMapLinear<T>( parts, flags, tmp, density, source ); 	//map weights to target grid, source is not needed because all particles have the same mass.
+//density.printGrid();
 	knComputeDensity<T>(density, flagsTmp, flags, deltaX, dt, particleMass, noDensityClamping);
+//flags.printGrid();
+//density.printGrid();
+//cout << "after knComputeDensity\n";
+//cout << "---\n";
 }
 
 PYTHON() void mapMassToGrid(FlagGrid& flags, Grid<Real>& density, const BasicParticleSystem& parts , ParticleDataImpl<Real>& source, MACGrid& deltaX, 
