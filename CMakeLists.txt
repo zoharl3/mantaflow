@@ -10,7 +10,7 @@
 #
 #******************************************************************************
 
-project (MantaFlow)
+project( MantaFlow )
 cmake_minimum_required(VERSION 3.0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
@@ -23,8 +23,6 @@ set(MANTAVERSION "0.13")
 # Default paths
 # - CMake's path finder is completely useless for Qt5 + Python on Win64
 # - allow override from command line on OsX, eg use "cmake ..  -DCMAKE_PREFIX_PATH=/Users/someone/qt5.2.1/5.2.1/clang_64/
-
-#find_package(boost) # needs to be before the next QT setting
 
 if(WIN32)
 	#set(WIN_QT_PATH        "C:/Qt/5.9/msvc2013_64_opengl") # qt5/win64
@@ -207,7 +205,6 @@ set(PP_SOURCES
 	source/plugin/fire.cpp
 	source/plugin/fluidguiding.cpp
 	source/plugin/kepsilon.cpp
-	source/plugin/implicitdensityprojection.cpp
 	source/plugin/initplugins.cpp
 	source/plugin/meshplugins.cpp
 	source/plugin/pressure.cpp
@@ -272,6 +269,15 @@ set(NOPP_HEADERS
 	source/util/randomstream.h
 	source/util/solvana.h
 )
+
+# zl
+if(1)
+    include( c:/prj/mantaflow_mod/mantaflow_mod.cmake )
+    message( "sources2: " ${pp_sources2} )
+    list(APPEND PP_SOURCES ${pp_sources2})
+    
+    set_target_properties( ${EXECCMD} PROPERTIES VS_DEBUGGER_COMMAND_ARGUMENTS "c:/prj-external-libs/mantaflow/scenes/zflip.py" )
+endif()
 
 if(GUI)
 	# need QT preprocessor
@@ -592,10 +598,21 @@ endif()
 FOREACH(it ${PP_SOURCES} ${PP_HEADERS})
 	get_filename_component(CURPATH ${it} PATH)
 	get_filename_component(CUREXT ${it} EXT)
-	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/${CURPATH}")
-	set(CURPP "${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/${it}")
-	string(REPLACE "source/" "" INFILE ${it})
-
+    get_filename_component(CURNAME ${it} NAME)
+    if( NOT IS_ABSOLUTE ${it} )
+        #message( "Relative: ${it}" )
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/${CURPATH}")
+        set(CURPP "${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/${it}")
+        string(REPLACE "source/" "" INFILE ${it})
+        set( INDIR "${CMAKE_CURRENT_SOURCE_DIR}/source/" )
+    else() # zl
+        #message( "Absolute: ${it}" )
+        file( MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/external" )
+        set( CURPP "${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/external/${CURNAME}" )
+        set( INFILE "${CURNAME}" )
+        set( INDIR "${CURPATH}/" )
+	endif()
+    
 	set(OUTFILES "${CURPP}")
 	if("${CUREXT}" STREQUAL ".h" OR "${CUREXT}" STREQUAL ".py")
 		if(NOT NOPYTHON)
@@ -608,7 +625,7 @@ FOREACH(it ${PP_SOURCES} ${PP_HEADERS})
 
 	# preprocessor
 	add_custom_command(OUTPUT ${OUTFILES}
-					COMMAND prep generate ${PP_PREPD} ${MT_TYPE} "${CMAKE_CURRENT_SOURCE_DIR}/source/" "${INFILE}" "${CURPP}"
+					COMMAND prep generate ${PP_PREPD} ${MT_TYPE} "${INDIR}" "${INFILE}" "${CURPP}"
 					DEPENDS prep
 					IMPLICIT_DEPENDS CXX ${it}
 					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
@@ -617,6 +634,9 @@ FOREACH(it ${PP_SOURCES} ${PP_HEADERS})
 	list(APPEND PREPPED_SOURCES ${CURPP})
 ENDFOREACH(it)
 list(APPEND SOURCES ${PREPPED_SOURCES})
+
+# zl
+list(APPEND SOURCES ${sources2})
 
 # link reg files , for python glue code
 if(NOT NOPYTHON)

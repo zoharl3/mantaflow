@@ -85,12 +85,16 @@ if GUI:
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show()
-    gui.pause()
+    #gui.pause()
     
 #main loop
 for t in range( 1, int( 2e3 +1) ): # 2500
     emphasize( '- t=%d' % t );
     mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
+    
+    # fixed vol
+    fixed_volume_advection( parts=pp, flags=flags )
+    break
     
     print( 'mapPartsToMAC' )
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
@@ -171,7 +175,8 @@ for t in range( 1, int( 2e3 +1) ): # 2500
     
     s.step()
         
-print( 'press enter...' )
-#keyboard.read_key()
-input()
+if 0:
+    print( 'press enter...' )
+    #keyboard.read_key()
+    input()
 
