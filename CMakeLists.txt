@@ -275,8 +275,6 @@ if(1)
     include( c:/prj/mantaflow_mod/mantaflow_mod.cmake )
     message( "sources2: " ${pp_sources2} )
     list(APPEND PP_SOURCES ${pp_sources2})
-    
-    set_target_properties( ${EXECCMD} PROPERTIES VS_DEBUGGER_COMMAND_ARGUMENTS "c:/prj-external-libs/mantaflow/scenes/zflip.py" )
 endif()
 
 if(GUI)
@@ -829,5 +827,9 @@ endif()
 # print debug summary
 # MESSAGE(STATUS "DEBUG Flag-Summary - Includes: '${INCLUDE_PATHS}' | Libs: '${F_LIBS}' | LibPaths: '${F_LIB_PATHS}' ")
 
-# not working?
+# zl not working?
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${EXECCMD})
+set_target_properties( ${EXECCMD} PROPERTIES 
+    VS_DEBUGGER_COMMAND_ARGUMENTS "c:/prj-external-libs/mantaflow/scenes/zflip.py" 
+    #VS_DEBUGGER_COMMAND "debug_command"
+    )

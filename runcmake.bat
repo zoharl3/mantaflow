@@ -23,7 +23,7 @@ cmake ^
 -DHOUDINI_ROOT="C:/Program Files/Side Effects Software/Houdini 19.0.657/" ^
 -DTBB=ON ^
 -DNUMPY=ON ^
--Wno-dev -G "Visual Studio 16 2019" ..
+-Wno-dev -G "Visual Studio 17 2022" -T "v142" ..
 
 cd ..
 
