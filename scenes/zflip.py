@@ -3,7 +3,7 @@
 # and without any particle resampling
 # 
 import os, sys
-import keyboard
+import keyboard, copy
 
 from manta import *
 
@@ -80,21 +80,22 @@ sampleFlagsWithParticles( flags=flags, parts=pp, discretization=particleNumber, 
 copyFlagsToFlags(flags, flagsPos)
 flags.initDomain(boundaryWidth=0, phiWalls=phiObs)
 
+np = pp.pySize();
+print( '# particles:', np )
+pos1 = s.create(PdataVec3)
+pos1.pyResize( np )
+
 if GUI:
     gui = Gui()
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show()
-    #gui.pause()
+    gui.pause()
     
 #main loop
 for t in range( 1, int( 2e3 +1) ): # 2500
     emphasize( '- t=%d' % t );
     mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
-    
-    # fixed vol
-    fixed_volume_advection( parts=pp, flags=flags )
-    break
     
     print( 'mapPartsToMAC' )
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
@@ -124,6 +125,9 @@ for t in range( 1, int( 2e3 +1) ): # 2500
     # we dont have any levelset, ie no extrapolation, so make sure the velocities are valid
     extrapolateMACSimple( flags=flags, vel=vel, distance=res ) # 4
     
+    # backup
+    pp.getPosPdata( target=pos1 )
+    
     # FLIP velocity update
     print( 'FLIP velocity update' )
     flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 0 )
@@ -134,8 +138,13 @@ for t in range( 1, int( 2e3 +1) ): # 2500
     print( 'advectInGrid' )
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
 
-    # position solver
-    if 1:
+    if 0:
+        # fixed vol
+        fixed_volume_advection( pp=pp, pos1=pos1, flags=flags )
+        break
+
+    # position solver, Thuerey21
+    if 0:
         print( 'position solver' )
         copyFlagsToFlags(flags, flagsPos)
         mapMassToGrid(flags=flagsPos, density=density, parts=pp, source=pMass, deltaX=deltaX, phiObs=phiObs, dt=s.timestep, particleMass=mass, noDensityClamping=resampleParticles)

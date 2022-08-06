@@ -330,6 +330,8 @@ public:
 	virtual ParticleDataBase* clone();
 	virtual PdataType getType() const;
 	virtual void resize(IndexInt s);
+    PYTHON()
+    void pyResize( int s ) { resize( s ); };
 	virtual void copyValueSlow(IndexInt from, IndexInt to);
 
 	IndexInt  size() const { return mData.size(); }
