@@ -16,18 +16,21 @@ os.system( 'rm %s*.png' % out )
 os.system( 'rm %s*.txt' % out )
 
 # solver params
+bScreenShot = 0
 dim = 2
+it_max = 1500
 particleNumber = 3
 res = 32
-gs = vec3(res,res,res)
-gs.z=1
-s = Solver( name='main', gridSize=gs, dim=dim )
+
 dt = .2 # .2, .5, 1(easier to debug)
-s.timestep = dt
+gs = vec3(res, res, res)
+if dim == 2:
+    gs.z = 1
+s = Solver( name='main', gridSize=gs, dim=dim )
 gravity = -10 * 1e-2; # 1e-2, 1e-3; adaptive
 
 print( '(unscaled) gravity:', gravity )
-print( 'timestep:', s.timestep )
+print( 'timestep:', dt )
 
 # prepare grids and particles
 flags    = s.create(FlagGrid)
@@ -53,7 +56,7 @@ if dim == 2:
 
 resampleParticles = False # must be a boolean type
 
-if (resampleParticles):
+if resampleParticles:
 	pindex = s.create(ParticleIndexSystem) 
 	gpi = s.create(IntGrid)
 	gCnt = s.create(IntGrid)
@@ -61,6 +64,7 @@ if (resampleParticles):
 # scene setup
 flags.initDomain(boundaryWidth=0) 
 
+# fluid box
 #t = vec3(0.15, 0.15,0)
 #t = vec3(0.3, 0.3, 0)
 #fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.4,1) ) ) # square
@@ -72,6 +76,7 @@ fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0) ), p1=gs*( vec3(0.4,0.8,1) ) ) # m
 
 #fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) # manta dam
 
+# phiInit
 phiInit = fluidbox.computeLevelset()
 flags.updateFromLevelset(phiInit)
 # phiInit is not needed from now on!
@@ -93,12 +98,18 @@ if GUI:
     gui.show()
     gui.pause()
     
-#main loop
-for t in range( 1, int( 2e3 +1) ): # 2500
-    emphasize( '- t=%d' % t );
-    mantaMsg('\n(Frame %i), simulation time %f' % (s.frame, s.timeTotal))
-    
-    print( 'mapPartsToMAC' )
+if bScreenShot:
+    gui.screenshot( out + 'flipt_%04d.png' % 0 ); # slow
+
+# loop
+it = 0
+while it < it_max:
+    emphasize( '\n-----------------\n- time: %g(/%d)' % ( it, it_max ) )
+    print( 'n=%d' % pp.pySize() )
+
+    s.timestep = ( 1 - it % 1 ) * dt
+
+    print( '- mapPartsToMAC' )
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
     
     #vel.printGrid()
@@ -107,18 +118,18 @@ for t in range( 1, int( 2e3 +1) ): # 2500
 
     # forces
     if 1:
-        print( 'forces' )
+        print( '- forces' )
         addGravity(flags=flags, vel=vel, gravity=(0,gravity,0)) # adaptive to grid size
 
     #vel.printGrid()
 
     # set solid
     setWallBcs(flags=flags, vel=vel) # clears velocity from solid
-    print( 'setWallBcs' )
+    print( '- setWallBcs' )
     
     # pressure solve
     if 1:
-        print( 'pressure' )
+        print( '- pressure' )
         solvePressure(flags=flags, vel=vel, pressure=pressure)
 
     #vel.printGrid()
@@ -130,36 +141,36 @@ for t in range( 1, int( 2e3 +1) ): # 2500
     pp.getPosPdata( target=pos1 )
     
     # FLIP velocity update
-    print( 'FLIP velocity update' )
+    print( '- FLIP velocity update' )
     flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 0 )
     
     #vel.printGrid()
     
     # advect particles 
-    print( 'advectInGrid' )
-    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
+    print( '- advectInGrid' )
+    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
 
     # fixed vol
-    if 0:
+    if 1:
         s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep )
         #break
 
     # position solver, Thuerey21
     if 0:
-        print( 'position solver' )
+        print( '- position solver' )
         copyFlagsToFlags(flags, flagsPos)
         mapMassToGrid(flags=flagsPos, density=density, parts=pp, source=pMass, deltaX=deltaX, phiObs=phiObs, dt=s.timestep, particleMass=mass, noDensityClamping=resampleParticles)
         #gui.pause()
         
         # resample particles
         if resampleParticles:
-            print( 'resample particles' )
+            print( '    - resample particles' )
             gridParticleIndex(parts=pp, indexSys=pindex, flags=flags, index=gpi, counter=gCnt)
             #apicMapPartsToMAC(flags=flags, vel=vel, parts=pp, partVel=pVel, cpx=apic_pCx, cpy=apic_pCy, cpz=apic_pCz, mass=apic_mass)
             resampeOverfullCells(vel=vel, density=density, index=gpi, indexSys=pindex, part=pp, pVel=pVel, dt=s.timestep)
     
         # position solver
-        print( 'solve pressure due to density' )
+        print( '    - solve pressure due to density' )
         solvePressureSystem(rhs=density, vel=vel, pressure=Lambda, flags=flagsPos, cgAccuracy = 1e-3)
         computeDeltaX(deltaX=deltaX, Lambda=Lambda, flags=flagsPos)
         mapMACToPartPositions(flags=flagsPos, deltaX=deltaX, parts=pp, dt=s.timestep)
@@ -181,11 +192,16 @@ for t in range( 1, int( 2e3 +1) ): # 2500
         #pp.printParts()
         pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
     
-    #gui.screenshot( out + 'flipt_%04d.png' % t ); # slow
-    
     # step
-    print( 'step' )
+    print( '- step' )
     s.step()
+
+    it = it + s.timestep / dt
+    if abs( it - round(it) ) < 1e-7:
+        it = round( it )
+
+        if bScreenShot:
+            gui.screenshot( out + 'flipt_%04d.png' % it ); # slow
         
 if 0:
     print( 'press enter...' )

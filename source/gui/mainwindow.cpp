@@ -147,7 +147,7 @@ void MainWnd::setStep(int f, float time) {
     } else {
 		char s[100];
 		sprintf( s, "Simulation frame %d\nTime %g", f, time );
-		mInfo->setText( s );
+		//mInfo->setText( s );
     }
 }
 
