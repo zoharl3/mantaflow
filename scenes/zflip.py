@@ -19,7 +19,7 @@ os.system( 'rm %s*.txt' % out )
 bScreenShot = 0
 dim = 2
 it_max = 1500
-particleNumber = 3
+part_per_cell_1d = 3
 res = 32
 
 dt = .2 # .2, .5, 1(easier to debug)
@@ -50,9 +50,9 @@ Lambda = s.create(RealGrid)
 deltaX = s.create(MACGrid)
 flagsPos = s.create(FlagGrid)
 pMass = pp.create(PdataReal)
-mass = 1.0 / (particleNumber * particleNumber * particleNumber) 
+mass = 1.0 / (part_per_cell_1d * part_per_cell_1d * part_per_cell_1d) 
 if dim == 2:
-	mass = 1.0 / (particleNumber * particleNumber) 
+	mass = 1.0 / (part_per_cell_1d * part_per_cell_1d) 
 
 resampleParticles = False # must be a boolean type
 
@@ -81,7 +81,7 @@ phiInit = fluidbox.computeLevelset()
 flags.updateFromLevelset(phiInit)
 # phiInit is not needed from now on!
 
-sampleFlagsWithParticles( flags=flags, parts=pp, discretization=particleNumber, randomness=0.2 ) # 0.2
+sampleFlagsWithParticles( flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.2 ) # 0.2
     
 copyFlagsToFlags(flags, flagsPos)
 flags.initDomain(boundaryWidth=0, phiWalls=phiObs)
@@ -152,7 +152,7 @@ while it < it_max:
 
     # fixed vol
     if 1:
-        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep )
+        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep, dim=dim, part_per_cell_1d=part_per_cell_1d )
         #break
 
     # position solver, Thuerey21
