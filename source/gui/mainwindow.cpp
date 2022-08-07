@@ -135,9 +135,20 @@ void MainWnd::addControl(void* ctrl) {
 }
 
 void MainWnd::setStep(int f, float time) {
-	std::stringstream s;
-	s << "Simulation frame " << f <<"\nTime "<<time; 
-	mInfo->setText(s.str().c_str());
+	// weird crash on QAccessible::updateAccessibility() if f or time vary
+	f = 1; time = 1;
+
+    if ( 0 ) { 
+        std::stringstream s;
+        s << "Simulation frame " << f << "\nTime " << time;
+        auto s1 = s.str();
+        auto s2 = s1.c_str();
+        mInfo->setText( s2 );
+    } else {
+		char s[100];
+		sprintf( s, "Simulation frame %d\nTime %g", f, time );
+		mInfo->setText( s );
+    }
 }
 
 void MainWnd::setPauseStatus(bool v)

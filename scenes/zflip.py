@@ -21,8 +21,9 @@ particleNumber = 3
 res = 32
 gs = vec3(res,res,res)
 gs.z=1
-s = Solver( name='main', gridSize = gs, dim=dim )
-s.timestep = .2 # .2, .5, 1(easier to debug)
+s = Solver( name='main', gridSize=gs, dim=dim )
+dt = .2 # .2, .5, 1(easier to debug)
+s.timestep = dt
 gravity = -10 * 1e-2; # 1e-2, 1e-3; adaptive
 
 print( '(unscaled) gravity:', gravity )
@@ -80,7 +81,7 @@ sampleFlagsWithParticles( flags=flags, parts=pp, discretization=particleNumber, 
 copyFlagsToFlags(flags, flagsPos)
 flags.initDomain(boundaryWidth=0, phiWalls=phiObs)
 
-np = pp.pySize();
+np = pp.pySize()
 print( '# particles:', np )
 pos1 = s.create(PdataVec3)
 pos1.pyResize( np )
@@ -125,7 +126,7 @@ for t in range( 1, int( 2e3 +1) ): # 2500
     # we dont have any levelset, ie no extrapolation, so make sure the velocities are valid
     extrapolateMACSimple( flags=flags, vel=vel, distance=res ) # 4
     
-    # backup
+    # save position
     pp.getPosPdata( target=pos1 )
     
     # FLIP velocity update
@@ -138,10 +139,10 @@ for t in range( 1, int( 2e3 +1) ): # 2500
     print( 'advectInGrid' )
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
 
+    # fixed vol
     if 0:
-        # fixed vol
-        fixed_volume_advection( pp=pp, pos1=pos1, flags=flags )
-        break
+        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep )
+        #break
 
     # position solver, Thuerey21
     if 0:
@@ -182,6 +183,8 @@ for t in range( 1, int( 2e3 +1) ): # 2500
     
     #gui.screenshot( out + 'flipt_%04d.png' % t ); # slow
     
+    # step
+    print( 'step' )
     s.step()
         
 if 0:
