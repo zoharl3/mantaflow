@@ -110,6 +110,21 @@ void Grid<T>::swap(Grid<T>& other) {
 
 }
 
+template <class T>
+vector<Vec3i> Grid<T>::get_ne_directions( bool b2D, bool bIncludeCell ) {
+    vector<Vec3i> dir;
+    for ( int i = -1; i < 2; ++i )
+        for ( int j = -1; j < 2; ++j )
+            for ( int k = -1; k < 2; ++k ) {
+                if ( !bIncludeCell && i == 0 && j == 0 && k == 0 )
+                    continue;
+                if ( b2D && k != 0 )
+                    continue;
+                dir.push_back( Vec3i( i, j, k ) );
+            }
+    return dir;
+}
+
 template<class T>
 int Grid<T>::load(string name) {
 	if (name.find_last_of('.') == string::npos)
@@ -864,6 +879,29 @@ void FlagGrid::fillGrid(int type) {
 		if ((mData[idx] & TypeObstacle)==0 && (mData[idx] & TypeInflow)==0&& (mData[idx] & TypeOutflow)==0&& (mData[idx] & TypeOpen)==0)
 			mData[idx] = (mData[idx] & ~(TypeEmpty | TypeFluid)) | type;
 	}
+}
+
+void FlagGrid::mark_interface() {
+    static vector<Vec3i> dir = FlagGrid::get_ne_directions( 1 );
+    int nd = dir.size();
+
+    FOR_IJK( *this ) {
+		Vec3i idx( i, j, k );
+        mData[ index(idx) ] &= !TypeInterface;
+        if ( mData[ index( idx ) ] & TypeFluid ) {
+			// check neighbors
+            int d = 0;
+            for ( ; d < nd; ++d ) { // dir
+                Vec3i idx2 = idx + dir[d];
+				if ( !isInBounds( idx2 ) )
+					break;
+                if ( !(mData[ index(idx) ] & TypeFluid) )
+					break;
+            }
+			if ( d == nd )
+                mData[index( idx )] |= TypeInterface;
+        }
+    }
 }
 
 // flag grid helper

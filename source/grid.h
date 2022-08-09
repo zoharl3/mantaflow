@@ -229,6 +229,9 @@ public:
 	inline T& operator()(int i, int j, int k, int unused)       { return mData[index(i, j, k)]; }
 	inline T operator() (int i, int j, int k, int unused) const { return mData[index(i, j, k)]; }
 
+	// get all index directions to neighboring cells
+    static vector<Vec3i> get_ne_directions( bool b2D, bool bIncludeCell = false );
+
 protected:
 	T* mData;
 	bool externalData;		// True if mData is managed outside of the Fluidsolver
@@ -298,6 +301,7 @@ public:
 		TypeOutflow  = 16,
 		TypeOpen     = 32,
 		TypeStick    = 64,
+		TypeInterface = 128,
 		// internal use only, for fast marching
 		TypeReserved = 256,
 		// 2^10 - 2^14 reserved for moving obstacles
@@ -335,7 +339,10 @@ public:
 	inline bool isStick(int i, int j, int k) const { return get(i,j,k) & TypeStick; }
 	inline bool isStick(const Vec3i& pos) const { return get(pos) & TypeStick; }
 	inline bool isStick(const Vec3& pos) const { return getAt(pos) & TypeStick; }
-
+    inline bool isInterface( IndexInt idx ) const { return get( idx ) & TypeInterface; }
+    inline bool isInterface( int i, int j, int k ) const { return get( i, j, k ) & TypeInterface; }
+    inline bool isInterface( const Vec3i &pos ) const { return get( pos ) & TypeInterface; }
+    inline bool isInterface( const Vec3 &pos ) const { return getAt( pos ) & TypeInterface; }
 	
 	void InitMinXWall(const int &boundaryWidth, Grid<Real>& phiWalls);
 	void InitMaxXWall(const int &boundaryWidth, Grid<Real>& phiWalls);
@@ -357,6 +364,9 @@ public:
 	PYTHON() void updateFromLevelset(LevelsetGrid& levelset);    
 	//! set all cells (except obs/in/outflow) to type (fluid by default)
 	PYTHON() void fillGrid(int type=TypeFluid);
+
+	// mark as interface fluid cells that border non-fluid cells
+	PYTHON() void mark_interface();
 
 	//! count no. of cells matching flags via "AND"
 	//! warning for large grids! only regular int returned (due to python interface)
