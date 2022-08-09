@@ -702,6 +702,17 @@ if(GUI)
 	endif()
 endif()
 
+# zl matlab
+if(1)
+    MESSAGE(STATUS "Matlab_ROOT_DIR: ${Matlab_ROOT_DIR}" )
+    find_package(Matlab REQUIRED ENG_LIBRARY MX_LIBRARY MAT_LIBRARY)
+    MESSAGE(STATUS "Matlab include: ${Matlab_INCLUDE_DIRS}" )
+    include_directories( ${Matlab_INCLUDE_DIRS} )
+    MESSAGE( "Matlab_MEX_LIBRARY: ${Matlab_MEX_LIBRARY}" )
+    MESSAGE( "Matlab_ENG_LIBRARY: ${Matlab_ENG_LIBRARY}" )
+    link_libraries( ${Matlab_MEX_LIBRARY} ${Matlab_MX_LIBRARY} ${Matlab_ENG_LIBRARY} ${Matlab_ENGINE_LIBRARY} )
+endif()
+
 #******************************************************************************
 # setup executable
 

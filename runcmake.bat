@@ -23,6 +23,7 @@ cmake ^
 -DHOUDINI_ROOT="C:/Program Files/Side Effects Software/Houdini 19.0.657/" ^
 -DTBB=ON ^
 -DNUMPY=ON ^
+-DMatlab_ROOT_DIR="%MATLAB_DIR%" ^
 -Wno-dev -G "Visual Studio 17 2022" -T "v142" ..
 
 cd ..
