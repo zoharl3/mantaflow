@@ -17,10 +17,10 @@ os.system( 'rm %s*.txt' % out )
 
 # solver params
 bScreenShot = 0
-dim = 2
-it_max = 1500
-part_per_cell_1d = 3
-res = 32
+dim = 2 # 2
+it_max = 1500 # 1500
+part_per_cell_1d = 2 # 3
+res = 11 # 32
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
@@ -64,17 +64,20 @@ if resampleParticles:
 # scene setup
 flags.initDomain(boundaryWidth=0) 
 
-# fluid box
+# my dam
+fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0) ), p1=gs*( vec3(0.4,0.8,1) ) ) 
+
+# square
 #t = vec3(0.15, 0.15,0)
 #t = vec3(0.3, 0.3, 0)
-#fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.4,1) ) ) # square
+#fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.4,1) ) )
 
-fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0) ), p1=gs*( vec3(0.4,0.8,1) ) ) # my dam
+# square
+#t = vec3(0.4, 0.4,0)
+#fluidbox = Box( parent=s, p0=gs*( t+vec3(0,0,0) ), p1=gs*( t+vec3(0.1,0.2,1) ) ) 
 
-#t = vec3(0.2, 0.4,0)
-#fluidbox = Box( parent=s, p0=gs*( t+vec3(0,0,0) ), p1=gs*( t+vec3(0.2,0.2,1) ) ) # square
-
-#fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) # manta dam
+# manta dam
+#fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) 
 
 # phiInit
 phiInit = fluidbox.computeLevelset()
@@ -202,6 +205,7 @@ while it < it_max:
 
         if bScreenShot:
             gui.screenshot( out + 'flipt_%04d.png' % it ); # slow
+
         
 if 0:
     print( 'press enter...' )

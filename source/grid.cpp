@@ -881,13 +881,14 @@ void FlagGrid::fillGrid(int type) {
 	}
 }
 
-void FlagGrid::mark_interface() {
+void FlagGrid::mark_interface() 
+{
     static vector<Vec3i> dir = FlagGrid::get_ne_directions( 1 );
     int nd = dir.size();
 
     FOR_IJK( *this ) {
 		Vec3i idx( i, j, k );
-        mData[ index(idx) ] &= !TypeInterface;
+        mData[ index(idx) ] &= ~TypeInterface;
         if ( mData[ index( idx ) ] & TypeFluid ) {
 			// check neighbors
             int d = 0;
