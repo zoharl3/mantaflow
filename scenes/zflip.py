@@ -16,7 +16,7 @@ os.system( 'rm %s*.png' % out )
 os.system( 'rm %s*.txt' % out )
 
 # solver params
-bScreenShot = 0
+bScreenShot = 1
 dim = 2 # 2
 it_max = 1500 # 1500
 part_per_cell_1d = 3 # 3
@@ -102,7 +102,7 @@ if GUI:
     gui.pause()
     
 if bScreenShot:
-    gui.screenshot( out + 'flipt_%04d.png' % 0 ); # slow
+    gui.screenshot( out + 'frame_%04d.png' % 0 ); # slow
 
 # loop
 it = 0
@@ -155,8 +155,8 @@ while it < it_max:
 
     # fixed vol
     if 1:
+        flags.mark_interface()
         s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep, dim=dim, part_per_cell_1d=part_per_cell_1d )
-        #break
 
     # position solver, Thuerey21
     if 0:
@@ -204,7 +204,7 @@ while it < it_max:
         it = round( it )
 
         if bScreenShot:
-            gui.screenshot( out + 'flipt_%04d.png' % it ); # slow
+            gui.screenshot( out + 'frame_%04d.png' % it ); # slow
 
         
 if 0:

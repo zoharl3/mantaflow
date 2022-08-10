@@ -890,16 +890,17 @@ void FlagGrid::mark_interface()
 		Vec3i idx( i, j, k );
         mData[ index(idx) ] &= ~TypeInterface;
         if ( mData[ index( idx ) ] & TypeFluid ) {
+//cout << "  - mark_interface(), checking: " << idx << endl;
 			// check neighbors
             int d = 0;
             for ( ; d < nd; ++d ) { // dir
                 Vec3i idx2 = idx + dir[d];
 				if ( !isInBounds( idx2 ) )
 					break;
-                if ( !(mData[ index(idx) ] & TypeFluid) )
+                if ( !( mData[ index(idx2) ] & TypeFluid ) )
 					break;
             }
-			if ( d == nd )
+			if ( d != nd )
                 mData[index( idx )] |= TypeInterface;
         }
     }

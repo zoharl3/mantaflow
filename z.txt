@@ -1,5 +1,6 @@
 
 - Code
+    - The drawing is done in GridPainter<int|Real|Vec3>::paint()
     - color and vector modes
         - enum RealDisplayModes { RealDispOff=0, RealDispStd, RealDispLevelset, RealDispShadeVol, RealDispShadeSurf, NumRealDispModes }; 
             - GridPainter<T>::setDispMode(int dm)
