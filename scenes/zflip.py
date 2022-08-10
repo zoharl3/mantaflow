@@ -19,8 +19,8 @@ os.system( 'rm %s*.txt' % out )
 bScreenShot = 0
 dim = 2 # 2
 it_max = 1500 # 1500
-part_per_cell_1d = 1 # 3
-res = 7 # 32
+part_per_cell_1d = 3 # 3
+res = 32 # 32
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
