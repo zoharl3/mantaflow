@@ -102,7 +102,7 @@ for t in range(250):
 
     # make sure we have velocities throught liquid region
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
-    extrapolateMACFromWeight( vel=vel , distance=2, weight=tmpVec3 )  # note, tmpVec3 could be free'd now...
+    extrapolateMACFromWeight( vel=vel , distance=2, weight=tmpVec3 )  # note, tmpVec3 could be freed now...
     markFluidCells( parts=pp, flags=flags )
 
     # create approximate surface level set, resample particles

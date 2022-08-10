@@ -16,11 +16,11 @@ os.system( 'rm %s*.png' % out )
 os.system( 'rm %s*.txt' % out )
 
 # solver params
-bScreenShot = 1
-dim = 2 # 2
+bScreenShot = 0
+dim = 3 # 2, 3
 it_max = 1500 # 1500
-part_per_cell_1d = 3 # 3
-res = 32 # 32
+part_per_cell_1d = 2 # 3, 2
+res = 32 # 32, 64
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
@@ -42,6 +42,7 @@ pp       = s.create(BasicParticleSystem)
 # add velocity data to particles
 pVel     = pp.create(PdataVec3) 
 phiObs   = s.create(LevelsetGrid, name='phiObs')
+mesh     = s.create(Mesh)
 
 #position solver stuff
 usePositionSolver = True
@@ -79,10 +80,9 @@ fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0) ), p1=gs*( vec3(0.4,0.8,1) ) )
 # manta dam
 #fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) 
 
-# phiInit
-phiInit = fluidbox.computeLevelset()
-flags.updateFromLevelset(phiInit)
-# phiInit is not needed from now on!
+# phi
+phi = fluidbox.computeLevelset()
+flags.updateFromLevelset( phi )
 
 sampleFlagsWithParticles( flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.2 ) # 0.2
     
@@ -133,7 +133,7 @@ while it < it_max:
     # pressure solve
     if 1:
         print( '- pressure' )
-        solvePressure(flags=flags, vel=vel, pressure=pressure)
+        solvePressure( flags=flags, vel=vel, pressure=pressure, phi=phi )
 
     #vel.printGrid()
 
@@ -195,6 +195,10 @@ while it < it_max:
         #pp.printParts()
         pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
     
+    # mesh
+    if dim == 3:
+        phi.createMesh( mesh )
+
     # step
     print( '- step' )
     s.step()
