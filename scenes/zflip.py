@@ -5,6 +5,8 @@
 import os, sys
 import keyboard, copy
 
+from tictoc import *
+
 from manta import *
 
 sys.path.append( r'c:\prj\python\\' )
@@ -16,11 +18,11 @@ os.system( 'rm %s*.png' % out )
 os.system( 'rm %s*.txt' % out )
 
 # solver params
-bScreenShot = 0
-dim = 3 # 2, 3
+bScreenShot = 1
+dim = 2 # 2, 3
 it_max = 1500 # 1500
 part_per_cell_1d = 2 # 3, 2
-res = 64 # 32, 64
+res = 128 # 32, 64, 128
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
@@ -156,7 +158,10 @@ while it < it_max:
     # fixed vol
     if 1:
         flags.mark_interface()
+        tic()
         s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep, dim=dim, part_per_cell_1d=part_per_cell_1d )
+        print( '      ', end='' )
+        toc()
 
     # position solver, Thuerey21
     if 0:
@@ -196,7 +201,7 @@ while it < it_max:
         pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
     
     # mesh
-    if dim == 3:
+    if 0 and dim == 3:
         phi.createMesh( mesh )
 
     # step
