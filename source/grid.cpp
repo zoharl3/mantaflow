@@ -118,12 +118,17 @@ vector<Vec3i> Grid<T>::get_ne_directions( bool b2D, bool bIncludeCell, bool bDia
             for ( int k = -1; k < 2; ++k ) {
 				if ( !bDiagonals && abs(i) + abs(j) + abs(k) > 1 )
 					continue;
-                if ( !bIncludeCell && i == 0 && j == 0 && k == 0 )
+                if ( i == 0 && j == 0 && k == 0 )
                     continue;
                 if ( b2D && k != 0 )
                     continue;
                 dir.push_back( Vec3i( i, j, k ) );
             }
+
+	// push zero last
+	if ( bIncludeCell )
+		dir.push_back( Vec3i::Zero );
+
     return dir;
 }
 
