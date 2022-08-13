@@ -230,7 +230,7 @@ public:
 	inline T operator() (int i, int j, int k, int unused) const { return mData[index(i, j, k)]; }
 
 	// get all index directions to neighboring cells
-    static vector<Vec3i> get_ne_directions( bool b2D, bool bIncludeCell = false );
+    static vector<Vec3i> get_ne_directions( bool b2D, bool bIncludeCell = false, bool bDiagonals = false );
 
 protected:
 	T* mData;

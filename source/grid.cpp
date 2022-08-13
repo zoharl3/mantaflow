@@ -111,11 +111,13 @@ void Grid<T>::swap(Grid<T>& other) {
 }
 
 template <class T>
-vector<Vec3i> Grid<T>::get_ne_directions( bool b2D, bool bIncludeCell ) {
+vector<Vec3i> Grid<T>::get_ne_directions( bool b2D, bool bIncludeCell, bool bDiagonals ) {
     vector<Vec3i> dir;
     for ( int i = -1; i < 2; ++i )
         for ( int j = -1; j < 2; ++j )
             for ( int k = -1; k < 2; ++k ) {
+				if ( !bDiagonals && abs(i) + abs(j) + abs(k) > 1 )
+					continue;
                 if ( !bIncludeCell && i == 0 && j == 0 && k == 0 )
                     continue;
                 if ( b2D && k != 0 )
