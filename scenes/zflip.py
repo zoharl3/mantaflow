@@ -2,7 +2,7 @@
 # Very simple flip without level set
 # and without any particle resampling
 # 
-import os, sys
+import os, sys, math
 import keyboard, copy
 
 from tictoc import *
@@ -35,9 +35,10 @@ if dim == 2:
     bSaveParts = 0
     
 s = Solver( name='main', gridSize=gs, dim=dim )
-gravity = -10 * 5e-2; # 1e-2, 1e-3
+gravity = -0.1
+gravity *= math.sqrt( res )
 
-print( '(unscaled) gravity:', gravity )
+print( 'gravity:', gravity )
 print( 'timestep:', dt )
 
 # prepare grids and particles
