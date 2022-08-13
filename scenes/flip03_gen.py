@@ -18,7 +18,7 @@ method = 2
 # === surface generation parameters ===
 
 # input file 
-partfile   = 'flipParts_%04d.uni' 
+partfile   = 'parts_%04d.uni' 
 startFrame = 1
 endFrame   = 1000
 interval   = 1
@@ -33,8 +33,8 @@ meshfile = out + 'fluidsurface_final_%04d.bobj.gz'
 refName = ( out + "ref_" + (partfile % 0) ) 
 gs = getUniFileSize(refName)
 if gs.x<=0: 
-	mantaMsg("Warning! File '%s' not found, cannot determine size...\n"%refName, 0)
-	exit(1)
+    mantaMsg("Warning! File '%s' not found, cannot determine size...\n"%refName, 0)
+    exit(1)
 
 gs.x = int(gs.x*upres)
 gs.y = int(gs.y*upres)
@@ -64,61 +64,63 @@ gpi    = s.create(IntGrid)
 
 # scene setup
 flags.initDomain(boundaryWidth=0)
-	
+    
 if 1 and (GUI):
-	gui = Gui()
-	gui.show()
-	#gui.pause()
+    gui = Gui()
+    gui.setRealGridDisplay( 0 )
+    gui.setVec3GridDisplay( 0 )
+    gui.show()
+    #gui.pause()
 
 
 # main loop
 
 while frame < endFrame:
-	meshfileCurr = meshfile % outCnt 
-	mantaMsg( "Frame %d " % frame )
-	phi.setBound(value=0., boundaryWidth=1)
+    meshfileCurr = meshfile % outCnt 
+    mantaMsg( "Frame %d " % frame )
+    phi.setBound(value=0., boundaryWidth=1)
 
-	# already exists?
-	if (os.path.isfile( meshfileCurr )):
-		mesh.load( meshfileCurr )
+    # already exists?
+    if (os.path.isfile( meshfileCurr )):
+        mesh.load( meshfileCurr )
 
-	else:
-		# generate mesh; first read input sim particles
-		if (os.path.isfile( out + partfile % frame )):
-			pp.load( out + partfile % frame );
-			
-			# create surface
-			gridParticleIndex( parts=pp , flags=flags, indexSys=pindex, index=gpi )
-			if method==0:
-				unionParticleLevelset( pp, pindex, flags, gpi, phi , radiusFactor ) # faster, but not as smooth
-			elif method==1:
-				averagedParticleLevelset( pp, pindex, flags, gpi, phi , radiusFactor , 1, 1 ) 
-			elif method==2:
-				improvedParticleLevelset( pp, pindex, flags, gpi, phi , radiusFactor , 1, 1 , 0.4, 3.5)
-			else:
-				print("Error - unknown method"); exit(1)
+    else:
+        # generate mesh; first read input sim particles
+        if (os.path.isfile( out + partfile % frame )):
+            pp.load( out + partfile % frame );
+            
+            # create surface
+            gridParticleIndex( parts=pp , flags=flags, indexSys=pindex, index=gpi )
+            if method==0:
+                unionParticleLevelset( pp, pindex, flags, gpi, phi , radiusFactor ) # faster, but not as smooth
+            elif method==1:
+                averagedParticleLevelset( pp, pindex, flags, gpi, phi , radiusFactor , 1, 1 ) 
+            elif method==2:
+                improvedParticleLevelset( pp, pindex, flags, gpi, phi , radiusFactor , 1, 1 , 0.4, 3.5)
+            else:
+                print("Error - unknown method"); exit(1)
 
-			phi.setBound(value=0., boundaryWidth=1)
-			phi.createMesh(mesh)
+            phi.setBound(value=0., boundaryWidth=1)
+            phi.createMesh(mesh)
 
-			# beautify mesh, too slow right now!
-			#subdivideMesh(mesh=mesh, minAngle=0.01, minLength=scale, maxLength=3*scale, cutTubes=False) 
-			# perform smoothing
-			#for iters in range(10):
-				#smoothMesh(mesh=mesh, strength=1e-3, steps=10) 
-				#subdivideMesh(mesh=mesh, minAngle=0.01, minLength=scale, maxLength=3*scale, cutTubes=True)
+            # beautify mesh, too slow right now!
+            #subdivideMesh(mesh=mesh, minAngle=0.01, minLength=scale, maxLength=3*scale, cutTubes=False) 
+            # perform smoothing
+            #for iters in range(10):
+                #smoothMesh(mesh=mesh, strength=1e-3, steps=10) 
+                #subdivideMesh(mesh=mesh, minAngle=0.01, minLength=scale, maxLength=3*scale, cutTubes=True)
 
-			# write output file:
-			mesh.save( meshfileCurr )
-		else:
-			# stop playback for UI, reset
-			if (GUI):
-				gui.pause()
-				outCnt = 0
+            # write output file:
+            mesh.save( meshfileCurr )
+        else:
+            # stop playback for UI, reset
+            if (GUI):
+                gui.pause()
+                outCnt = 0
 
-	#gui.screenshot( 'flip03_%04d.png' % outCnt ); 
-	outCnt += 1
-	frame  += interval
-	s.step()
-	
+    #gui.screenshot( 'flip03_%04d.png' % outCnt ); 
+    outCnt += 1
+    frame  += interval
+    s.step()
+    
 

@@ -21,7 +21,7 @@ s = Solver(name='main', gridSize = gs, dim=dim)
 s.timestep = 0.8
 minParticles = pow(2,dim)
 
-# save particles for separate surface generation pass?
+# save particles
 saveParts = True
 
 # size of particles 
@@ -91,7 +91,7 @@ pTest.setConst( 0.1 )
 
 # save reference any grid, to automatically determine grid size
 if saveParts:
-    pressure.save( out + 'ref_flipParts_0000.uni' );
+    pressure.save( out + 'ref_parts_0000.uni' );
 
 #main loop
 for t in range(250):
@@ -134,9 +134,9 @@ for t in range(250):
     #s.printMemInfo()
     s.step()
 
-    # generate data for flip03_gen.py surface generation scene
+    # save particle data for flip03_gen.py surface generation scene
     if saveParts:
-        pp.save( out + 'flipParts_%04d.uni' % t );
+        pp.save( out + 'parts_%04d.uni' % t );
 
     if 0 and (GUI):
         gui.screenshot( out + 'flip02_%04d.png' % t );

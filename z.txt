@@ -51,6 +51,7 @@ c:\prj-external-libs\mantaflow\out\
     
 - ui
     - clicking a grid cell gives info
+    - +/- move slice plane
     
     
     

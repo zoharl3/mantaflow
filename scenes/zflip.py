@@ -16,20 +16,26 @@ out = r'c:/prj-external-libs/mantaflow/out/'
 
 os.system( 'rm %s*.png' % out )
 os.system( 'rm %s*.txt' % out )
+os.system( 'rm %s*.uni' % out )
+os.system( 'rm %s*.vdb' % out )
+
+bScreenShot = 1
+bSaveParts = 1
 
 # solver params
-bScreenShot = 1
 dim = 3 # 2, 3
 it_max = 1500 # 1500
-part_per_cell_1d = 2 # 3, 2
+part_per_cell_1d = 1 # 3, 2
 res = 64 # 32, 64, 128
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
 if dim == 2:
     gs.z = 1
+    bSaveParts = 0
+    
 s = Solver( name='main', gridSize=gs, dim=dim )
-gravity = -10 * 1e-2; # 1e-2, 1e-3; adaptive
+gravity = -10 * 5e-2; # 1e-2, 1e-3
 
 print( '(unscaled) gravity:', gravity )
 print( 'timestep:', dt )
@@ -55,14 +61,14 @@ flagsPos = s.create(FlagGrid)
 pMass = pp.create(PdataReal)
 mass = 1.0 / (part_per_cell_1d * part_per_cell_1d * part_per_cell_1d) 
 if dim == 2:
-	mass = 1.0 / (part_per_cell_1d * part_per_cell_1d) 
+    mass = 1.0 / (part_per_cell_1d * part_per_cell_1d) 
 
 resampleParticles = False # must be a boolean type
 
 if resampleParticles:
-	pindex = s.create(ParticleIndexSystem) 
-	gpi = s.create(IntGrid)
-	gCnt = s.create(IntGrid)
+    pindex = s.create(ParticleIndexSystem) 
+    gpi = s.create(IntGrid)
+    gCnt = s.create(IntGrid)
     
 # scene setup
 flags.initDomain(boundaryWidth=0) 
@@ -106,6 +112,9 @@ if GUI:
 if bScreenShot:
     gui.screenshot( out + 'frame_%04d.png' % 0 ); # slow
 
+if bSaveParts:
+    pressure.save( out + 'ref_parts_0000.uni' );
+
 # loop
 it = 0
 while it < it_max:
@@ -124,7 +133,8 @@ while it < it_max:
     # forces
     if 1:
         print( '- forces' )
-        addGravity(flags=flags, vel=vel, gravity=(0,gravity,0)) # adaptive to grid size
+        addGravityNoScale( flags=flags, vel=vel, gravity=(0,gravity,0) )
+        #addGravity( flags=flags, vel=vel, gravity=(0,gravity,0) ) # adaptive to grid size
 
     #vel.printGrid()
 
@@ -215,6 +225,13 @@ while it < it_max:
         if bScreenShot:
             gui.screenshot( out + 'frame_%04d.png' % it ); # slow
 
+        # save particle data for flip03_gen.py surface generation scene
+        if bSaveParts:
+            pp.save( out + 'parts_%04d.uni' % it )
+
+            # note: when saving pdata fields, they must be accompanied by and listed before their parent pp
+            objects = [flags, phi, pressure, vel, pVel, pp]
+            save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
         
 if 0:
     print( 'press enter...' )
