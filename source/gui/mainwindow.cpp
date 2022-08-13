@@ -32,6 +32,11 @@ MainWnd::MainWnd() : QMainWindow(0), mPaused(true), mRequestPause(false), mReque
 {
 	// Frame info label
 	mInfo = new QLabel;
+
+	QFont font( "Consolas", 12 ); 
+    QApplication::setFont( font, "QLabel" );
+	//mInfo->setFont( font ); // doesn't change size
+
 	setStep(0,0.);
 	
 	// register GL widget
