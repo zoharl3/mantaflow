@@ -19,7 +19,9 @@ os.system( 'rm %s*.txt' % out )
 os.system( 'rm %s*.uni' % out )
 os.system( 'rm %s*.vdb' % out )
 
-bSaveParts = 0
+# flags
+bSaveParts = 1
+
 bScreenShot = 1
 
 # solver params
