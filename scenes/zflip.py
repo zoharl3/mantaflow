@@ -27,7 +27,7 @@ bScreenShot = 1
 # solver params
 dim = 3 # 2, 3
 it_max = 500 # 500, 1200, 1500
-part_per_cell_1d = 1 # 3, 2, 1
+part_per_cell_1d = 2 # 3, 2, 1
 res = 64 # 32, 48, 64, 128
 
 dt = .2 # .2, .5, 1(easier to debug)
@@ -43,6 +43,9 @@ gravity *= math.sqrt( res )
 print( 'gravity:', gravity )
 print( 'timestep:', dt )
 
+# size of particles 
+radiusFactor = 1.0
+
 # prepare grids and particles
 flags    = s.create(FlagGrid)
 vel      = s.create(MACGrid)
@@ -54,6 +57,10 @@ pp       = s.create(BasicParticleSystem)
 pVel     = pp.create(PdataVec3) 
 phiObs   = s.create(LevelsetGrid, name='phiObs')
 mesh     = s.create(Mesh)
+
+# Acceleration data for particle
+pindex = s.create(ParticleIndexSystem)
+gpi    = s.create(IntGrid)
 
 #position solver stuff
 usePositionSolver = True
@@ -124,15 +131,21 @@ if GUI:
     gui.show()
     gui.pause()
     
+it = 0
+
 if bScreenShot:
-    gui.screenshot( out + 'frame_%04d.png' % 0 ); # slow
+    gui.screenshot( out + 'frame_%04d.png' % it ); # slow
 
 if bSaveParts:
-    #pressure.save( out + 'ref_parts_0000.uni' );
-    pass
+    if 0:
+        pressure.save( out + 'ref_parts_0000.uni' );
+        pp.save( out + 'parts_%04d.uni' % it )
+
+    #objects = [ flags, phi, pp ]
+    objects = [ pp ]
+    save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
 
 # loop
-it = 0
 while it < it_max:
     emphasize( '\n-----------------\n- time: %g(/%d)' % ( it, it_max ) )
     print( 'n=%d' % pp.pySize() )
@@ -218,6 +231,18 @@ while it < it_max:
             deltaX.printGrid()
             #gui.pause()
     
+    # level set and mesh
+    if bSaveParts:
+        # Create level set from particles
+        gridParticleIndex( parts=pp , flags=flags, indexSys=pindex, index=gpi )
+        unionParticleLevelset( pp, pindex, flags, gpi, phi, radiusFactor ) 
+        extrapolateLsSimple(phi=phi, distance=4, inside=True )
+        improvedParticleLevelset( pp, pindex, flags, gpi, phi, radiusFactor, 1, 1 , 0.4, 3.5 )
+
+        # mesh
+        phi.setBound( value=0., boundaryWidth=1 )
+        phi.createMesh( mesh )
+
     # print/write
     if 0:
         flags.printGrid()
@@ -226,10 +251,6 @@ while it < it_max:
         #pp.printParts()
         pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
     
-    # mesh
-    if 0 and dim == 3:
-        phi.createMesh( mesh )
-
     # step
     print( '- step' )
     s.step()
@@ -241,13 +262,14 @@ while it < it_max:
         if bScreenShot:
             gui.screenshot( out + 'frame_%04d.png' % it ); # slow
 
-        # save particle data for flip03_gen.py surface generation scene
+        # save particle data
         if bSaveParts:
-            #pp.save( out + 'parts_%04d.uni' % it )
+            if 0:
+                # save particle data for flip03_gen.py surface generation scene
+                pp.save( out + 'parts_%04d.uni' % it )
 
-            # note: when saving pdata fields, they must be accompanied by and listed before their parent pp
-            #objects = [flags, phi, pressure, vel, pVel, pp]
-            objects = [ phi, pp ]
+            #objects = [ flags, phi, pp ]
+            objects = [ pp ]
             save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
         
 # pause

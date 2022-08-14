@@ -88,6 +88,12 @@ if 1 and (GUI):
 # Main loop
 step = -1
 
+if 1:
+    # note: when saving pdata fields, they must be accompanied by and listed before their parent pp
+    #objects = [flags, phiParts, phi, pressure, vel, pVel, pp]
+    objects = [ phi, pp ]
+    save( name=out + 'fluid_data_%04d.vdb' % s.frame, objects=objects )
+
 while s.frame < 200:
 	step = step + 1
 	
