@@ -20,7 +20,7 @@ os.system( 'rm %s*.uni' % out )
 os.system( 'rm %s*.vdb' % out )
 
 # flags
-bSaveParts = 1
+bSaveParts = 0
 
 bScreenShot = 1
 
