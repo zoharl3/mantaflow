@@ -230,12 +230,14 @@ while it < it_max:
 
         # save particle data for flip03_gen.py surface generation scene
         if bSaveParts:
-            pp.save( out + 'parts_%04d.uni' % it )
+            #pp.save( out + 'parts_%04d.uni' % it )
 
             # note: when saving pdata fields, they must be accompanied by and listed before their parent pp
-            objects = [flags, phi, pressure, vel, pVel, pp]
+            #objects = [flags, phi, pressure, vel, pVel, pp]
+            objects = [ phi, pp ]
             save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
         
+# pause
 if 0:
     print( 'press enter...' )
     #keyboard.read_key()
