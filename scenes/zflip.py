@@ -26,9 +26,9 @@ bScreenShot = 1
 
 # solver params
 dim = 3 # 2, 3
-it_max = 1500 # 1500
-part_per_cell_1d = 1 # 3, 2
-res = 48 # 32, 48, 64, 128
+it_max = 500 # 500, 1200, 1500
+part_per_cell_1d = 1 # 3, 2, 1
+res = 64 # 32, 48, 64, 128
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
@@ -76,23 +76,35 @@ if resampleParticles:
 # scene setup
 flags.initDomain(boundaryWidth=0) 
 
-# my dam
-fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0) ), p1=gs*( vec3(0.4,0.8,1) ) ) 
+if 0: # breaking dam
+    # my dam
+    fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0.3) ), p1=gs*( vec3(0.4,0.8,.7) ) ) 
 
-# square
-#t = vec3(0.15, 0.15,0)
-#t = vec3(0.3, 0.3, 0)
-#fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.4,1) ) )
+    # square
+    #t = vec3(0.15, 0.15,0)
+    #t = vec3(0.3, 0.3, 0)
+    #fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.4,1) ) )
 
-# square
-#t = vec3(0.4, 0.4,0)
-#fluidbox = Box( parent=s, p0=gs*( t+vec3(0,0,0) ), p1=gs*( t+vec3(0.1,0.2,1) ) ) 
+    # square
+    #t = vec3(0.4, 0.4,0)
+    #fluidbox = Box( parent=s, p0=gs*( t+vec3(0,0,0) ), p1=gs*( t+vec3(0.1,0.2,1) ) ) 
 
-# manta dam
-#fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) 
+    # manta dam
+    #fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) 
 
-# phi
-phi = fluidbox.computeLevelset()
+    # phi
+    phi = fluidbox.computeLevelset()
+
+else: # falling drop
+    fluidBasin = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(1.0,0.1,1.0)) # basin
+    dropCenter = vec3(0.5,0.3,0.5)
+    dropRadius = 0.1
+    fluidDrop  = Sphere( parent=s , center=gs*dropCenter, radius=res*dropRadius)
+    fluidVel   = Sphere( parent=s , center=gs*dropCenter, radius=res*(dropRadius+0.05) )
+    fluidSetVel= vec3(0,-1,0)
+    phi = fluidBasin.computeLevelset()
+    phi.join( fluidDrop.computeLevelset() )
+
 flags.updateFromLevelset( phi )
 
 sampleFlagsWithParticles( flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.2 ) # 0.2
@@ -116,7 +128,8 @@ if bScreenShot:
     gui.screenshot( out + 'frame_%04d.png' % 0 ); # slow
 
 if bSaveParts:
-    pressure.save( out + 'ref_parts_0000.uni' );
+    #pressure.save( out + 'ref_parts_0000.uni' );
+    pass
 
 # loop
 it = 0
