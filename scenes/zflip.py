@@ -26,7 +26,7 @@ bScreenShot = 1
 dim = 3 # 2, 3
 it_max = 1500 # 1500
 part_per_cell_1d = 1 # 3, 2
-res = 64 # 32, 48, 64, 128
+res = 48 # 32, 48, 64, 128
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
