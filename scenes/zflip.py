@@ -129,7 +129,7 @@ if GUI:
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show()
-    gui.pause()
+    #gui.pause()
     
 it = 0
 
@@ -138,12 +138,14 @@ if bScreenShot:
 
 if bSaveParts:
     if 0:
-        pressure.save( out + 'ref_parts_0000.uni' );
+        pressure.save( out + 'ref_parts_0000.uni' )
         pp.save( out + 'parts_%04d.uni' % it )
 
     #objects = [ flags, phi, pp ]
     objects = [ pp ]
-    save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
+    fname = out + 'fluid_data_%04d.vdb' % it
+    print( fname )
+    save( name=fname, objects=objects )
 
 # loop
 while it < it_max:
