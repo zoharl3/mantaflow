@@ -11,7 +11,7 @@ cmake ^
 -DCMAKE_TOOLCHAIN_FILE=C:/prj-external-libs/vcpkg/scripts/buildsystems/vcpkg.cmake ^ -DVCPKG_TARGET_TRIPLET=x64-windows ^
 -DPYTHON_VERSION=37 ^
 -DGUI=ON ^
--DDEBUG=ON ^
+-DDEBUG=OFF ^
 -DDOUBLEPRECISION=ON ^
 -DPREPDEBUG=ON ^
 -DDEBUG_PYTHON_WITH_RELEASE=ON ^
