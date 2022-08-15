@@ -48,13 +48,14 @@ pindex = s.create(ParticleIndexSystem)
 gpi    = s.create(IntGrid)
 
 # scene setup, 0=breaking dam, 1=drop into pool
-setup = 0
+setup = 1
+
 bWidth=1
 flags.initDomain(boundaryWidth=bWidth)
 fluidVel = 0
 fluidSetVel = 0
 
-if 0 and (GUI): # mutex crash?
+if 1 and (GUI): # mutex crash?
     gui = Gui()
     gui.show()
     #gui.pause()

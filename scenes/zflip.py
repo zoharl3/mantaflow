@@ -20,13 +20,14 @@ os.system( 'rm %s*.uni' % out )
 os.system( 'rm %s*.vdb' % out )
 
 # flags
-bSaveParts = 1
+bSaveParts  = 1
+bSaveUni    = 0
 
 bScreenShot = 1
 
 # solver params
 dim = 3 # 2, 3
-it_max = 500 # 500, 1200, 1500
+it_max = 300 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2, 1
 res = 64 # 32, 48, 64, 128
 
@@ -114,9 +115,9 @@ else: # falling drop
 
 flags.updateFromLevelset( phi )
 
-sampleFlagsWithParticles( flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.2 ) # 0.2
+sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.05 ) # 0.05, 0.2
     
-copyFlagsToFlags(flags, flagsPos)
+copyFlagsToFlags( flags, flagsPos )
 flags.initDomain(boundaryWidth=0, phiWalls=phiObs)
 
 np = pp.pySize()
@@ -137,7 +138,7 @@ if bScreenShot:
     gui.screenshot( out + 'frame_%04d.png' % it ); # slow
 
 if bSaveParts:
-    if 0:
+    if bSaveUni:
         pressure.save( out + 'ref_parts_0000.uni' )
         pp.save( out + 'parts_%04d.uni' % it )
 
@@ -266,7 +267,7 @@ while it < it_max:
 
         # save particle data
         if bSaveParts:
-            if 0:
+            if bSaveUni:
                 # save particle data for flip03_gen.py surface generation scene
                 pp.save( out + 'parts_%04d.uni' % it )
 
