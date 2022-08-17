@@ -130,7 +130,7 @@ if GUI:
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show()
-    #gui.pause()
+    gui.pause()
     
 it = 0
 
