@@ -29,7 +29,7 @@ bScreenShot = 1
 dim = 2 # 2, 3
 it_max = 300 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2, 1
-res = 64 # 32, 48, 64, 128
+res = 9 # 32, 48, 64, 128
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
@@ -84,18 +84,17 @@ if resampleParticles:
 # scene setup
 flags.initDomain(boundaryWidth=0) 
 
-if 0: # breaking dam
+if 1: # breaking dam
     # my dam
-    fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0.3) ), p1=gs*( vec3(0.4,0.8,.7) ) ) 
+    #fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0.3) ), p1=gs*( vec3(0.4,0.8,.7) ) ) 
 
     # square
-    #t = vec3(0.15, 0.15,0)
-    #t = vec3(0.3, 0.3, 0)
-    #fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + vec3(0.4,0.4,1) ) )
-
-    # square
-    #t = vec3(0.4, 0.4,0)
-    #fluidbox = Box( parent=s, p0=gs*( t+vec3(0,0,0) ), p1=gs*( t+vec3(0.1,0.2,1) ) ) 
+    if 1:
+        t1 = 0.4 # 0.15, 0.3, .4
+        sz1 = .4 # .2, .4
+        t = vec3(t1, t1, 0)
+        sz = vec3(sz1, sz1, 1)
+        fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + sz ) )
 
     # manta dam
     #fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) 
