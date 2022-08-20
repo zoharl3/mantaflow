@@ -134,11 +134,16 @@ void GLWidget::mouseMoveEvent(QMouseEvent* e)
 		 mRotY += diff.x() * speedRot;
 		 updateGL();
 	 }
-	 if (e->buttons() & Qt::RightButton) {
+	 if (e->buttons() & Qt::MiddleButton) {
 		 mCamPos.x += diff.x() * speedPan;
 		 mCamPos.y -= diff.y() * speedPan;
 		 updateGL();
 	 }
+     if ( e->buttons() & Qt::RightButton ) {
+         const float speed = 0.002f;
+         mCamPos.z += speed * diff.y();
+         updateGL();
+     }
 
 	 mAnchor = e->pos();     
 }

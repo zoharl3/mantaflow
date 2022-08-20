@@ -29,7 +29,7 @@ bScreenShot = 0
 dim = 3 # 2, 3
 it_max = 1000 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2, 1
-res = 64 # 32, 48, 64, 128
+res = 128 # 32, 48, 64, 128
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
@@ -84,7 +84,7 @@ if resampleParticles:
 # scene setup
 flags.initDomain(boundaryWidth=0) 
 
-if 0: # breaking dam
+if 1: # breaking dam
     # my dam
     fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0.3) ), p1=gs*( vec3(0.4,0.8,.7) ) ) 
 
