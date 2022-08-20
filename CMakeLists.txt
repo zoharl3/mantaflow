@@ -702,8 +702,9 @@ if(GUI)
 	endif()
 endif()
 
-# zl matlab
+# zl 
 if(1)
+    # matlab
     MESSAGE(STATUS "Matlab_ROOT_DIR: ${Matlab_ROOT_DIR}" )
     find_package(Matlab REQUIRED ENG_LIBRARY MX_LIBRARY MAT_LIBRARY)
     MESSAGE(STATUS "Matlab include: ${Matlab_INCLUDE_DIRS}" )
@@ -711,6 +712,16 @@ if(1)
     MESSAGE( "Matlab_MEX_LIBRARY: ${Matlab_MEX_LIBRARY}" )
     MESSAGE( "Matlab_ENG_LIBRARY: ${Matlab_ENG_LIBRARY}" )
     link_libraries( ${Matlab_MEX_LIBRARY} ${Matlab_MX_LIBRARY} ${Matlab_ENG_LIBRARY} ${Matlab_ENGINE_LIBRARY} )
+    
+    # gurobi
+    option(CXX "enable C++ compilation" ON)
+    enable_language(CXX)
+    set( MT OFF )
+    find_package( GUROBI REQUIRED )
+    include_directories( ${GUROBI_INCLUDE_DIRS} )
+    message( "gurobi include: ${GUROBI_INCLUDE_DIRS}\n  libs: ${GUROBI_CXX_LIBRARY} ${GUROBI_CXX_DEBUG_LIBRARY} ${GUROBI_LIBRARY}" )
+    list( APPEND F_LIBS optimized ${GUROBI_CXX_LIBRARY} debug ${GUROBI_CXX_DEBUG_LIBRARY} )
+    link_libraries( ${GUROBI_LIBRARY} )
 endif()
 
 #******************************************************************************
@@ -735,6 +746,7 @@ if(NOT NOPYTHON)
 	else()
 		add_executable(${EXECCMD} ${SOURCES} ${GITINFO})
 	endif()
+    message( "F_LIBS: ${F_LIBS}" )
 	target_link_libraries( ${EXECCMD} ${F_LIBS} )
 
 	# fix for "el capitan" TBB and changed dynamic library env vars, lookup of TBB can cause problems without @rpath
@@ -844,3 +856,8 @@ set_target_properties( ${EXECCMD} PROPERTIES
     VS_DEBUGGER_COMMAND_ARGUMENTS "c:/prj-external-libs/mantaflow/scenes/zflip.py" 
     #VS_DEBUGGER_COMMAND "debug_command"
     )
+
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+    include(FeatureSummary)
+    feature_summary(WHAT ALL)
+endif()
