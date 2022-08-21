@@ -23,13 +23,13 @@ os.system( 'rm %s*.vdb' % out )
 bSaveParts  = 1 # needed from drawing the surface
 bSaveUni    = 0
 
-bScreenShot = 0
+bScreenShot = 1
 
 # solver params
 dim = 2 # 2, 3
 it_max = 1000 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2, 1
-res = 32 # 32, 48, 64, 128
+res = 128 # 32, 48, 64, 128
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
