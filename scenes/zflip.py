@@ -200,7 +200,7 @@ while it < it_max:
     if 1:
         flags.mark_interface()
         tic()
-        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep, dim=dim, part_per_cell_1d=part_per_cell_1d, state=0 )
+        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep, dim=dim, part_per_cell_1d=part_per_cell_1d, state=0, phi=phi )
         print( '      ', end='' )
         toc()
 
