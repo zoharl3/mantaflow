@@ -134,7 +134,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent* e)
 		 mRotY += diff.x() * speedRot;
 		 updateGL();
 	 }
-	 if (e->buttons() & Qt::MiddleButton) {
+	 if (e->buttons() & Qt::MiddleButton) { // Maya buttons
 		 mCamPos.x += diff.x() * speedPan;
 		 mCamPos.y -= diff.y() * speedPan;
 		 updateGL();
