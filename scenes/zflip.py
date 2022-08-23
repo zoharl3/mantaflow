@@ -129,7 +129,7 @@ if 1 and GUI:
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show()
-    #gui.pause()
+    gui.pause()
 else:
     bScreenShot = 0
 
@@ -235,14 +235,15 @@ while it < it_max:
             deltaX.printGrid()
             #gui.pause()
     
+    # create level set from particles
+    gridParticleIndex( parts=pp , flags=flags, indexSys=pindex, index=gpi )
+    unionParticleLevelset( pp, pindex, flags, gpi, phi, radiusFactor ) 
+    extrapolateLsSimple(phi=phi, distance=4, inside=True ) # 4
+
     # level set and mesh
     if bSaveParts:
-        # Create level set from particles
-        gridParticleIndex( parts=pp , flags=flags, indexSys=pindex, index=gpi )
-        unionParticleLevelset( pp, pindex, flags, gpi, phi, radiusFactor ) 
-        extrapolateLsSimple(phi=phi, distance=4, inside=True )
         improvedParticleLevelset( pp, pindex, flags, gpi, phi, radiusFactor, 1, 1 , 0.4, 3.5 )
-
+        
         # mesh
         phi.setBound( value=0., boundaryWidth=1 )
         phi.createMesh( mesh )
