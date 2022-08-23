@@ -130,7 +130,9 @@ if 1 and GUI:
     gui.setVec3GridDisplay( 0 )
     gui.show()
     #gui.pause()
-    
+else:
+    bScreenShot = 0
+
 it = 0
 
 if bScreenShot:
