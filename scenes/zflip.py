@@ -238,7 +238,7 @@ while it < it_max:
     # create level set from particles
     gridParticleIndex( parts=pp, flags=flags, indexSys=pindex, index=gpi )
     unionParticleLevelset( pp, pindex, flags, gpi, phi, radiusFactor ) 
-    extrapolateLsSimple(phi=phi, distance=4, inside=True ) # 4
+    extrapolateLsSimple( phi=phi, distance=4, inside=True, include_walls=True ) # 4
 
     # level set and mesh
     if bSaveParts:

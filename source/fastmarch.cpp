@@ -467,10 +467,12 @@ void knSetRemaining (Grid<S>& phi, Grid<int>& tmp, S distance )
 	phi(i,j,k) = distance;
 }
 
-PYTHON() void extrapolateLsSimple (Grid<Real>& phi, int distance = 4, bool inside=false )
+// zl setting include_walls define surface also near obstacles
+PYTHON() void extrapolateLsSimple(Grid<Real>& phi, int distance = 4, bool inside=false, bool include_walls=false )
 {
 	Grid<int> tmp( phi.getParent() );
-	tmp.clear();
+	tmp.setName( "tmp" );
+	tmp.clear(); // set to 0
 	const int dim = (phi.is3D() ? 3:2);
 
 	// by default, march outside
@@ -482,28 +484,41 @@ PYTHON() void extrapolateLsSimple (Grid<Real>& phi, int distance = 4, bool insid
 		} 
 	} else {
 		direction = -1.;
-		FOR_IJK_BND(phi,1) {
+        FOR_IJK_BND( phi, (include_walls? 0 : 1) ) {
 			if ( phi(i,j,k) > 0. ) { tmp(i,j,k) = 1; }
 		} 
 	}
+
+// phi.printGrid();
+// printf( "init:\n" );
+// tmp.printGrid();
+
 	// + first layer around
 	FOR_IJK_BND(phi,1) {
 		Vec3i p(i,j,k);
 		if ( tmp(p) ) continue;
 		for (int n=0; n<2*dim; ++n) {
-			if (tmp(p+nb[n])==1) {
+            auto p2 = tmp( p + nb[n] );
+			if ( p2 == 1 ) {
 				tmp(i,j,k) = 2; n=2*dim;
 			}
 		}
-	} 
+	}
+
+// printf( "first layer:\n" );
+// tmp.printGrid();
 
 	// extrapolate for distance
 	for(int d=2; d<1+distance; ++d) {
 		knExtrapolateLsSimple<Real>(phi, distance, tmp, d, direction );
+// printf( "d=%d\n", d );
+// tmp.printGrid();
 	} 
 
 	// set all remaining cells to max
 	knSetRemaining<Real>(phi, tmp, Real(direction * (distance+2)) );
+// printf( "after remaining\n" );
+// phi.printGrid();
 }
 
 // extrapolate centered vec3 values from marked fluid cells
