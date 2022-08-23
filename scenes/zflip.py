@@ -26,10 +26,10 @@ bSaveUni    = 0
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
-it_max = 1000 # 300, 500, 1200, 1500
+dim = 2 # 2, 3
+it_max = 28 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
-res = 64 # 17(min band), 32, 48, 64(default), 128(large)
+res = 19 # 17(min band), 32, 48, 64(default), 128(large)
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
@@ -202,7 +202,7 @@ while it < it_max:
     if 1:
         flags.mark_interface()
         tic()
-        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep, dim=dim, part_per_cell_1d=part_per_cell_1d, state=0, phi=phi )
+        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep, dim=dim, part_per_cell_1d=part_per_cell_1d, state=0, phi=phi, it=it )
         print( '      ', end='' )
         toc()
 
