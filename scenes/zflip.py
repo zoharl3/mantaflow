@@ -124,7 +124,7 @@ print( '# particles:', np )
 pos1 = s.create(PdataVec3)
 pos1.pyResize( np )
 
-if 1 and GUI:
+if 0 and GUI:
     gui = Gui()
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
