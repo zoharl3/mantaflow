@@ -27,7 +27,7 @@ bScreenShot = 1
 
 # solver params
 dim = 3 # 2, 3
-it_max = 280 # 300, 500, 1200, 1500
+it_max = 900 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
 res = 64 # 17(min band), 32, 48, 64(default), 128(large)
 
@@ -124,7 +124,7 @@ print( '# particles:', np )
 pos1 = s.create(PdataVec3)
 pos1.pyResize( np )
 
-if 1 and GUI:
+if 0 and GUI:
     gui = Gui()
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
@@ -147,7 +147,7 @@ if bSaveParts:
     objects = [ pp ]
     fname = out + 'fluid_data_%04d.vdb' % it
     print( fname )
-    save( name=fname, objects=objects )
+    save( name=fname, objects=objects ) # error in debug mode "string too long?"
 
 # loop
 while it < it_max:
