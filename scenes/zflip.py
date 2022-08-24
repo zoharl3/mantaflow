@@ -20,16 +20,16 @@ os.system( 'rm %s*.uni' % out )
 os.system( 'rm %s*.vdb' % out )
 
 # flags
-bSaveParts  = 0 # needed from drawing the surface
+bSaveParts  = 1 # needed from drawing the surface
 bSaveUni    = 0
 
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
-it_max = 28 # 300, 500, 1200, 1500
+dim = 3 # 2, 3
+it_max = 280 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
-res = 19 # 17(min band), 32, 48, 64(default), 128(large)
+res = 64 # 17(min band), 32, 48, 64(default), 128(large)
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
@@ -124,7 +124,7 @@ print( '# particles:', np )
 pos1 = s.create(PdataVec3)
 pos1.pyResize( np )
 
-if 0 and GUI:
+if 1 and GUI:
     gui = Gui()
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
@@ -199,12 +199,18 @@ while it < it_max:
     pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
 
     # fixed vol
+    include_walls = false
     if 1:
         flags.mark_interface()
         tic()
         s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep, dim=dim, part_per_cell_1d=part_per_cell_1d, state=0, phi=phi, it=it )
         print( '      ', end='' )
         toc()
+
+        # if using band
+        if 0:
+            include_walls = true
+            bSaveParts = 0
 
     # position solver, Thuerey21
     if 0:
@@ -238,7 +244,7 @@ while it < it_max:
     # create level set from particles
     gridParticleIndex( parts=pp, flags=flags, indexSys=pindex, index=gpi )
     unionParticleLevelset( pp, pindex, flags, gpi, phi, radiusFactor ) 
-    extrapolateLsSimple( phi=phi, distance=4, inside=True, include_walls=True ) # 4
+    extrapolateLsSimple( phi=phi, distance=4, inside=True, include_walls=include_walls ) # 4
 
     # level set and mesh
     if bSaveParts:
