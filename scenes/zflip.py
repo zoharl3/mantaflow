@@ -26,15 +26,18 @@ bSaveUni    = 0
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 it_max = 900 # 300, 500, 1200, 1500
-part_per_cell_1d = 2 # 3, 2(default), 1
-res = 64 # 17(min band), 32, 48, 64(default), 128(large)
+part_per_cell_1d = 4 # 3, 2(default), 1
+res = 12 # 17(min band), 32, 48, 64(default), 128(large)
+res2 = res * 2
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
+gs2 = vec3(res2, res2, res2)
 if dim == 2:
     gs.z = 1
+    gs2.z = 1
     bSaveParts = 0
     
 s = Solver( name='main', gridSize=gs, dim=dim )
@@ -82,7 +85,12 @@ if resampleParticles:
     gCnt = s.create(IntGrid)
     
 # scene setup
-flags.initDomain(boundaryWidth=0) 
+flags.initDomain( boundaryWidth=0 ) 
+
+# my vars
+s2 = Solver( name='secondary', gridSize=gs2, dim=dim )
+flags2 = s.create(FlagGrid)
+flags2.initDomain( boundaryWidth=0 ) 
 
 if 1: # breaking dam
     # my dam
@@ -117,14 +125,14 @@ flags.updateFromLevelset( phi )
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.05 ) # 0.05, 0.2
     
 copyFlagsToFlags( flags, flagsPos )
-flags.initDomain(boundaryWidth=0, phiWalls=phiObs)
+flags.initDomain( boundaryWidth=0, phiWalls=phiObs )
 
 np = pp.pySize()
 print( '# particles:', np )
 pos1 = s.create(PdataVec3)
 pos1.pyResize( np )
 
-if 0 and GUI:
+if 1 and GUI:
     gui = Gui()
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
@@ -158,10 +166,14 @@ while it < it_max:
 
     print( '- mapPartsToMAC' )
     mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
-    
+    #flags.printGrid()
+
     #vel.printGrid()
     
+    print( '- markFluidCells' )
     markFluidCells( parts=pp, flags=flags )
+    markFluidCells( parts=pp, flags=flags2 )
+    #flags.printGrid()
 
     # forces
     if 1:
@@ -196,14 +208,15 @@ while it < it_max:
     
     # advect particles 
     print( '- advectInGrid' )
-    pp.advectInGrid(flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
+    pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
 
     # fixed vol
     include_walls = false
     if 1:
-        flags.mark_interface()
+        flags2.mark_interface()
+
         tic()
-        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags, dt=s.timestep, dim=dim, part_per_cell_1d=part_per_cell_1d, state=0, phi=phi, it=it )
+        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=part_per_cell_1d, state=0, phi=phi, it=it )
         print( '      ', end='' )
         toc()
 
@@ -257,10 +270,10 @@ while it < it_max:
     # print/write
     if 0:
         flags.printGrid()
-        vel.printGrid()
+        #vel.printGrid()
     
         #pp.printParts()
-        pp.writeParticlesText( out + 'flipt_%04d.txt' % t )
+        #pp.writeParticlesText( out + 'flipt_%04d.txt' % it )
     
     # step
     print( '- step' )
