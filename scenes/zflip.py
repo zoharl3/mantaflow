@@ -27,9 +27,9 @@ bScreenShot = 1
 
 # solver params
 dim = 2 # 2, 3
-it_max = 28 # 300, 500, 1200, 1500
+it_max = 280 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
-res = 19 # 17(min band), 32, 48, 64(default), 128(large)
+res = 20 # 17(min band), 32, 48, 64(default), 128(large)
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
