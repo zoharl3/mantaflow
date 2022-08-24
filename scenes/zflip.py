@@ -30,7 +30,7 @@ dim = 2 # 2, 3
 it_max = 900 # 300, 500, 1200, 1500
 part_per_cell_1d = 4 # 3, 2(default), 1
 res = 12 # 17(min band), 32, 48, 64(default), 128(large)
-res2 = res * 2
+res2 = res *1
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
@@ -89,7 +89,7 @@ flags.initDomain( boundaryWidth=0 )
 
 # my vars
 s2 = Solver( name='secondary', gridSize=gs2, dim=dim )
-flags2 = s.create(FlagGrid)
+flags2 = s2.create( FlagGrid )
 flags2.initDomain( boundaryWidth=0 ) 
 
 if 1: # breaking dam
