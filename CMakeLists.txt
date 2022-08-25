@@ -623,7 +623,9 @@ FOREACH(it ${PP_SOURCES} ${PP_HEADERS})
 
 	# preprocessor
 	add_custom_command(OUTPUT ${OUTFILES}
+                    COMMAND attrib -R "${CURPP}" # zk
 					COMMAND prep generate ${PP_PREPD} ${MT_TYPE} "${INDIR}" "${INFILE}" "${CURPP}"
+                    COMMAND attrib +R "${CURPP}"
 					DEPENDS prep
 					IMPLICIT_DEPENDS CXX ${it}
 					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

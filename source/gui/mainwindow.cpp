@@ -150,9 +150,10 @@ void MainWnd::setStep(int f, float time) {
         auto s2 = s1.c_str();
         mInfo->setText( s2 );
     } else {
-		char s[100];
-		sprintf( s, "Simulation frame %d\nTime %g", f, time );
-		//mInfo->setText( s );
+		static char s[100];
+		//sprintf( s, "Simulation frame %d\nTime %g", f, time );
+        sprintf( s, "Time %g", time );
+		mInfo->setText( s );
     }
 }
 

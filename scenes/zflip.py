@@ -1,7 +1,4 @@
-#
-# Very simple flip without level set
-# and without any particle resampling
-# 
+
 import os, sys, math
 import keyboard, copy
 
@@ -20,26 +17,30 @@ os.system( 'rm %s*.uni' % out )
 os.system( 'rm %s*.vdb' % out )
 
 # flags
-bSaveParts  = 1 # needed from drawing the surface
+bSaveParts  = 1 # needed for drawing the surface
 bSaveUni    = 0
 
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
+dim = 3 # 2, 3
 it_max = 900 # 300, 500, 1200, 1500
-part_per_cell_1d = 4 # 3, 2(default), 1
-res = 12 # 17(min band), 32, 48, 64(default), 128(large)
-res2 = res *1
+part_per_cell_1d = 1 # 3, 2(default), 1
+res = 64 # 17(min band), 32, 48, 64(default), 128(large)
+scale2 = 1 # scale fixed_vol grid
 
 dt = .2 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
-gs2 = vec3(res2, res2, res2)
+gs2 = vec3(res*scale2, res*scale2, res*scale2)
 if dim == 2:
     gs.z = 1
     gs2.z = 1
     bSaveParts = 0
-    
+
+bnd_width = 0
+if scale2 < 1:
+    bnd_width = 1/scale2 - 1
+
 s = Solver( name='main', gridSize=gs, dim=dim )
 gravity = -0.1
 gravity *= math.sqrt( res )
@@ -85,7 +86,7 @@ if resampleParticles:
     gCnt = s.create(IntGrid)
     
 # scene setup
-flags.initDomain( boundaryWidth=0 ) 
+flags.initDomain( boundaryWidth=bnd_width ) 
 
 # my vars
 s2 = Solver( name='secondary', gridSize=gs2, dim=dim )
@@ -125,11 +126,11 @@ flags.updateFromLevelset( phi )
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.05 ) # 0.05, 0.2
     
 copyFlagsToFlags( flags, flagsPos )
-flags.initDomain( boundaryWidth=0, phiWalls=phiObs )
+flags.initDomain( boundaryWidth=bnd_width, phiWalls=phiObs )
 
 np = pp.pySize()
 print( '# particles:', np )
-pos1 = s.create(PdataVec3)
+pos1 = s.create( PdataVec3 )
 pos1.pyResize( np )
 
 if 1 and GUI:
@@ -172,7 +173,6 @@ while it < it_max:
     
     print( '- markFluidCells' )
     markFluidCells( parts=pp, flags=flags )
-    markFluidCells( parts=pp, flags=flags2 )
     #flags.printGrid()
 
     # forces
@@ -197,8 +197,12 @@ while it < it_max:
     # we dont have any levelset, ie no extrapolation, so make sure the velocities are valid
     extrapolateMACSimple( flags=flags, vel=vel, distance=res ) # 4
     
-    # save position
-    pp.getPosPdata( target=pos1 )
+    # fixed-vol pre-process
+    if 1:
+        scale_particle_pos( pp=pp, scale=scale2 )
+        markFluidCells( parts=pp, flags=flags2 )
+        pp.getPosPdata( target=pos1 ) # save position
+        scale_particle_pos( pp=pp, scale=1/scale2 )
     
     # FLIP velocity update
     print( '- FLIP velocity update' )
@@ -210,20 +214,24 @@ while it < it_max:
     print( '- advectInGrid' )
     pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
 
-    # fixed vol
-    include_walls = false
+    # fixed-vol
+    include_walls = false # for band
     if 1:
+        scale_particle_pos( pp=pp, scale=scale2 )
+
         flags2.mark_interface()
 
         tic()
-        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=part_per_cell_1d, state=0, phi=phi, it=it )
+        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it )
         print( '      ', end='' )
         toc()
 
         # if using band
         if 0:
             include_walls = true
-            bSaveParts = 0
+            bSaveParts = 0 # turn off mesh
+
+        scale_particle_pos( pp=pp, scale=1/scale2 )
 
     # position solver, Thuerey21
     if 0:
@@ -259,7 +267,7 @@ while it < it_max:
     unionParticleLevelset( pp, pindex, flags, gpi, phi, radiusFactor ) 
     extrapolateLsSimple( phi=phi, distance=4, inside=True, include_walls=include_walls ) # 4
 
-    # level set and mesh
+    # mesh
     if bSaveParts:
         improvedParticleLevelset( pp, pindex, flags, gpi, phi, radiusFactor, 1, 1 , 0.4, 3.5 )
 
