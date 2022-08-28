@@ -112,6 +112,10 @@ while frame < endFrame:
 
             # write output file:
             mesh.save( meshfileCurr )
+            
+            objects = [ flags, phi, pp ]
+            save( name=out + 'fluid_data_%04d.vdb' % outCnt, objects=objects )
+            
         else:
             # stop playback for UI, reset
             if (GUI):

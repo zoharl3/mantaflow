@@ -25,8 +25,8 @@ bScreenShot = 1
 # solver params
 dim = 3 # 2, 3
 it_max = 900 # 300, 500, 1200, 1500
-part_per_cell_1d = 1 # 3, 2(default), 1
-res = 64 # 17(min band), 32, 48, 64(default), 128(large)
+part_per_cell_1d = 2 # 3, 2(default), 1
+res = 128 # 17(min band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
 
 dt = .2 # .2, .5, 1(easier to debug)
@@ -152,8 +152,8 @@ if bSaveParts:
         pressure.save( out + 'ref_parts_0000.uni' )
         pp.save( out + 'parts_%04d.uni' % it )
 
-    #objects = [ flags, phi, pp ]
-    objects = [ pp ]
+    objects = [ flags, phi, pp ] # need the 3 of them for volume
+    #objects = [ pp ]
     fname = out + 'fluid_data_%04d.vdb' % it
     print( fname )
     save( name=fname, objects=objects ) # error in debug mode "string too long?"
@@ -300,8 +300,8 @@ while it < it_max:
                 # save particle data for flip03_gen.py surface generation scene
                 pp.save( out + 'parts_%04d.uni' % it )
 
-            #objects = [ flags, phi, pp ]
-            objects = [ pp ]
+            objects = [ flags, phi, pp ]
+            #objects = [ pp ]
             save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
         
 # pause
