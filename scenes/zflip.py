@@ -26,7 +26,7 @@ bScreenShot = 1
 dim = 3 # 2, 3
 it_max = 900 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
-res = 128 # 17(min band), 32, 48, 64(default), 128(large)
+res = 64 # 17(min band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
 
 dt = .2 # .2, .5, 1(easier to debug)
