@@ -23,7 +23,7 @@ bSaveUni    = 0
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 it_max = 900 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
 res = 64 # 17(min band), 32, 48, 64(default), 128(large)
