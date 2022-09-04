@@ -128,7 +128,7 @@ while s.frame < 200:
 	extrapolateLsSimple(phi=phi, distance=3 )
 	flags.updateFromLevelset(phi)
 
-	# Make sure we have velocities throught liquid region
+	# Make sure we have velocities throughout the liquid region
 	if narrowBand:
 		# Combine particles velocities with advected grid velocities
 		mapPartsToMAC(vel=velParts, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights)
