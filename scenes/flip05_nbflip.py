@@ -15,7 +15,7 @@ out = r'c:/prj-external-libs/mantaflow/out/'
 os.system( 'rm %s*.vdb' % out )
 
 # Toggle between regular FLIP and NB-FLIP
-narrowBand = True
+narrowBand = 1
 
 # Choose dimension (2 or 3) and resolution
 dim = 2
@@ -127,7 +127,7 @@ while s.frame < 200:
         phi.copyFrom( phiParts )
         extrapolateLsSimple(phi=phi, distance=4, inside=True )
 
-    extrapolateLsSimple( phi=phi, distance=3 )
+    #extrapolateLsSimple( phi=phi, distance=3 ) # zl why again?
     flags.updateFromLevelset(phi)
 
     # Make sure we have velocities throughout the liquid region
@@ -162,7 +162,7 @@ while s.frame < 200:
     if narrowBand:
         phi.setBoundNeumann(0) # make sure no particles are placed at outer boundary
         adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=1*minParticles, maxParticles=2*minParticles, phi=phi, narrowBand=narrowBandWidth ) 
-    else:
+    elif 1:
         adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=1*minParticles, maxParticles=2*minParticles, phi=phi ) 
 
     s.step()
