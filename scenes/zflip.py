@@ -26,7 +26,7 @@ bScreenShot = 1
 dim = 2 # 2, 3
 it_max = 900 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
-res = 64 # 17(min band), 32, 48, 64(default), 128(large)
+res = 18 # 17(min band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
 
 dt = .2 # .2, .5, 1(easier to debug)
@@ -152,7 +152,7 @@ if bSaveParts:
         pressure.save( out + 'ref_parts_0000.uni' )
         pp.save( out + 'parts_%04d.uni' % it )
 
-    objects = [ flags, phi, pp ] # need the 3 of them for volume
+    objects = [ flags, phi, pp ] # need the 3 of them for volumetric .vdb
     #objects = [ pp ]
     fname = out + 'fluid_data_%04d.vdb' % it
     print( fname )
@@ -165,8 +165,9 @@ while it < it_max:
 
     s.timestep = ( 1 - it % 1 ) * dt
 
+    # map particle velocities to grid
     print( '- mapPartsToMAC' )
-    mapPartsToMAC(vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
+    mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=tmpVec3 ) 
     #flags.printGrid()
 
     #vel.printGrid()
@@ -183,7 +184,7 @@ while it < it_max:
 
     #vel.printGrid()
 
-    # set solid
+    # set solid (walls)
     setWallBcs(flags=flags, vel=vel) # clears velocity from solid
     print( '- setWallBcs' )
     
@@ -206,7 +207,7 @@ while it < it_max:
     
     # FLIP velocity update
     print( '- FLIP velocity update' )
-    flipVelocityUpdate(vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 0 )
+    flipVelocityUpdate( vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 0 )
     
     #vel.printGrid()
     
@@ -214,7 +215,7 @@ while it < it_max:
     print( '- advectInGrid' )
     pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
 
-    # fixed-vol
+    # fixed volume (my scheme)
     include_walls = false # for band
     if 1:
         scale_particle_pos( pp=pp, scale=scale2 )
@@ -300,6 +301,7 @@ while it < it_max:
                 # save particle data for flip03_gen.py surface generation scene
                 pp.save( out + 'parts_%04d.uni' % it )
 
+            # pdata fields must be before pp
             objects = [ flags, phi, pp ]
             #objects = [ pp ]
             save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
