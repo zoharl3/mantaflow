@@ -20,20 +20,20 @@ os.system( 'rm %s*.vdb' % out )
 bSaveParts  = 1 # needed for drawing the surface
 bSaveUni    = 0
 
-bScreenShot = 0
+bScreenShot = 1
 
 # solver params
 dim = 2 # 2, 3
-it_max = 9000 # 300, 500, 1200, 1500
+it_max = 90000 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
-res = 64 # 17(min band), 32, 48, 64(default), 128(large)
+res = 18 # 17(min band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
 
 narrowBand = 1
 narrowBandWidth = 3
 combineBandWidth = narrowBandWidth - 1
 
-dt = 1 # .2, .5, 1(easier to debug)
+dt = .2 # .2, .5, 1(flip5, easier to debug)
 gs = vec3(res, res, res)
 gs2 = vec3(res*scale2, res*scale2, res*scale2)
 if dim == 2:
@@ -48,13 +48,13 @@ if scale2 < 1:
 s = Solver( name='main', gridSize=gs, dim=dim )
 gravity = -0.1
 gravity *= math.sqrt( res )
-gravity = -0.003
+#gravity = -0.003 # flip5
 
 print( 'gravity:', gravity )
 print( 'timestep:', dt )
 
-# adaptive time stepping
-if 1:
+# adaptive time stepping; flip5
+if 0:
     s.frameLength = 1.0   # length of one frame (in "world time")
     s.timestep    = 1.0
     s.timestepMin = 0.5   # time step range
@@ -110,10 +110,10 @@ flags2.initDomain( boundaryWidth=0 )
 
 if 1: # breaking dam
     # my dam
-    #fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0.3) ), p1=gs*( vec3(0.4,0.8,.7) ) ) 
+    fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0.3) ), p1=gs*( vec3(0.4,0.8,.7) ) ) 
 
     # flip05_nbflip.py
-    fluidbox = Box( parent=s, p0=gs*vec3(0, 0.15, 0), p1=gs*vec3(0.4, 0.5, 0.8) )
+    #fluidbox = Box( parent=s, p0=gs*vec3(0, 0.15, 0), p1=gs*vec3(0.4, 0.5, 0.8) )
 
     # square
     if 0:
@@ -141,7 +141,7 @@ else: # falling drop
 
 flags.updateFromLevelset( phi )
 
-sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.05 ) # 0.05, 0.2
+sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
     
 copyFlagsToFlags( flags, flagsPos )
 
@@ -155,7 +155,7 @@ if 1 and GUI:
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show()
-    gui.pause()
+    #gui.pause()
 else:
     bScreenShot = 0
 
@@ -180,10 +180,10 @@ while it < it_max:
     emphasize( '\n-----------------\n- time: %g(/%d)' % ( it, it_max ) )
     print( 'n=%d' % pp.pySize() )
 
-    if 0:
+    maxVel = vel.getMax()
+    if 1:
         s.timestep = ( 1 - it % 1 ) * dt
-    else:
-        maxVel = vel.getMax()
+    else: # flip5
         s.adaptTimestep( maxVel )
 
     # map particle velocities to grid
@@ -210,8 +210,8 @@ while it < it_max:
     # forces
     if 1:
         print( '- forces' )
-        #addGravityNoScale( flags=flags, vel=vel, gravity=(0, gravity, 0) )
-        addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0) ) # adaptive to grid size
+        addGravityNoScale( flags=flags, vel=vel, gravity=(0, gravity, 0) )
+        #addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0) ) # adaptive to grid size; flip5
     #vel.printGrid()
 
     # set solid (walls)
@@ -228,7 +228,7 @@ while it < it_max:
     extrapolateMACSimple( flags=flags, vel=vel, distance=int(maxVel*1.25 + 2) )
     
     # fixed-vol pre-process
-    if 0:
+    if 1:
         scale_particle_pos( pp=pp, scale=scale2 )
         markFluidCells( parts=pp, flags=flags2 )
         pp.getPosPdata( target=pos1 ) # save position
@@ -236,14 +236,15 @@ while it < it_max:
     
     # FLIP velocity update
     print( '- FLIP velocity update' )
-    flipVelocityUpdate( vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 0.05 ) # 0
+    alpha = 0 # 0
+    flipVelocityUpdate( vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1 - alpha )
     
     #vel.printGrid()
     
     # advect
     print( '- advect' )
     # advect particles
-    pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntRK4, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
+    pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
     # advect phi
     advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
     flags.updateFromLevelset(phi)
@@ -316,11 +317,12 @@ while it < it_max:
     # resample particles
     pVel.setSource( vel, isMAC=True ) # set source grids for resampling, used in adjustNumber
     minParticles = pow( part_per_cell_1d, dim )
+    maxParticles = minParticles
     if narrowBand:
         phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
-        adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=1*minParticles, maxParticles=2*minParticles, phi=phi, narrowBand=narrowBandWidth ) 
+        adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, narrowBand=narrowBandWidth ) 
     elif 0:
-        adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=1*minParticles, maxParticles=2*minParticles, phi=phi ) 
+        adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi ) 
 
     # mesh
     if bSaveParts:
