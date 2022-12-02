@@ -20,11 +20,11 @@ os.system( 'rm %s*.vdb' % out )
 bSaveParts  = 1 # needed for drawing the surface
 bSaveUni    = 0
 
-bScreenShot = 1
+bScreenShot = 0
 
 # solver params
 dim = 2 # 2, 3
-it_max = 900 # 300, 500, 1200, 1500
+it_max = 9000 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
 res = 64 # 17(min band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
@@ -33,7 +33,7 @@ narrowBand = 1
 narrowBandWidth = 3
 combineBandWidth = narrowBandWidth - 1
 
-dt = .2 # .2, .5, 1(easier to debug)
+dt = 1 # .2, .5, 1(easier to debug)
 gs = vec3(res, res, res)
 gs2 = vec3(res*scale2, res*scale2, res*scale2)
 if dim == 2:
@@ -48,6 +48,7 @@ if scale2 < 1:
 s = Solver( name='main', gridSize=gs, dim=dim )
 gravity = -0.1
 gravity *= math.sqrt( res )
+gravity = -0.003
 
 print( 'gravity:', gravity )
 print( 'timestep:', dt )
@@ -112,7 +113,7 @@ if 1: # breaking dam
     #fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0.3) ), p1=gs*( vec3(0.4,0.8,.7) ) ) 
 
     # flip05_nbflip.py
-    fluidbox = Box( parent=s, p0=gs*vec3(0, 0.15, 0), p1=gs*vec3(0.4, 0.5, 0.8))
+    fluidbox = Box( parent=s, p0=gs*vec3(0, 0.15, 0), p1=gs*vec3(0.4, 0.5, 0.8) )
 
     # square
     if 0:
@@ -143,7 +144,6 @@ flags.updateFromLevelset( phi )
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.05 ) # 0.05, 0.2
     
 copyFlagsToFlags( flags, flagsPos )
-flags.initDomain( boundaryWidth=boundary_width, phiWalls=phiObs )
 
 np = pp.pySize()
 print( '# particles:', np )
@@ -155,7 +155,7 @@ if 1 and GUI:
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show()
-    #gui.pause()
+    gui.pause()
 else:
     bScreenShot = 0
 
@@ -180,7 +180,11 @@ while it < it_max:
     emphasize( '\n-----------------\n- time: %g(/%d)' % ( it, it_max ) )
     print( 'n=%d' % pp.pySize() )
 
-    s.timestep = ( 1 - it % 1 ) * dt
+    if 0:
+        s.timestep = ( 1 - it % 1 ) * dt
+    else:
+        maxVel = vel.getMax()
+        s.adaptTimestep( maxVel )
 
     # map particle velocities to grid
     print( '- mapPartsToMAC' )
@@ -196,35 +200,35 @@ while it < it_max:
         mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
-    print( '- markFluidCells' )
-    markFluidCells( parts=pp, flags=flags )
-    #flags.printGrid()
+    if 0:
+        print( '- markFluidCells' )
+        markFluidCells( parts=pp, flags=flags )
+        #flags.printGrid()
 
+    #vel.printGrid()
+    #flags.printGrid()
     # forces
     if 1:
         print( '- forces' )
-        addGravityNoScale( flags=flags, vel=vel, gravity=(0,gravity,0) )
-        #addGravity( flags=flags, vel=vel, gravity=(0,gravity,0) ) # adaptive to grid size
-
+        #addGravityNoScale( flags=flags, vel=vel, gravity=(0, gravity, 0) )
+        addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0) ) # adaptive to grid size
     #vel.printGrid()
 
     # set solid (walls)
-    setWallBcs(flags=flags, vel=vel) # clears velocity from solid
     print( '- setWallBcs' )
+    setWallBcs( flags=flags, vel=vel ) # clear velocity from solid
     
     # pressure solve
     if 1:
         print( '- pressure' )
         solvePressure( flags=flags, vel=vel, pressure=pressure, phi=phi )
-
-    #vel.printGrid()
+        setWallBcs( flags=flags, vel=vel )
 
     #extrapolateMACSimple( flags=flags, vel=vel, distance=res )
-    maxVel = vel.getMax()
-    extrapolateMACSimple( flags=flags, vel=vel, distance=(int(maxVel*1.25 + 2.)) )
+    extrapolateMACSimple( flags=flags, vel=vel, distance=int(maxVel*1.25 + 2) )
     
     # fixed-vol pre-process
-    if 1:
+    if 0:
         scale_particle_pos( pp=pp, scale=scale2 )
         markFluidCells( parts=pp, flags=flags2 )
         pp.getPosPdata( target=pos1 ) # save position
@@ -232,7 +236,7 @@ while it < it_max:
     
     # FLIP velocity update
     print( '- FLIP velocity update' )
-    flipVelocityUpdate( vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 0 )
+    flipVelocityUpdate( vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1- 0.05 ) # 0
     
     #vel.printGrid()
     
@@ -299,23 +303,23 @@ while it < it_max:
     gridParticleIndex( parts=pp, flags=flags, indexSys=pindex, index=gpi )
     unionParticleLevelset( pp, pindex, flags, gpi, phiParts, radiusFactor ) 
     if narrowBand:
-        # Combine level set of particles with grid level set
+        # combine level set of particles with grid level set
         phi.addConst(1.); # shrink slightly
         phi.join( phiParts )
         extrapolateLsSimple( phi=phi, distance=narrowBandWidth+2, inside=True )
     else:
-        # Overwrite grid level set with level set of particles
+        # overwrite grid level set with level set of particles
         phi.copyFrom( phiParts )
         extrapolateLsSimple( phi=phi, distance=4, inside=True, include_walls=include_walls ) # 4
     flags.updateFromLevelset( phi )
 
     # resample particles
-    pVel.setSource( vel, isMAC=True ) # Set source grids for resampling, used in adjustNumber
+    pVel.setSource( vel, isMAC=True ) # set source grids for resampling, used in adjustNumber
     minParticles = pow( part_per_cell_1d, dim )
-    if 1 and narrowBand:
+    if narrowBand:
         phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
         adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=1*minParticles, maxParticles=2*minParticles, phi=phi, narrowBand=narrowBandWidth ) 
-    elif 1:
+    elif 0:
         adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=1*minParticles, maxParticles=2*minParticles, phi=phi ) 
 
     # mesh
