@@ -209,13 +209,13 @@ PYTHON() void adjustNumber(BasicParticleSystem& parts, const MACGrid& vel, const
 
 			Real phiv = phi.getInterpolated( parts.getPos(idx) );
 			if( phiv > 0 ) { parts.kill(idx); continue; }
-			if( narrowBand>0. && phiv < -narrowBand) { parts.kill(idx); continue; }
+			if( narrowBand>0. && phiv < -narrowBand ) { parts.kill(idx); continue; }
 
 			bool atSurface = false;
 			if (phiv > SURFACE_LS) atSurface = true;
 			int num = tmp(p);
 			
-			// dont delete particles in non fluid cells here, the particles are "always right"
+			// don't delete particles in non fluid cells here, the particles are "always right"
 			if ( num > maxParticles && (!atSurface) ) {
 				parts.kill(idx);
 			} else {

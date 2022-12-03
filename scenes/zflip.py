@@ -26,10 +26,10 @@ bScreenShot = 1
 dim = 2 # 2, 3
 it_max = 90000 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
-res = 18 # 17(min band), 32, 48, 64(default), 128(large)
+res = 64 # 17(min band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
 
-narrowBand = 1
+narrowBand = 0
 narrowBandWidth = 3
 combineBandWidth = narrowBandWidth - 1
 
@@ -200,7 +200,7 @@ while it < it_max:
         mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
-    if 0:
+    if 0: # not needed
         print( '- markFluidCells' )
         markFluidCells( parts=pp, flags=flags )
         #flags.printGrid()
@@ -318,7 +318,7 @@ while it < it_max:
     pVel.setSource( vel, isMAC=True ) # set source grids for resampling, used in adjustNumber
     minParticles = pow( part_per_cell_1d, dim )
     maxParticles = minParticles
-    if narrowBand:
+    if 0 and narrowBand:
         phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
         adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, narrowBand=narrowBandWidth ) 
     elif 0:
