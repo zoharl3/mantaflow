@@ -26,7 +26,7 @@ bScreenShot = 1
 dim = 2 # 2, 3
 it_max = 90000 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
-res = 64 # 17(min band), 32, 48, 64(default), 128(large)
+res = 17 # 17(min band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
 
 narrowBand = 0
@@ -145,17 +145,15 @@ sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part
     
 copyFlagsToFlags( flags, flagsPos )
 
-np = pp.pySize()
-print( '# particles:', np )
+print( '# particles:', pp.pySize() )
 pos1 = s.create( PdataVec3 )
-pos1.pyResize( np )
 
 if 1 and GUI:
     gui = Gui()
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show()
-    #gui.pause()
+    gui.pause()
 else:
     bScreenShot = 0
 
@@ -227,10 +225,11 @@ while it < it_max:
     #extrapolateMACSimple( flags=flags, vel=vel, distance=res )
     extrapolateMACSimple( flags=flags, vel=vel, distance=int(maxVel*1.25 + 2) )
     
-    # fixed-vol pre-process
+    # fixed volume pre-process
     if 1:
         scale_particle_pos( pp=pp, scale=scale2 )
         markFluidCells( parts=pp, flags=flags2 )
+        pos1.pyResize( pp.pySize() )
         pp.getPosPdata( target=pos1 ) # save position
         scale_particle_pos( pp=pp, scale=1/scale2 )
     
@@ -254,7 +253,7 @@ while it < it_max:
 
     # fixed volume (my scheme)
     include_walls = false # for band
-    if 0:
+    if 1:
         scale_particle_pos( pp=pp, scale=scale2 )
 
         flags2.mark_interface()
@@ -315,14 +314,15 @@ while it < it_max:
     flags.updateFromLevelset( phi )
 
     # resample particles
-    pVel.setSource( vel, isMAC=True ) # set source grids for resampling, used in adjustNumber
-    minParticles = pow( part_per_cell_1d, dim )
-    maxParticles = minParticles
-    if 0 and narrowBand:
-        phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
-        adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, narrowBand=narrowBandWidth ) 
-    elif 0:
-        adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi ) 
+    if 0:
+        pVel.setSource( vel, isMAC=True ) # set source grids for resampling, used in adjustNumber
+        minParticles = pow( part_per_cell_1d, dim )
+        maxParticles = minParticles
+        if narrowBand:
+            phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
+            adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, narrowBand=narrowBandWidth ) 
+        elif 0:
+            adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi ) 
 
     # mesh
     if bSaveParts:
