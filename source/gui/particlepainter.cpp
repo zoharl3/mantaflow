@@ -342,7 +342,7 @@ void ParticlePainter::paintBasicSys() {
 				glColor3f(0.0, 1.0, 0.); // new, green
 			} else {
 				//glColor3f(0, 0.0, 1.0); // regular, blue
-				glColor3f(1.0, 1.0, 1.0); // regular, white - hi contrast
+				glColor3f(1.0, 1.0, 1.0); // regular, white - high contrast
 			}
 			glVertex(pos, dx);
 			
