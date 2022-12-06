@@ -138,7 +138,7 @@ public:
 	void transformPositions( Vec3i dimOld, Vec3i dimNew );
 
 	//! explicitly trigger compression from outside
-	void doCompress() { if ( mDeletes > mDeleteChunk) compress(); }
+	void doCompress() { if ( 1||mDeletes > mDeleteChunk) compress(); }
 	//! insert buffered positions as new particles, update additional particle data
 	void insertBufferedParticles();
 	//! resize data vector, and all pdata fields

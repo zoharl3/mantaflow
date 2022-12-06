@@ -26,11 +26,11 @@ bScreenShot = 1
 dim = 2 # 2, 3
 it_max = 1999 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
-res = 11 # 17(min old band), 32, 48, 64(default), 128(large)
+res = 64 # 17(min old band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
 
 narrowBand = True
-narrowBandWidth = 3
+narrowBandWidth = 55
 combineBandWidth = narrowBandWidth - 1
 
 dt = .2 # .2, .5, 1(flip5, easier to debug)
