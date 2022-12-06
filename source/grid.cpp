@@ -527,11 +527,12 @@ template<class T> void Grid<T>::printGrid(int zSlice, bool printIndex, int bnd) 
 	std::ostringstream out;
 	out << std::endl;
 	FOR_IJK_BND(*this,bnd) {
-		IndexInt idx = (*this).index(i,j,k);
+        int j2 = getSizeY() - bnd - j - 1; // zl flip rows to be consistent with the y-axis
+		IndexInt idx = (*this).index(i,j2,k);
 		if((zSlice>=0 && k==zSlice) || (zSlice<0)) { 
 			out << " ";
-			if(printIndex &&  this->is3D()) out << "  "<<i<<","<<j<<","<<k <<":";
-			if(printIndex && !this->is3D()) out << "  "<<i<<","<<j<<":";
+			if(printIndex &&  this->is3D()) out << "  "<<i<<","<<j2<<","<<k <<":";
+			if(printIndex && !this->is3D()) out << "  "<<i<<","<<j2<<":";
 			auto v = (*this)[idx];
 			//out << showpoint;
 			out << fixed;

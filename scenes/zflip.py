@@ -24,7 +24,7 @@ bScreenShot = 1
 
 # solver params
 dim = 2 # 2, 3
-it_max = 1999 # 300, 500, 1200, 1500
+it_max = 11 # 300, 500, 1200, 1500
 part_per_cell_1d = 1 # 3, 2(default), 1
 res = 9 # 17(min old band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
@@ -174,9 +174,12 @@ if bSaveParts:
     save( name=fname, objects=objects ) # error in debug mode "string too long?"
 
 # loop
-while it < it_max:
+while 1:
     emphasize( '\n-----------------\n- time: %g(/%d)' % ( it, it_max ) )
     print( 'n=%d' % pp.pySize() )
+
+    if not it < it_max:
+        break
 
     maxVel = vel.getMax()
     if 1:
@@ -245,8 +248,10 @@ while it < it_max:
     # advect particles
     pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
     # advect phi
-    advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
-    flags.updateFromLevelset( phi )
+    # why? the particles should determine phi, which should flow on its own
+    if 0:
+        advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
+        flags.updateFromLevelset( phi ) 
     # advect grid velocity
     if narrowBand:
         advectSemiLagrange( flags=flags, vel=vel, grid=vel, order=2 )
@@ -256,8 +261,8 @@ while it < it_max:
     if 1:
         scale_particle_pos( pp=pp, scale=scale2 )
 
-        #copyFlagsToFlags( flags, flags2 )
-        markFluidCells( parts=pp, flags=flags2 )
+        copyFlagsToFlags( flags, flags2 )
+        #markFluidCells( parts=pp, flags=flags2 ) # not needed
         flags2.mark_interface()
 
         tic()
@@ -313,7 +318,7 @@ while it < it_max:
         # overwrite grid level set with level set of particles
         phi.copyFrom( phiParts )
         extrapolateLsSimple( phi=phi, distance=4, inside=True, include_walls=include_walls ) # 4
-    flags.updateFromLevelset( phi )
+    #flags.updateFromLevelset( phi )
 
     # resample particles
     if 0:
