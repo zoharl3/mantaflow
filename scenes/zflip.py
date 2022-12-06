@@ -26,7 +26,7 @@ bScreenShot = 1
 dim = 2 # 2, 3
 it_max = 1999 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
-res = 32 # 17(min old band), 32, 48, 64(default), 128(large)
+res = 11 # 17(min old band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
 
 narrowBand = True
@@ -188,13 +188,13 @@ while it < it_max:
     print( '- mapPartsToMAC' )
     # extrapolate velocities throughout the liquid region
     if narrowBand:
-        # Combine particles velocities with advected grid velocities
+        # combine particles velocities with advected grid velocities
         mapPartsToMAC( vel=velParts, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=velParts , distance=2, weight=mapWeights )
         combineGridVel( vel=velParts, weight=mapWeights , combineVel=vel, phi=phi, narrowBand=combineBandWidth, thresh=0 )
         velOld.copyFrom( vel )
     else:
-        # Map particle velocities to grid
+        # map particle velocities to grid
         mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
@@ -246,7 +246,8 @@ while it < it_max:
     pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
     # advect phi
     advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
-    flags.updateFromLevelset(phi)
+    flags.updateFromLevelset( phi )
+    flags2.updateFromLevelset( phi )
     # advect grid velocity
     if narrowBand:
         advectSemiLagrange( flags=flags, vel=vel, grid=vel, order=2 )
@@ -259,7 +260,7 @@ while it < it_max:
         flags2.mark_interface()
 
         tic()
-        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it, use_band=narrowBand )
+        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it, use_band=narrowBand, band_width=narrowBandWidth )
         print( '      ', end='' )
         toc()
 

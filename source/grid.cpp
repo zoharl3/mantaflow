@@ -904,11 +904,16 @@ void FlagGrid::mark_interface()
                 Vec3i idx2 = idx + dir[d];
 				if ( !isInBounds( idx2 ) )
 					break;
+                // to be consistent with the level-set
+                if ( mData[index( idx2 )] & TypeObstacle )
+					continue;
                 if ( !( mData[ index(idx2) ] & TypeFluid ) )
 					break;
             }
-			if ( d != nd )
+            if ( d != nd ) {
+//cout << "    marking interface" << endl;
                 mData[index( idx )] |= TypeInterface;
+            }
         }
     }
 }
