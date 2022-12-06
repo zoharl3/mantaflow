@@ -25,11 +25,11 @@ bScreenShot = 1
 # solver params
 dim = 2 # 2, 3
 it_max = 1999 # 300, 500, 1200, 1500
-part_per_cell_1d = 2 # 3, 2(default), 1
-res = 64 # 17(min old band), 32, 48, 64(default), 128(large)
+part_per_cell_1d = 1 # 3, 2(default), 1
+res = 9 # 17(min old band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
 
-narrowBand = True
+narrowBand = False
 narrowBandWidth = 55
 combineBandWidth = narrowBandWidth - 1
 
@@ -228,7 +228,7 @@ while it < it_max:
     # fixed volume pre-process
     if 1:
         scale_particle_pos( pp=pp, scale=scale2 )
-        markFluidCells( parts=pp, flags=flags2 )
+        #markFluidCells( parts=pp, flags=flags2 )
         pos1.pyResize( pp.pySize() )
         pp.getPosPdata( target=pos1 ) # save position
         scale_particle_pos( pp=pp, scale=1/scale2 )
@@ -247,7 +247,6 @@ while it < it_max:
     # advect phi
     advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
     flags.updateFromLevelset( phi )
-    flags2.updateFromLevelset( phi )
     # advect grid velocity
     if narrowBand:
         advectSemiLagrange( flags=flags, vel=vel, grid=vel, order=2 )
@@ -257,6 +256,8 @@ while it < it_max:
     if 1:
         scale_particle_pos( pp=pp, scale=scale2 )
 
+        #copyFlagsToFlags( flags, flags2 )
+        markFluidCells( parts=pp, flags=flags2 )
         flags2.mark_interface()
 
         tic()
