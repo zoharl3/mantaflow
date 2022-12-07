@@ -9,6 +9,16 @@ from manta import *
 sys.path.append( r'c:\prj\python\\' )
 from text_color import *
 
+# prints line number
+import logging
+logging.basicConfig(
+    format="%(pathname)s line%(lineno)s: %(message)s",
+    level=logging.INFO
+)
+#logging.info("test message")
+
+###
+
 out = r'c:/prj-external-libs/mantaflow/out/'
 
 os.system( 'rm %s*.png' % out )
@@ -24,9 +34,9 @@ bScreenShot = 1
 
 # solver params
 dim = 2 # 2, 3
-it_max = 11 # 300, 500, 1200, 1500
-part_per_cell_1d = 1 # 3, 2(default), 1
-res = 9 # 17(min old band), 32, 48, 64(default), 128(large)
+it_max = 1111 # 300, 500, 1200, 1500
+part_per_cell_1d = 2 # 3, 2(default), 1
+res = 64 # 17(min old band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
 
 narrowBand = False
@@ -201,7 +211,7 @@ while 1:
         mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
-    if 0: # not needed
+    if 1:
         print( '- markFluidCells' )
         markFluidCells( parts=pp, flags=flags )
         #flags.printGrid()
@@ -261,8 +271,8 @@ while 1:
     if 1:
         scale_particle_pos( pp=pp, scale=scale2 )
 
+        #markFluidCells( parts=pp, flags=flags2 )
         copyFlagsToFlags( flags, flags2 )
-        #markFluidCells( parts=pp, flags=flags2 ) # not needed
         flags2.mark_interface()
 
         tic()
