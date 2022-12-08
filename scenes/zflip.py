@@ -27,8 +27,11 @@ os.system( 'rm %s*.uni' % out )
 os.system( 'rm %s*.vdb' % out )
 
 # flags
-bSaveParts  = 1 # needed for drawing the surface
+bMesh       = 1
+bSaveParts  = 0
 bSaveUni    = 0
+if bSaveParts or bSaveUni:
+    bMesh = 1
 
 bScreenShot = 1
 
@@ -36,10 +39,10 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 9999 # 300, 500, 1200, 1500
-res = 64 # 17(min old band), 32, 48, 64(default), 128(large)
+res = 128 # 17(min old band), 32, 48, 64(default), 128(large)
 
 b_fixed_vol = 1
-narrowBand = bool( 1 )
+narrowBand = bool( 0 )
 narrowBandWidth = 6 # 3, 6
 
 combineBandWidth = narrowBandWidth - 1
@@ -51,6 +54,7 @@ gs2 = vec3(res*scale2, res*scale2, res*scale2)
 if dim == 2:
     gs.z = 1
     gs2.z = 1
+    bMesh = 0
     bSaveParts = 0
 
 boundary_width = 0
@@ -62,6 +66,7 @@ gravity = -0.1
 gravity *= math.sqrt( res )
 #gravity = -0.003 # flip5
 
+print( 'narrowBandWidth:', narrowBandWidth )
 print( 'gravity:', gravity )
 print( 'timestep:', dt )
 
@@ -88,6 +93,7 @@ pp       = s.create(BasicParticleSystem)
 pVel     = pp.create(PdataVec3) 
 phiObs   = s.create(LevelsetGrid, name='phiObs')
 phiParts = s.create(LevelsetGrid)
+phiMesh = s.create(LevelsetGrid)
 mesh     = s.create(Mesh)
 
 # Acceleration data for particle
@@ -120,7 +126,7 @@ s2 = Solver( name='secondary', gridSize=gs2, dim=dim )
 flags2 = s2.create( FlagGrid )
 flags2.initDomain( boundaryWidth=0 ) 
 
-if 1: # breaking dam
+if 0: # breaking dam
     # my dam
     fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0.3) ), p1=gs*( vec3(0.4,0.8,.7) ) ) 
 
@@ -149,7 +155,7 @@ else: # falling drop
     fluidVel   = Sphere( parent=s , center=gs*dropCenter, radius=res*(dropRadius+0.05) )
     fluidSetVel= vec3(0,-1,0)
     phi = fluidBasin.computeLevelset()
-    phi.join( fluidDrop.computeLevelset() )
+    phi.join( fluidDrop.computeLevelset() ) # add drop
 
 flags.updateFromLevelset( phi )
 #phi.printGrid()
@@ -174,9 +180,14 @@ pos1 = s.create( PdataVec3 )
 
 if 1 and GUI:
     gui = Gui()
-    gui.nextMeshDisplay() # hide mesh
+    #gui.nextMeshDisplay() # invisible
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
+    if 1 or dim == 3:
+        gui.setCamPos( 0, 0, -2.2 ) # drop
+        gui.setCamRot( 35, -30, 0 )
+    if bMesh:
+        gui.toggleHideGrids()
     gui.show()
     #gui.pause()
 else:
@@ -361,12 +372,13 @@ while 1:
             adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi ) 
 
     # mesh
-    if bSaveParts:
-        improvedParticleLevelset( pp, pindex, flags, gpi, phi, radiusFactor, 1, 1 , 0.4, 3.5 )
+    if bMesh:
+        phiMesh.copyFrom( phi )
+        improvedParticleLevelset( pp, pindex, flags, gpi, phiMesh, radiusFactor, 1, 1 , 0.4, 3.5 )
 
         # mesh
-        phi.setBound( value=0., boundaryWidth=1 )
-        phi.createMesh( mesh )
+        phiMesh.setBound( value=0., boundaryWidth=1 )
+        phiMesh.createMesh( mesh )
 
     # print/write
     if 0:

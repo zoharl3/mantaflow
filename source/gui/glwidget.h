@@ -41,8 +41,16 @@ public:
 	void wheelEvent(QWheelEvent *e);     
 	void screenshot(QString file);
 
-	void setCamPos(Vec3 pos) { mCamPos = pos; }
-	void setCamRot(Vec3 pos) { mRotX = pos.x; mRotY = pos.y; }
+	void print_cam();
+    void setCamPos( Vec3 pos ) {
+        mCamPos = pos;
+        print_cam();
+    }
+    void setCamRot( Vec3 pos ) {
+        mRotX = pos.x;
+        mRotY = pos.y;
+        print_cam();
+    }
 
 	void setPlane(int plane) { updatePlane(plane); }
 

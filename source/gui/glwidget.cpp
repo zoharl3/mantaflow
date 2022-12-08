@@ -132,16 +132,19 @@ void GLWidget::mouseMoveEvent(QMouseEvent* e)
 	 if (e->buttons() & Qt::LeftButton) {
 		 mRotX += diff.y() * speedRot;
 		 mRotY += diff.x() * speedRot;
+		 print_cam();
 		 updateGL();
 	 }
 	 if (e->buttons() & Qt::MiddleButton) { // Maya buttons
 		 mCamPos.x += diff.x() * speedPan;
 		 mCamPos.y -= diff.y() * speedPan;
+         print_cam();
 		 updateGL();
 	 }
      if ( e->buttons() & Qt::RightButton ) {
          const float speed = 0.002f;
          mCamPos.z += speed * diff.y();
+         print_cam();
          updateGL();
      }
 
@@ -157,6 +160,7 @@ void GLWidget::wheelEvent(QWheelEvent* e)
 {
 	const float speed = 0.002f;
 	mCamPos.z += speed*e->delta();
+    print_cam();
 	updateGL();
 }
 
@@ -175,6 +179,11 @@ void GLWidget::timerEvent(QTimerEvent* e)
 	if (mMoveState[MoveIn])    { mCamPos.z += speed; doRepaint = true; }
 	if (doRepaint) 
 		updateGL();
+}
+
+void GLWidget::print_cam() {
+    printf( "mCamPos = ( %g, %g, %g )", mCamPos.x, mCamPos.y, mCamPos.z );
+    printf( ", mRot = ( %g, %g )\n", mRotX, mRotY );
 }
 
 void GLWidget::setViewport(const Vec3i& gridsize) {

@@ -12,6 +12,7 @@ from manta import *
 
 out = r'c:/prj-external-libs/mantaflow/out/'
 
+#os.system( 'rm %s*.png' % out )
 os.system( 'rm %s*.vdb' % out )
 
 # Toggle between regular FLIP and NB-FLIP
