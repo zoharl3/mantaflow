@@ -540,7 +540,8 @@ template<class T> void Grid<T>::printGrid(int zSlice, bool printIndex, int bnd) 
 			out << setprecision(2);
 			out << v; 
 			if(i==(*this).getSizeX()-1 -bnd) out << std::endl; 
-		}
+		} else if ( is3D() )
+			out << std::endl;
 	}
 	out << endl; debMsg("Printing " << this->getName() << out.str().c_str() , 1);
 }

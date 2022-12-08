@@ -18,7 +18,7 @@ os.system( 'rm %s*.vdb' % out )
 narrowBand = 1
 
 # Choose dimension (2 or 3) and resolution
-dim = 2
+dim = 3
 res = 64
 
 # Configuration 
@@ -72,7 +72,8 @@ phi.initFromFlags(flags)
 #fluidBasin = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(1.0,0.15,1.0))
 #phi.join( fluidBasin.computeLevelset() )
 
-fluidDam = Box( parent=s, p0=gs*vec3(0,0.15,0), p1=gs*vec3(0.4,0.5,0.8) )
+fluidDam = Box( parent=s, p0=gs*( vec3(0,0,0.3) ), p1=gs*( vec3(0.4,0.8,.7) ) ) # my dam
+#fluidDam = Box( parent=s, p0=gs*vec3(0,0.15,0), p1=gs*vec3(0.4,0.5,0.8) )
 phi.join( fluidDam.computeLevelset() )
     
 flags.updateFromLevelset(phi)

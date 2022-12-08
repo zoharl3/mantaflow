@@ -15,7 +15,7 @@ logging.basicConfig(
     format="%(pathname)s line%(lineno)s: %(message)s",
     level=logging.INFO
 )
-#logging.info("test message")
+#logging.info('') # example
 
 ###
 
@@ -33,20 +33,18 @@ bSaveUni    = 0
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
-it_max = 2222 # 300, 500, 1200, 1500
+dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
+it_max = 9999 # 300, 500, 1200, 1500
 res = 64 # 17(min old band), 32, 48, 64(default), 128(large)
-scale2 = 1 # scale fixed_vol grid
 
 b_fixed_vol = 1
-
-narrowBand = False
-if 1:
-    narrowBand = True
+narrowBand = bool( 1 )
 narrowBandWidth = 6 # 3, 6
+
 combineBandWidth = narrowBandWidth - 1
 
+scale2 = 1 # scale fixed_vol grid
 dt = .2 # .2, .5, 1(flip5, easier to debug)
 gs = vec3(res, res, res)
 gs2 = vec3(res*scale2, res*scale2, res*scale2)
@@ -154,9 +152,21 @@ else: # falling drop
     phi.join( fluidDrop.computeLevelset() )
 
 flags.updateFromLevelset( phi )
+#phi.printGrid()
 
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
-    
+
+# phi is influenced by the walls for some reason; fix it
+# create level set from particles
+gridParticleIndex( parts=pp, flags=flags, indexSys=pindex, index=gpi )
+unionParticleLevelset( pp, pindex, flags, gpi, phiParts, radiusFactor )
+phi.copyFrom( phiParts )
+if narrowBand:
+    extrapolateLsSimple( phi=phi, distance=narrowBandWidth+2, inside=True )
+else:
+    extrapolateLsSimple( phi=phi, distance=4, inside=True ) # 4
+#phi.printGrid()
+
 copyFlagsToFlags( flags, flagsPos )
 
 print( '# particles:', pp.pySize() )
@@ -164,6 +174,7 @@ pos1 = s.create( PdataVec3 )
 
 if 1 and GUI:
     gui = Gui()
+    gui.nextMeshDisplay() # hide mesh
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show()
@@ -273,7 +284,7 @@ while 1:
         advectSemiLagrange( flags=flags, vel=vel, grid=vel, order=2 )
 
     # fixed volume (my scheme)
-    include_walls = false # for band
+    include_walls = false
     if b_fixed_vol:
         scale_particle_pos( pp=pp, scale=scale2 )
 
@@ -281,15 +292,17 @@ while 1:
         copyFlagsToFlags( flags, flags2 )
         flags2.mark_interface()
 
+        phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
+        #phi.printGrid()
+
         tic()
         s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it, use_band=narrowBand, band_width=narrowBandWidth )
         print( '      ', end='' )
         toc()
 
         # if using band
-        if 0:
+        if 0 and narrowBand:
             include_walls = true
-            bSaveParts = 0 # turn off mesh
 
         scale_particle_pos( pp=pp, scale=1/scale2 )
 
@@ -329,7 +342,7 @@ while 1:
         # combine level set of particles with grid level set
         phi.addConst(1.); # shrink slightly
         phi.join( phiParts )
-        extrapolateLsSimple( phi=phi, distance=narrowBandWidth+2, inside=True )
+        extrapolateLsSimple( phi=phi, distance=narrowBandWidth+2, inside=True, include_walls=include_walls )
     else:
         # overwrite grid level set with level set of particles
         phi.copyFrom( phiParts )
@@ -342,6 +355,7 @@ while 1:
         maxParticles = minParticles
         if narrowBand:
             phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
+            #phi.printGrid()
             adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, narrowBand=narrowBandWidth ) 
         elif 0:
             adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi ) 
