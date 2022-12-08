@@ -41,8 +41,10 @@ scale2 = 1 # scale fixed_vol grid
 
 b_fixed_vol = 1
 
-narrowBand = True if 1 else False
-narrowBandWidth = 3
+narrowBand = False
+if 1:
+    narrowBand = True
+narrowBandWidth = 6 # 3, 6
 combineBandWidth = narrowBandWidth - 1
 
 dt = .2 # .2, .5, 1(flip5, easier to debug)
