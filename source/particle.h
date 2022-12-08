@@ -138,7 +138,11 @@ public:
 	void transformPositions( Vec3i dimOld, Vec3i dimNew );
 
 	//! explicitly trigger compression from outside
-	void doCompress() { if ( 1||mDeletes > mDeleteChunk) compress(); }
+	// zl I added bForce; I don't understand the mDeleteChunk condition
+    void doCompress( bool bForce = false ) {
+        if ( bForce || mDeletes > mDeleteChunk )
+            compress();
+    }
 	//! insert buffered positions as new particles, update additional particle data
 	void insertBufferedParticles();
 	//! resize data vector, and all pdata fields

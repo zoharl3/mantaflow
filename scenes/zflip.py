@@ -34,13 +34,15 @@ bScreenShot = 1
 
 # solver params
 dim = 2 # 2, 3
-it_max = 1111 # 300, 500, 1200, 1500
+it_max = 2222 # 300, 500, 1200, 1500
 part_per_cell_1d = 2 # 3, 2(default), 1
 res = 64 # 17(min old band), 32, 48, 64(default), 128(large)
 scale2 = 1 # scale fixed_vol grid
 
-narrowBand = False
-narrowBandWidth = 55
+b_fixed_vol = 1
+
+narrowBand = True if 1 else False
+narrowBandWidth = 3
 combineBandWidth = narrowBandWidth - 1
 
 dt = .2 # .2, .5, 1(flip5, easier to debug)
@@ -214,6 +216,8 @@ while 1:
     if 1:
         print( '- markFluidCells' )
         markFluidCells( parts=pp, flags=flags )
+        if narrowBand:
+            update_fluid_from_phi( flags=flags, phi=phi, band_width=narrowBandWidth )
         #flags.printGrid()
 
     #vel.printGrid()
@@ -268,7 +272,7 @@ while 1:
 
     # fixed volume (my scheme)
     include_walls = false # for band
-    if 1:
+    if b_fixed_vol:
         scale_particle_pos( pp=pp, scale=scale2 )
 
         #markFluidCells( parts=pp, flags=flags2 )
@@ -328,10 +332,9 @@ while 1:
         # overwrite grid level set with level set of particles
         phi.copyFrom( phiParts )
         extrapolateLsSimple( phi=phi, distance=4, inside=True, include_walls=include_walls ) # 4
-    #flags.updateFromLevelset( phi )
 
     # resample particles
-    if 0:
+    if not b_fixed_vol:
         pVel.setSource( vel, isMAC=True ) # set source grids for resampling, used in adjustNumber
         minParticles = pow( part_per_cell_1d, dim )
         maxParticles = minParticles
