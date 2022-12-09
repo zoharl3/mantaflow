@@ -39,9 +39,9 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 9999 # 300, 500, 1200, 1500
-res = 128 # 17(min old band), 32, 48, 64(default), 128(large)
+res = 64 # 17(min old band), 32, 48, 64(default), 128(large)
 
-b_fixed_vol = 1
+b_fixed_vol = 0
 narrowBand = bool( 0 )
 narrowBandWidth = 6 # 3, 6
 
@@ -114,8 +114,6 @@ if dim == 2:
 resampleParticles = False # must be a boolean type
 
 if resampleParticles:
-    pindex = s.create(ParticleIndexSystem) 
-    gpi = s.create(IntGrid)
     gCnt = s.create(IntGrid)
     
 # scene setup
@@ -318,8 +316,9 @@ while 1:
         scale_particle_pos( pp=pp, scale=1/scale2 )
 
     # position solver, Thuerey21
-    if 0:
+    if 1:
         print( '- position solver' )
+        assert( not narrowBand ) # noisy
         copyFlagsToFlags(flags, flagsPos)
         mapMassToGrid(flags=flagsPos, density=density, parts=pp, source=pMass, deltaX=deltaX, phiObs=phiObs, dt=s.timestep, particleMass=mass, noDensityClamping=resampleParticles)
         #gui.pause()
