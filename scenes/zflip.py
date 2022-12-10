@@ -39,7 +39,7 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 9999 # 300, 500, 1200, 1500
-res = 64 # 17(min old band), 32, 48, 64(default), 128(large)
+res = 128 # 17(min old band), 32, 48, 64(default), 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -134,7 +134,7 @@ if 0: # breaking dam
     # square
     if 0:
         t1 = 0.4 # 0.15, 0.3, .4
-        sz1 = .4 # .2, .4
+        sz1 = .1 # .2, .4
         t = vec3(t1, t1, 0)
         sz = vec3(sz1, sz1, 1)
         fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + sz ) )
