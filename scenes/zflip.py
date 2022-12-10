@@ -66,6 +66,8 @@ gravity = -0.1
 gravity *= math.sqrt( res )
 #gravity = -0.003 # flip5
 
+print()
+print( 'dim:', dim )
 print( 'narrowBandWidth:', narrowBandWidth )
 print( 'gravity:', gravity )
 print( 'timestep:', dt )
@@ -305,7 +307,7 @@ while 1:
         #phi.printGrid()
 
         tic()
-        s.timestep = fixed_volume_advection( pp=pp, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it, use_band=narrowBand, band_width=narrowBandWidth )
+        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it, use_band=narrowBand, band_width=narrowBandWidth )
         print( '      ', end='' )
         toc()
 
