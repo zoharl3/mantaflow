@@ -41,8 +41,8 @@ part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 9999 # 300, 500, 1200, 1500
 res = 64 # 17(min old band), 32, 48, 64(default), 128(large)
 
-b_fixed_vol = 0
-narrowBand = bool( 0 )
+b_fixed_vol = 1
+narrowBand = bool( 1 )
 narrowBandWidth = 6 # 3, 6
 
 combineBandWidth = narrowBandWidth - 1
@@ -181,7 +181,7 @@ if 1 and GUI:
     #gui.nextMeshDisplay() # invisible
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
-    if 1 or dim == 3:
+    if 1 and dim == 3:
         gui.setCamPos( 0, 0, -2.2 ) # drop
         gui.setCamRot( 35, -30, 0 )
     if bMesh:
@@ -316,7 +316,7 @@ while 1:
         scale_particle_pos( pp=pp, scale=1/scale2 )
 
     # position solver, Thuerey21
-    if 1:
+    if 0:
         print( '- position solver' )
         assert( not narrowBand ) # noisy
         copyFlagsToFlags(flags, flagsPos)
