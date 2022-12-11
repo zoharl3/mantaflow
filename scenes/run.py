@@ -1,6 +1,4 @@
 
-# manta probably overrides python's cout, and tee messes it
-
 import os, sys
 
 cmd = r'..\build\debug\manta zflip.py'
