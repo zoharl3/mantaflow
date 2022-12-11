@@ -64,16 +64,22 @@ void runScript(vector<string>& args) {
 	// Run the python script file
 	debMsg("Loading script '" << filename << "'", 0);
 #if defined(WIN32) || defined(_WIN32)
-	// known bug workaround: use simplestring
-	fseek(fp,0,SEEK_END);
-	long filelen=ftell(fp);
-	fseek(fp,0,SEEK_SET);
-	char* buf = new char[filelen+1];
-	fread(buf,filelen,1,fp);
-	buf[filelen] = '\0';
-	fclose(fp);
-	PyRun_SimpleString(buf);
-	delete[] buf;    
+    if ( 1 ) {
+        // known bug workaround: use simplestring
+        fseek( fp, 0, SEEK_END );
+        long filelen = ftell( fp );
+        fseek( fp, 0, SEEK_SET );
+        char *buf = new char[filelen + 1];
+        fread( buf, filelen, 1, fp );
+        buf[filelen] = '\0';
+        fclose( fp );
+        PyRun_SimpleString( buf );
+        delete[] buf;
+    } else {
+        Py_Initialize();
+        PyRun_SimpleFile( fp, filename.c_str() );
+        Py_Finalize();
+    }
 #else
 	// for linux, use this as it produces nicer error messages
 	PyRun_SimpleFileEx(fp, filename.c_str(), 0);  

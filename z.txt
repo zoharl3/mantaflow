@@ -1,5 +1,7 @@
 
 - Code
+    - The python script is run from c++ using 
+PyRun_SimpleString(buf);
     - grid color: in painter.cpp, GridPainter<int>::paint()
 glColor3f( 0, 0.3, 1 ); // light blue
     - particle color: in particlepainter.cpp, ParticlePainter::paintBasicSys()
