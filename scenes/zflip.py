@@ -36,10 +36,10 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 9999 # 300, 500, 1200, 1500
-res = 128 # 17(min old band), 32, 48, 64(default), 128(large)
+res = 64 # 17(min old band), 32, 48, 64(default), 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -308,7 +308,7 @@ while 1:
 
         tic()
         s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it, use_band=narrowBand, band_width=narrowBandWidth )
-        print( '      ', end='' )
+        print( '  ', end='' )
         toc()
 
         # if using band
@@ -398,7 +398,8 @@ while 1:
         it = round( it )
 
         if bScreenShot:
-            gui.screenshot( out + 'frame_%04d.png' % it ); # slow
+            gui.update()
+            gui.screenshot( out + 'frame_%04d.png' % it ) # slow
 
         # save particle data
         if bSaveParts:
