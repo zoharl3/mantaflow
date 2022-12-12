@@ -28,6 +28,8 @@ os.system( 'rm %s*.png' % out )
 os.system( 'rm %s*.txt' % out )
 os.system( 'rm %s*.uni' % out )
 os.system( 'rm %s*.vdb' % out )
+os.system( 'rm %s*.html' % out )
+os.system( 'rm %s*.ans' % out )
 
 # flags
 bMesh       = 1
@@ -41,8 +43,8 @@ bScreenShot = 1
 # solver params
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
-it_max = 9999 # 300, 500, 1200, 1500
-res = 64 # 17(min old band), 32, 48, 64(default), 128(large)
+it_max = 400 # 300, 500, 1200, 1500
+res = 96 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -70,12 +72,13 @@ gravity *= math.sqrt( res )
 #gravity = -0.003 # flip5
 
 print()
-print( 'dim:', dim )
-print( 'narrowBandWidth:', narrowBandWidth )
+print( 'dim:', dim, ', res:', res, ', part_per_cell_1d:', part_per_cell_1d )
+print( 'narrowBand:', narrowBand, ', narrowBandWidth:', narrowBandWidth )
+print( 'b_fixed_vol:', b_fixed_vol )
 print( 'gravity:', gravity )
 print( 'timestep:', dt )
 
-# adaptive time stepping; flip5
+# adaptive time stepping; from flip5
 if 0:
     s.frameLength = 1.0   # length of one frame (in "world time")
     s.timestep    = 1.0
@@ -403,7 +406,6 @@ while 1:
         it = round( it )
 
         if bScreenShot:
-            gui.update()
             gui.screenshot( out + 'frame_%04d.png' % it ) # slow
 
         # save particle data
