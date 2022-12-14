@@ -313,6 +313,8 @@ bool GLWidget::keyProcess(int key, int modifier, bool down)
 }
 
 void GLWidget::screenshot(QString file) {
+	// nothing helps to solve the refresh issue
+	updateGL();
 	// https://stackoverflow.com/questions/10429452/how-to-take-reliable-qglwidget-snapshot
 	glFlush();
 	grabFrameBuffer().save(file, nullptr, -1);
