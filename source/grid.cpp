@@ -892,8 +892,10 @@ void FlagGrid::fillGrid(int type) {
 
 void FlagGrid::mark_interface() 
 {
-    static vector<Vec3i> dir = FlagGrid::get_ne_directions( mParent->is2D(), 0, 1 );
+	bool bDiagonals = 1;
+    static vector<Vec3i> dir = FlagGrid::get_ne_directions( mParent->is2D(), 0, bDiagonals );
     int nd = dir.size();
+    printf( "- mark_interface(), nd=%d\n", nd );
 
     FOR_IJK( *this ) {
 		Vec3i idx( i, j, k );

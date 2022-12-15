@@ -37,14 +37,14 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
-part_per_cell_1d = 2 # 3, 2(default), 1
+dim = 2 # 2, 3
+part_per_cell_1d = 1 # 3, 2(default), 1
 it_max = 400 # 300, 500, 1200, 1500
-res = 64 # 17(min old band), 32, 48, 64(default), 96, 128(large)
+res = 16 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
-narrowBandWidth = 4 # 3(flip), 6(drop), 10(dam64)
+narrowBandWidth = 3 # 3(flip), 6(drop), 10(dam64)
 
 combineBandWidth = narrowBandWidth - 1
 
