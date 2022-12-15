@@ -24,12 +24,8 @@ sys.stdout.reconfigure( line_buffering=True )
 
 out = r'c:/prj-external-libs/mantaflow/out/'
 
-os.system( 'rm %s*.png' % out )
-os.system( 'rm %s*.txt' % out )
-os.system( 'rm %s*.uni' % out )
-os.system( 'rm %s*.vdb' % out )
-os.system( 'rm %s*.html' % out )
-os.system( 'rm %s*.ans' % out )
+os.system( 'rm %s*.*' % out )
+os.system( 'cp %s../video.bat %s' % (out, out) )
 
 # flags
 bMesh       = 1
@@ -44,11 +40,11 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 400 # 300, 500, 1200, 1500
-res = 128 # 17(min old band), 32, 48, 64(default), 96, 128(large)
+res = 64 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
-narrowBandWidth = 6 # 3(flip), 6(drop), 10(dam64)
+narrowBandWidth = 4 # 3(flip), 6(drop), 10(dam64)
 
 combineBandWidth = narrowBandWidth - 1
 
