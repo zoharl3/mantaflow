@@ -427,7 +427,7 @@ while 1:
         
 # pause
 if 1:
-    print( 'press enter...' )
+    print( '(zflip.py) press enter...' )
     #keyboard.read_key()
     input()
 
