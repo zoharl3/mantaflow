@@ -39,7 +39,7 @@ bScreenShot = 1
 # solver params
 dim = 2 # 2, 3
 part_per_cell_1d = 1 # 3, 2(default), 1
-it_max = 37 # 300, 500, 1200, 1500
+it_max = 9 # 300, 500, 1200, 1500
 res = 9 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
@@ -245,7 +245,8 @@ while 1:
         mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
-    if 1:
+
+    if 1: # and not ( b_fixed_vol and narrowBand and it > 0 ):
         print( '- markFluidCells' )
         markFluidCells( parts=pp, flags=flags )
         if narrowBand:

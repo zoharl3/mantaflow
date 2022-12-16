@@ -256,7 +256,7 @@ PYTHON() void debugIntToReal(const Grid<int>& source, Grid<Real>& dest, Real fac
 
 // build a grid that contains indices for a particle system
 // the particles in a cell i,j,k are particles[index(i,j,k)] to particles[index(i+1,j,k)-1]
-// (ie,  particles[index(i+1,j,k)] already belongs to cell i+1,j,k)
+// (i.e., particles[index(i+1,j,k)] already belong to cell i+1,j,k)
 PYTHON() void gridParticleIndex(const BasicParticleSystem& parts, ParticleIndexSystem& indexSys,
                                  const FlagGrid& flags, Grid<int>& index, Grid<int>* counter=NULL )
 {
@@ -306,47 +306,46 @@ PYTHON() void gridParticleIndex(const BasicParticleSystem& parts, ParticleIndexS
 }
 
 KERNEL()
-void ComputeUnionLevelsetPindex(const Grid<int>& index, const BasicParticleSystem& parts, const ParticleIndexSystem& indexSys,
-				LevelsetGrid& phi, const Real radius,
-				const ParticleDataImpl<int> *ptype, const int exclude)
+void ComputeUnionLevelsetPindex( const Grid<int> &index, const BasicParticleSystem &parts, const ParticleIndexSystem &indexSys, LevelsetGrid &phi, const Real radius, const ParticleDataImpl<int> *ptype, const int exclude ) 
 {
-	const Vec3 gridPos = Vec3(i,j,k) + Vec3(0.5); // shifted by half cell
-	Real phiv = radius * 1.0;  // outside
+    const Vec3 gridPos = Vec3( i, j, k ) + Vec3( 0.5 ); // shifted by a half cell
+    Real phiv = radius * 1.0; // outside
 
-	int r  = int(radius) + 1;
-	int rZ = phi.is3D() ? r : 0;
-	for(int zj=k-rZ; zj<=k+rZ; zj++) 
-	for(int yj=j-r ; yj<=j+r ; yj++) 
-	for(int xj=i-r ; xj<=i+r ; xj++) {
-		if (!phi.isInBounds(Vec3i(xj,yj,zj))) continue;
+    int r = int( radius ) + 1;
+    int rZ = phi.is3D() ? r : 0;
+    for ( int zj = k - rZ; zj <= k + rZ; zj++ )
+        for ( int yj = j - r; yj <= j + r; yj++ )
+            for ( int xj = i - r; xj <= i + r; xj++ ) {
+                if ( !phi.isInBounds( Vec3i( xj, yj, zj ) ) )
+                    continue;
 
-		// note, for the particle indices in indexSys the access is periodic (ie, dont skip for eg inBounds(sx,10,10)
-		IndexInt isysIdxS = index.index(xj,yj,zj);
-		IndexInt pStart = index(isysIdxS), pEnd=0;
-		if(phi.isInBounds(isysIdxS+1)) pEnd = index(isysIdxS+1);
-		else                           pEnd = indexSys.size();
+                // note, for the particle indices in indexSys the access is periodic, e.g. don't skip inBounds(sx,10,10)
+                IndexInt isysIdxS = index.index( xj, yj, zj );
+                IndexInt pStart = index( isysIdxS ), pEnd;
+                if ( phi.isInBounds( isysIdxS + 1 ) )
+                    pEnd = index( isysIdxS + 1 );
+                else
+                    pEnd = indexSys.size();
 
-		// now loop over particles in cell
-		for(IndexInt p=pStart; p<pEnd; ++p) {
-			const int psrc = indexSys[p].sourceIndex;
-			if(ptype && ((*ptype)[psrc] & exclude)) continue;
-			const Vec3 pos = parts[psrc].pos;
-			phiv = std::min( phiv , fabs( norm(gridPos-pos) )-radius );
-		}
-	}
-	phi(i,j,k) = phiv;
+                // now loop over particles in cell
+                for ( IndexInt p = pStart; p < pEnd; ++p ) {
+                    const int psrc = indexSys[p].sourceIndex;
+                    if ( ptype && ( ( *ptype )[psrc] & exclude ) )
+                        continue;
+                    const Vec3 pos = parts[psrc].pos;
+                    phiv = std::min( phiv, fabs( norm( gridPos - pos ) ) - radius );
+                }
+            }
+    phi( i, j, k ) = phiv;
 }
- 
-PYTHON() void unionParticleLevelset(const BasicParticleSystem& parts, const ParticleIndexSystem& indexSys,
-				    const FlagGrid& flags, const Grid<int>& index, LevelsetGrid& phi, const Real radiusFactor=1.,
-				    const ParticleDataImpl<int> *ptype=NULL, const int exclude=0)
-{
-	// use half a cell diagonal as base radius
-	const Real radius = 0.5 * calculateRadiusFactor(phi, radiusFactor);
-	// no reset of phi necessary here 
-	ComputeUnionLevelsetPindex(index, parts, indexSys, phi, radius, ptype, exclude);
 
-	phi.setBound(0.5, 0);
+PYTHON() void unionParticleLevelset( const BasicParticleSystem &parts, const ParticleIndexSystem &indexSys, const FlagGrid &flags, const Grid<int> &index, LevelsetGrid &phi, const Real radiusFactor = 1., const ParticleDataImpl<int> *ptype = NULL, const int exclude = 0 ) {
+    // use half a cell diagonal as base radius
+    const Real radius = 0.5 * calculateRadiusFactor( phi, radiusFactor );
+    // no reset of phi is necessary here 
+    ComputeUnionLevelsetPindex( index, parts, indexSys, phi, radius, ptype, exclude );
+
+    phi.setBound( 0.5, 0 );
 }
 
 //! kernel for computing averaged particle level set weights
