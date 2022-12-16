@@ -39,8 +39,8 @@ bScreenShot = 1
 # solver params
 dim = 2 # 2, 3
 part_per_cell_1d = 1 # 3, 2(default), 1
-it_max = 21 # 300, 500, 1200, 1500
-res = 16 # 17(min old band), 32, 48, 64(default), 96, 128(large)
+it_max = 37 # 300, 500, 1200, 1500
+res = 9 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -213,9 +213,14 @@ if bSaveParts:
     save( name=fname, objects=objects ) # error in debug mode "string too long?"
 
 # loop
+ret = 0
 while 1:
     emphasize( '\n-----------------\n- time: %g(/%d; it2=%d)' % ( it, it_max, it2 ) )
     print( 'n=%d' % pp.pySize() )
+
+    if ret != 0:
+        error( f'Error: ret={ret}' )
+        break
 
     if not it < it_max:
         break
@@ -311,6 +316,9 @@ while 1:
 
         tic()
         s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth )
+        if s.timestep < 0:
+            ret = -1
+            s.timestep *= -1
         print( '  ', end='' )
         toc()
 
@@ -351,17 +359,18 @@ while 1:
             #gui.pause()
     
     # create level set from particles
-    gridParticleIndex( parts=pp, flags=flags, indexSys=pindex, index=gpi )
-    unionParticleLevelset( pp, pindex, flags, gpi, phiParts, radiusFactor ) 
-    if narrowBand:
-        # combine level set of particles with grid level set
-        phi.addConst(1.); # shrink slightly
-        phi.join( phiParts )
-        extrapolateLsSimple( phi=phi, distance=narrowBandWidth+2, inside=True, include_walls=include_walls )
-    else:
-        # overwrite grid level set with level set of particles
-        phi.copyFrom( phiParts )
-        extrapolateLsSimple( phi=phi, distance=4, inside=True, include_walls=include_walls ) # 4
+    if not b_fixed_vol:
+        gridParticleIndex( parts=pp, flags=flags, indexSys=pindex, index=gpi )
+        unionParticleLevelset( pp, pindex, flags, gpi, phiParts, radiusFactor ) 
+        if narrowBand:
+            # combine level set of particles with grid level set
+            phi.addConst(1.); # shrink slightly
+            phi.join( phiParts )
+            extrapolateLsSimple( phi=phi, distance=narrowBandWidth+2, inside=True, include_walls=include_walls )
+        else:
+            # overwrite grid level set with level set of particles
+            phi.copyFrom( phiParts )
+            extrapolateLsSimple( phi=phi, distance=4, inside=True, include_walls=include_walls ) # 4
 
     # resample particles
     if not b_fixed_vol:
