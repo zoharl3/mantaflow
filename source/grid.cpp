@@ -890,18 +890,18 @@ void FlagGrid::fillGrid(int type) {
 	}
 }
 
-void FlagGrid::mark_interface() 
+void FlagGrid::mark_surface() 
 {
 	bool bDiagonals = 0;
     static vector<Vec3i> dir = FlagGrid::get_ne_directions( mParent->is2D(), 0, bDiagonals );
     int nd = dir.size();
-    printf( "- mark_interface(), nd=%d\n", nd );
+    printf( "- mark_surface(), nd=%d\n", nd );
 
     FOR_IJK( *this ) {
 		Vec3i idx( i, j, k );
-        mData[ index(idx) ] &= ~TypeInterface;
+        mData[ index(idx) ] &= ~TypeSurface;
         if ( mData[ index( idx ) ] & TypeFluid ) {
-//cout << "  - mark_interface(), checking: " << idx << endl;
+//cout << "  - mark_surface(), checking: " << idx << endl;
 			// check neighbors
             int d = 0;
             for ( ; d < nd; ++d ) { // dir
@@ -918,7 +918,7 @@ void FlagGrid::mark_interface()
             }
             if ( d != nd ) {
 //cout << "    marking interface" << endl;
-                mData[index( idx )] |= TypeInterface;
+                mData[index( idx )] |= TypeSurface;
             }
         }
     }

@@ -97,8 +97,9 @@ pp       = s.create(BasicParticleSystem)
 pVel     = pp.create(PdataVec3) 
 phiObs   = s.create(LevelsetGrid, name='phiObs')
 phiParts = s.create(LevelsetGrid)
-phiMesh = s.create(LevelsetGrid)
+phiMesh  = s.create(LevelsetGrid)
 mesh     = s.create(Mesh)
+bfs      = s.create(IntGrid) # discrete distance from surface
 
 # Acceleration data for particle
 pindex = s.create(ParticleIndexSystem)
@@ -164,8 +165,8 @@ flags.updateFromLevelset( phi )
 
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
 
-# phi is influenced by the walls for some reason; fix it
-# create level set from particles
+# phi is influenced by the walls for some reason
+# create a level set from particles
 gridParticleIndex( parts=pp, flags=flags, indexSys=pindex, index=gpi )
 unionParticleLevelset( pp, pindex, flags, gpi, phiParts, radiusFactor )
 phi.copyFrom( phiParts )
@@ -245,7 +246,6 @@ while 1:
         mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
-
     if 1: # and not ( b_fixed_vol and narrowBand and it > 0 ):
         print( '- markFluidCells' )
         markFluidCells( parts=pp, flags=flags )
@@ -310,13 +310,12 @@ while 1:
 
         #markFluidCells( parts=pp, flags=flags2 )
         copyFlagsToFlags( flags, flags2 )
-        flags2.mark_interface()
 
         phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
         #phi.printGrid()
 
         tic()
-        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth )
+        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
         if s.timestep < 0:
             ret = -1
             s.timestep *= -1

@@ -139,6 +139,7 @@ KERNEL() void knClearFluidFlags(FlagGrid& flags, int dummy=0) {
 		flags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeEmpty) & ~FlagGrid::TypeFluid;
 	}
 }
+
 KERNEL(bnd=1) 
 void knSetNbObstacle(FlagGrid& nflags, const FlagGrid& flags, const Grid<Real>& phiObs) {
 	if ( phiObs(i,j,k)>0. ) return;
@@ -155,6 +156,7 @@ void knSetNbObstacle(FlagGrid& nflags, const FlagGrid& flags, const Grid<Real>& 
 		if(set) nflags(i,j,k) = (flags(i,j,k) | FlagGrid::TypeFluid) & ~FlagGrid::TypeEmpty;
 	}
 }
+
 PYTHON() void markFluidCells(const BasicParticleSystem& parts, FlagGrid& flags, const Grid<Real>* phiObs=NULL, const ParticleDataImpl<int>* ptype=NULL, const int exclude=0) {
 	// remove all fluid cells
 	knClearFluidFlags(flags, 0);
