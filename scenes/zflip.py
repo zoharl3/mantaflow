@@ -235,7 +235,7 @@ while 1:
     # map particle velocities to grid
     print( '- mapPartsToMAC' )
     # extrapolate velocities throughout the liquid region
-    if narrowBand:
+    if 1 and narrowBand:
         # combine particles velocities with advected grid velocities
         mapPartsToMAC( vel=velParts, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=velParts , distance=2, weight=mapWeights )
@@ -246,7 +246,7 @@ while 1:
         mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
-    if 1: # and not ( b_fixed_vol and narrowBand and it > 0 ):
+    if 1:
         print( '- markFluidCells' )
         markFluidCells( parts=pp, flags=flags )
         if narrowBand:
