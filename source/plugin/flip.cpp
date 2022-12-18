@@ -163,10 +163,14 @@ PYTHON() void markFluidCells(const BasicParticleSystem& parts, FlagGrid& flags, 
 	
 	// mark all particles in flaggrid as fluid
 	for(IndexInt idx=0; idx<parts.size(); idx++) {
+//printf( "p%d\n", idx );
 		if (!parts.isActive(idx) || (ptype && ((*ptype)[idx] & exclude))) continue;
 		Vec3i p = toVec3i( parts.getPos(idx) );
-		if (flags.isInBounds(p) && flags.isEmpty(p))
-			flags(p) = (flags(p) | FlagGrid::TypeFluid) & ~FlagGrid::TypeEmpty;
+//cout << "  pos: " << p << endl;
+        if ( flags.isInBounds( p ) && flags.isEmpty( p ) ) {
+            flags( p ) = ( flags( p ) | FlagGrid::TypeFluid ) & ~FlagGrid::TypeEmpty;
+//printf( "  marked fluid\n" );
+        }
 	}
 
 	// special for second order obstacle BCs, check empty cells in boundary region

@@ -150,6 +150,7 @@ public:
 	
 	//! adding and deleting
 	inline void kill(IndexInt idx);
+    inline void revive( IndexInt idx );
 	IndexInt add(const S& data);
 	//! remove all particles, init 0 length arrays (also pdata)
 	PYTHON() void clear();
@@ -423,6 +424,12 @@ inline void ParticleSystem<S>::kill(IndexInt idx) {
 	assertMsg(idx>=0 && idx<size(), "Index out of bounds");
 	mData[idx].flag |= PDELETE; 
 	if ( (++mDeletes > mDeleteChunk) && (mAllowCompress) ) compress(); 
+}
+
+template <class S>
+inline void ParticleSystem<S>::revive( IndexInt idx ) {
+    assertMsg( idx >= 0 && idx < size(), "Index out of bounds" );
+    mData[idx].flag &= ~PDELETE;
 }
 
 template<class S>
