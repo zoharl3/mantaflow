@@ -38,13 +38,13 @@ bScreenShot = 1
 
 # solver params
 dim = 2 # 2, 3
-part_per_cell_1d = 1 # 3, 2(default), 1
-it_max = 99 # 300, 500, 1200, 1500
-res = 9 # 17(min old band), 32, 48, 64(default), 96, 128(large)
+part_per_cell_1d = 2 # 3, 2(default), 1
+it_max = 171 # 300, 500, 1200, 1500
+res = 16 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
-narrowBandWidth = 3 # 3(flip), 6(drop), 10(dam64)
+narrowBandWidth = 4 # 3(flip), 4(min fix: min distance between the two interfaces should be 2)
 
 combineBandWidth = narrowBandWidth - 1
 
@@ -219,7 +219,7 @@ while 1:
     emphasize( '\n-----------------\n- time: %g(/%d; it2=%d)' % ( it, it_max, it2 ) )
     print( 'n=%d' % pp.pySize() )
 
-    if ret != 0:
+    if 1 and ret != 0:
         error( f'Error: ret={ret}' )
         break
 
@@ -239,7 +239,11 @@ while 1:
         # combine particles velocities with advected grid velocities
         mapPartsToMAC( vel=velParts, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=velParts , distance=2, weight=mapWeights )
-        combineGridVel( vel=velParts, weight=mapWeights , combineVel=vel, phi=phi, narrowBand=combineBandWidth, thresh=0 )
+        #vel.printGrid()
+        #velParts.printGrid()
+        combineGridVel( vel=velParts, weight=mapWeights, combineVel=vel, phi=phi, narrowBand=combineBandWidth, thresh=0 )
+        #print( '>> combine' )
+        #vel.printGrid()
         velOld.copyFrom( vel )
     else:
         # map particle velocities to grid
@@ -265,16 +269,20 @@ while 1:
     # set solid (walls)
     print( '- setWallBcs' )
     setWallBcs( flags=flags, vel=vel ) # clear velocity from solid
-    
+    #vel.printGrid()
+
     # pressure solve
     if 1:
         print( '- pressure' )
         solvePressure( flags=flags, vel=vel, pressure=pressure, phi=phi )
         setWallBcs( flags=flags, vel=vel )
+        #vel.printGrid()
 
     #extrapolateMACSimple( flags=flags, vel=vel, distance=res )
     extrapolateMACSimple( flags=flags, vel=vel, distance=int(maxVel*1.25 + 2) )
-    
+    #flags.printGrid()
+    #vel.printGrid()
+
     # fixed volume pre-process
     if 1:
         scale_particle_pos( pp=pp, scale=scale2 )
@@ -287,15 +295,13 @@ while 1:
     print( '- FLIP velocity update' )
     alpha = 0 # 0
     flipVelocityUpdate( vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1 - alpha )
-    
     #vel.printGrid()
     
     # advect
     print( '- advect' )
     # advect particles
     pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
-    # advect phi
-    # why? the particles should determine phi, which should flow on its own
+    # advect phi; why? the particles should determine phi, which should flow on its own
     if 0:
         advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
         flags.updateFromLevelset( phi ) 
@@ -359,7 +365,7 @@ while 1:
             #gui.pause()
     
     # create level set from particles
-    if not b_fixed_vol:
+    if 1:
         gridParticleIndex( parts=pp, flags=flags, indexSys=pindex, index=gpi )
         unionParticleLevelset( pp, pindex, flags, gpi, phiParts, radiusFactor ) 
         if narrowBand:
@@ -380,6 +386,7 @@ while 1:
         if narrowBand:
             phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
             #phi.printGrid()
+            # vel is used only to get the parent
             adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, narrowBand=narrowBandWidth ) 
         elif 0:
             adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi ) 
@@ -395,14 +402,14 @@ while 1:
 
     # print/write
     if 0:
-        flags.printGrid()
-        #vel.printGrid()
+        #flags.printGrid()
+        vel.printGrid()
     
         #pp.printParts()
         #pp.writeParticlesText( out + 'flipt_%04d.txt' % it )
     
     # step
-    print( '- step' )
+    print( '- step (%d)' % it )
     s.step()
 
     it += s.timestep / dt

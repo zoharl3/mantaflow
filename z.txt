@@ -1,5 +1,6 @@
 
 - Code
+    - I excluded build/pp from resharper
     - The python script is run from c++ using 
 PyRun_SimpleString(buf);
     - grid color: in painter.cpp, GridPainter<int>::paint()

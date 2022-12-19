@@ -459,7 +459,7 @@ template<> void GridPainter<Real>::paint() {
 	glBegin(GL_QUADS);
 
 	// "new" drawing style 
-	// ignore flags, its a bit dangerous to skip outside info
+	// ignore flags, it's a bit dangerous to skip outside info
 	if( (dm==RealDispStd) || (dm==RealDispLevelset) ) {
 
 		FOR_P_SLICE(mLocalGrid, mDim, mPlane) 
@@ -513,6 +513,7 @@ template<> void GridPainter<Real>::paint() {
 }
 
 // Paint velocity vectors
+// zl The velocity is a MAC; it probably draws the interpolated center.
 template<> void GridPainter<Vec3>::paint() {
 	if (!mObject || mHide || mHideLocal || mPlane <0 || mPlane >= mLocalGrid->getSize()[mDim])
 		return;

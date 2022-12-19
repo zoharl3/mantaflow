@@ -141,7 +141,7 @@ void MainWnd::addControl(void* ctrl) {
 
 void MainWnd::setStep(int f, float time) {
 	// weird crash on QAccessible::updateAccessibility() if f or time vary
-	f = 1; time = 1;
+	//f = 1; time = 1;
 
     if ( 0 ) { 
         std::stringstream s;
