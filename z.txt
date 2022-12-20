@@ -28,6 +28,7 @@ if(!bp->isActive(i) ) {
     - setInterpolMAC() interpolates MAC from particles. The four grid points are ref[0], ref[X], ref[Y], ref[X+Y]. 
     - The output precision (also 2D/3D) is set in Vector3D<S>::toString() in vectorbase.h.
         - "[%+4.2f,%+4.2f]"
+        - Vector3D<int>::toString() in vectorbase.cpp
 
 - Needs env var
 set PYTHONHOME=c:\Python37\

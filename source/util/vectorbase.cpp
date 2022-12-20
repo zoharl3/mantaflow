@@ -29,7 +29,8 @@ template<> bool Vector3D<double>::isValid() const { return !c_isnan(x) && !c_isn
 //! Specialization for readable ints
 template<> std::string Vector3D<int>::toString() const {
 	char buf[256];
-	snprintf ( buf,256,"[%d,%d,%d]", ( *this ) [0], ( *this ) [1], ( *this ) [2] );
+    snprintf( buf, 256, "[%d,%d]", ( *this )[0], ( *this )[1] );
+	//snprintf ( buf,256,"[%d,%d,%d]", ( *this ) [0], ( *this ) [1], ( *this ) [2] );
 	return std::string ( buf );
 }
 
