@@ -416,7 +416,12 @@ template<> void GridPainter<int>::paint() {
             } else if (flag & FlagGrid::TypeSurface) {
                 if (skipFluid)
                     continue;
-                glColor3f( 0, 0.3, 1 ); // light blue
+                //glColor3f( 0, 0.3, 1 ); // light blue
+                glColor3f( 0, .8, 0 ); // green
+            } else if ( flag & FlagGrid::TypeBandInterface ) {
+                if ( skipFluid )
+                    continue;
+                glColor3f( .8, .8, 0 ); // yellow
             } else if (flag & FlagGrid::TypeFluid) {
                 if (skipFluid)
                     continue;

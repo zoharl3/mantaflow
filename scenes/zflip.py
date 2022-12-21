@@ -39,12 +39,12 @@ bScreenShot = 1
 # solver params
 dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
-it_max = 200 # 300, 500, 1200, 1500
-res = 16 # 17(min old band), 32, 48, 64(default), 96, 128(large)
+it_max = 300 # 300, 500, 1200, 1500
+res = 64 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
-narrowBandWidth = 4 # 3(flip), 4(min fix: min distance between the two interfaces should be 2)
+narrowBandWidth = 4 # 3(flip), 4; min fixed_vol: min distance between the two interfaces should be ?
 
 combineBandWidth = narrowBandWidth - 1
 
@@ -250,8 +250,9 @@ while 1:
         mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
-    if 1:
-        print( '- markFluidCells' )
+    # update flags
+    if not b_fixed_vol or it == 0:
+        print( '- markFluidCells (update flags)' )
         markFluidCells( parts=pp, flags=flags )
         if narrowBand:
             update_fluid_from_phi( flags=flags, phi=phi, band_width=narrowBandWidth )
@@ -333,6 +334,8 @@ while 1:
             include_walls = true
 
         scale_particle_pos( pp=pp, scale=1/scale2 )
+
+        copyFlagsToFlags( flags2, flags )
 
     # position solver, Thuerey21
     if 0:
@@ -431,9 +434,12 @@ while 1:
             #objects = [ pp ]
             save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
         
+# code not reached if quitting manta (with esc); pausing in run.py instead
 # pause
-if 1:
+if 0:
+    print( '(zflip.py) press a key...' )
+    keyboard.read_key()
+elif 0:
     print( '(zflip.py) press enter...' )
-    #keyboard.read_key()
     input()
 
