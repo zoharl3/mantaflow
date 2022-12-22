@@ -1,5 +1,6 @@
 
 - Code
+    - print_cam()
     - I excluded build/pp from resharper
     - The python script is run from c++ using 
 PyRun_SimpleString(buf);

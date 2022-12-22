@@ -37,14 +37,14 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
-it_max = 300 # 300, 500, 1200, 1500
-res = 128 # 17(min old band), 32, 48, 64(default), 96, 128(large)
+it_max = 100 # 300, 500, 1200, 1500
+res = 32 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
-narrowBandWidth = 4 # 3(flip), 4; min fixed_vol: min distance between the two interfaces should be?
+narrowBandWidth = 4
 
 combineBandWidth = narrowBandWidth - 1
 
@@ -217,7 +217,7 @@ if bSaveParts:
 ret = 0
 while 1:
     emphasize( '\n-----------------\n- time: %g(/%d; it2=%d)' % ( it, it_max, it2 ) )
-    print( 'n=%d' % pp.pySize() )
+    print( '- n=%d' % pp.pySize() )
 
     if 1 and ret != 0:
         error( f'Error: ret={ret}' )

@@ -182,8 +182,10 @@ void GLWidget::timerEvent(QTimerEvent* e)
 }
 
 void GLWidget::print_cam() {
-    printf( "mCamPos = ( %g, %g, %g )", mCamPos.x, mCamPos.y, mCamPos.z );
-    printf( ", mRot = ( %g, %g )\n", mRotX, mRotY );
+    if ( 0 ) {
+        printf( "mCamPos = ( %g, %g, %g )", mCamPos.x, mCamPos.y, mCamPos.z );
+        printf( ", mRot = ( %g, %g )\n", mRotX, mRotY );
+    }
 }
 
 void GLWidget::setViewport(const Vec3i& gridsize) {

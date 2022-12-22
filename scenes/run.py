@@ -23,10 +23,10 @@ print( 'run.py is done' )
 
 # pause
 if 1:
-    print( 'press esc...' )
+    print( 'press esc or enter...' )
     while 1:
         ch = keyboard.read_key()
-        if ch == 'esc':
+        if ch == 'esc' or ch == 'enter':
             break
 elif 0:
     print( 'press a key...' )
