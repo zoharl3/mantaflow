@@ -44,7 +44,7 @@ res = 32 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
-narrowBandWidth = 4
+narrowBandWidth = 8
 
 combineBandWidth = narrowBandWidth - 1
 
@@ -185,7 +185,7 @@ if 1 and GUI:
     gui = Gui()
     #gui.nextMeshDisplay() # invisible
     gui.setRealGridDisplay( 0 )
-    gui.setVec3GridDisplay( 0 )
+    #gui.setVec3GridDisplay( 0 )
     if 1 and dim == 3: # camera
         gui.setCamPos( 0, 0, -2.2 ) # drop
         gui.setCamRot( 35, -30, 0 )
@@ -245,7 +245,7 @@ while 1:
         #print( '>> combine' )
         #vel.printGrid()
         velOld.copyFrom( vel )
-    else:
+    elif 1:
         # map particle velocities to grid
         mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
@@ -294,7 +294,7 @@ while 1:
     
     # FLIP velocity update
     print( '- FLIP velocity update' )
-    alpha = 0 # 0
+    alpha = 0. # 0
     flipVelocityUpdate( vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1 - alpha )
     #vel.printGrid()
     

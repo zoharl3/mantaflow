@@ -569,6 +569,13 @@ void knMapLinearVec3ToMACGrid(const BasicParticleSystem& p, const FlagGrid& flag
 			      const ParticleDataImpl<Vec3>& pvel, const ParticleDataImpl<int>* ptype, const int exclude)
 {
 	unusedParameter(flags);
+
+	// zl
+    if ( 0&& p.getStatus( idx ) & ParticleBase::PNEW )
+        return; 
+	if ( 0&& idx >= 503-1 )
+		return;
+
 	if (!p.isActive(idx) || (ptype && ((*ptype)[idx] & exclude))) return;
 	vel.setInterpolated( p[idx].pos, pvel[idx], &tmp[0] );
 }
