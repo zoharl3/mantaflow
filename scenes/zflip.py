@@ -40,7 +40,7 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 100 # 300, 500, 1200, 1500
-res = 64 # 17(min old band), 32, 48, 64(default), 96, 128(large)
+res = 128 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -436,6 +436,10 @@ while 1:
             #objects = [ pp ]
             save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
         
+# video
+if 1:
+    os.system( r'c:\prj-external-libs\mantaflow\out\video.bat' )
+
 # code not reached if quitting manta (with esc); pausing in run.py instead
 # pause
 if 0:
