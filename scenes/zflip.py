@@ -37,14 +37,14 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
+dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 100 # 300, 500, 1200, 1500
-res = 32 # 17(min old band), 32, 48, 64(default), 96, 128(large)
+res = 64 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
-narrowBandWidth = 8
+narrowBandWidth = 3
 
 combineBandWidth = narrowBandWidth - 1
 
@@ -185,7 +185,7 @@ if 1 and GUI:
     gui = Gui()
     #gui.nextMeshDisplay() # invisible
     gui.setRealGridDisplay( 0 )
-    #gui.setVec3GridDisplay( 0 )
+    gui.setVec3GridDisplay( 0 )
     if 1 and dim == 3: # camera
         gui.setCamPos( 0, 0, -2.2 ) # drop
         gui.setCamRot( 35, -30, 0 )
@@ -321,6 +321,8 @@ while 1:
         phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
         #phi.printGrid()
 
+        pVel.setSource( vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()
+
         tic()
         s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
         if s.timestep < 0:
@@ -408,7 +410,7 @@ while 1:
         #flags.printGrid()
         vel.printGrid()
     
-        #pp.printParts()
+        pp.printParts()
         #pp.writeParticlesText( out + 'flipt_%04d.txt' % it )
     
     # step
