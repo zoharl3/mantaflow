@@ -44,7 +44,7 @@ res = 128 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
-narrowBandWidth = 3
+narrowBandWidth = 4
 
 combineBandWidth = narrowBandWidth - 1
 
