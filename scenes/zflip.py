@@ -221,7 +221,8 @@ while 1:
 
     if 1 and ret != 0:
         error( f'Error: ret={ret}' )
-        break
+        ret = 0
+        #break
 
     if not it < it_max:
         break

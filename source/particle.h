@@ -86,7 +86,7 @@ protected:
 	//! allow automatic compression / resize? disallowed for, eg, flip particle systems
 	bool mAllowCompress;
 
-	//! store particle data , each pointer has its own storage vector of a certain type (int, real, vec3)
+	//! store particle data, each pointer has its own storage vector of a certain type (int, real, vec3)
 	std::vector<ParticleDataBase*> mPartData;
 	//! lists of different types, for fast operations w/o virtual function calls (all calls necessary per particle)
 	std::vector< ParticleDataImpl<Real> *> mPdataReal;
@@ -727,7 +727,7 @@ std::string ParticleSystem<S>::infoString() const {
 	std::stringstream s;
 	s << "ParticleSys '" << getName() << "'\n-> ";
 	if(this->getNumPdata()>0) s<< "pdata: "<< this->getNumPdata();
-	s << "parts: " << size();
+	s << ", parts: " << size();
 	//for(IndexInt i=0; i<(IndexInt)mPartData.size(); ++i) { sstr << i<<":" << mPartData[i]->size() <<" "; }
 	return s.str();
 }
