@@ -37,10 +37,10 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 100 # 300, 500, 1200, 1500
-res = 128 # 17(min old band), 32, 48, 64(default), 96, 128(large)
+res = 32 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -222,7 +222,7 @@ while 1:
     if 1 and ret != 0:
         error( f'Error: ret={ret}' )
         ret = 0
-        #break
+        break
 
     if not it < it_max:
         break
@@ -324,8 +324,11 @@ while 1:
 
         pVel.setSource( vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()
 
+        #dt_bound = dt/3
+        dt_bound = s.timestep/3
+
         tic()
-        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, x0=pos1, flags=flags2, dt=s.timestep, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), state=0, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
+        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, x0=pos1, flags=flags2, dt=s.timestep, dt_bound=dt_bound, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
         if s.timestep < 0:
             ret = -1
             s.timestep *= -1
