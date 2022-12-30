@@ -27,6 +27,9 @@ out = r'c:/prj-external-libs/mantaflow/out/'
 os.system( 'rm %s*.*' % out )
 os.system( 'cp %s../video.bat %s' % (out, out) )
 
+# for consistent result (debug)
+limit_to_one_core()
+
 # flags
 bMesh       = 1
 bSaveParts  = 0
@@ -37,10 +40,10 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
-part_per_cell_1d = 2 # 3, 2(default), 1
-it_max = 100 # 300, 500, 1200, 1500
-res = 128 # 17(min old band), 32, 48, 64(default), 96, 128(large)
+dim = 2 # 2, 3
+part_per_cell_1d = 1 # 3, 2(default), 1
+it_max = 300 # 300, 500, 1200, 1500
+res = 32 # 17(min old band), 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -441,8 +444,8 @@ while 1:
             save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
         
 # video
-if 1:
-    os.system( r'c:\prj-external-libs\mantaflow\out\video.bat' )
+if 0:
+    os.system( r'c:\prj-external-libs\mantaflow\out\video.bat > nul 2>&1' )
 
 # code not reached if quitting manta (with esc); pausing in run.py instead
 # pause
