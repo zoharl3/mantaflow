@@ -59,6 +59,7 @@ public:
 	PYTHON(name=timestep)  Real mDt;  
 	PYTHON(name=timeTotal) Real mTimeTotal;
 	PYTHON(name=frame)     int  mFrame;
+	int mCount;
 	//! parameters for adaptive time stepping
 	PYTHON(name=cfl)          Real mCflCond;  
 	PYTHON(name=timestepMin)  Real mDtMin;  

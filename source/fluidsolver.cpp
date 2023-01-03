@@ -105,7 +105,7 @@ template<> void FluidSolver::freeGrid4dPointer<Vec4>(Vec4* ptr) {
 // FluidSolver members
 
 FluidSolver::FluidSolver(Vec3i gridsize, int dim, int fourthDim)
-	: PbClass(this), mDt(1.0), mTimeTotal(0.), mFrame(0), 
+	: PbClass(this), mDt(1.0), mTimeTotal(0.), mFrame(0), mCount(0), 
 	  mCflCond(1000), mDtMin(1.), mDtMax(1.), mFrameLength(1.),
 	  mTimePerFrame(0.), mGridSize(gridsize), mDim(dim), mLockDt(false), mFourthDim(fourthDim)
 {
@@ -142,24 +142,21 @@ PbClass* FluidSolver::create(PbType t, PbTypeVec T, const string& name) {
 void FluidSolver::step() {
 	// update simulation time with adaptive time stepping 
 	// (use eps value to prevent roundoff errors)
-	if ( 0 ) { // zl
-	    mTimePerFrame += mDt;
-	    mTimeTotal    += mDt;
-	} else {
-	    mTimePerFrame += 1;
-	    mTimeTotal    += 1;
-	}
+	mTimePerFrame += mDt;
+	mTimeTotal    += mDt;
+	++mCount;
 
-	if( (mTimePerFrame+VECTOR_EPSILON) >mFrameLength) {
+	if( (mTimePerFrame+VECTOR_EPSILON) >mFrameLength ) {
 		mFrame++;
 
-		// re-calc total time, prevent drift...
-		mTimeTotal    = (double)mFrame * mFrameLength;
-		mTimePerFrame = 0.;
-		mLockDt = false;
+        // re-calc total time, prevent drift...
+        mTimeTotal = (double)mFrame * mFrameLength;
+        mTimePerFrame = 0.;
+        mLockDt = false;
 	}
 
-	updateQtGui(true, mFrame,mTimeTotal, "FluidSolver::step");
+	//updateQtGui(true, mFrame, mTimeTotal, "FluidSolver::step");
+    updateQtGui( true, mFrame, mCount, "FluidSolver::step" ); // zl
 }
 
 void FluidSolver::printMemInfo() {

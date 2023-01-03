@@ -2,12 +2,11 @@
 import os, sys, math
 import keyboard, copy
 
-from tictoc import *
-
 from manta import *
 
 sys.path.append( r'c:\prj\python\\' )
 from text_color import *
+from tictoc import *
 
 # prints line number
 import logging
@@ -41,10 +40,10 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
-it_max = 100 # 300, 500, 1200, 1500
-res = 128 # 17(min old band), 32, 48, 64(default), 96, 128(large)
+it_max = 200 # 300, 500, 1200, 1500
+res = 140 # 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -233,9 +232,10 @@ while 1:
 
     maxVel = vel.getMax()
     if 1:
+        s.frameLength = dt
         s.timestep = ( 1 - it % 1 ) * dt
     else: # flip5
-        s.adaptTimestep( maxVel )
+        s.adaptTimestep( maxVel ) # enable init above
 
     # map particle velocities to grid
     print( '- mapPartsToMAC' )
@@ -280,7 +280,10 @@ while 1:
     # pressure solve
     if 1:
         print( '- pressure' )
+        tic()
         solvePressure( flags=flags, vel=vel, pressure=pressure, phi=phi )
+        print( '  (pressure) ', end='' )
+        toc()
         setWallBcs( flags=flags, vel=vel )
         #vel.printGrid()
 
@@ -336,7 +339,7 @@ while 1:
         if s.timestep < 0:
             ret = -1
             s.timestep *= -1
-        print( '  ', end='' )
+        print( '  (fixed vol) ', end='' )
         toc()
 
         # if using band
