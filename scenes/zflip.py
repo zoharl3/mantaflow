@@ -27,7 +27,7 @@ os.system( 'rm %s*.*' % out )
 os.system( 'cp %s../video.bat %s' % (out, out) )
 
 # (debug) for consistent result
-if 0:
+if 1:
     limit_to_one_core()
 
 # flags
@@ -43,7 +43,7 @@ bScreenShot = 1
 dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 200 # 300, 500, 1200, 1500
-res = 150 # 32, 48, 64(default), 96, 128(large)
+res = 32 # 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -448,7 +448,7 @@ while 1:
             save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
         
 # video
-if 1:
+if 0:
     os.system( r'c:\prj-external-libs\mantaflow\out\video.bat > nul 2>&1' )
 
 # code not reached if quitting manta (with esc); pausing in run.py instead
