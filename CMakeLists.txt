@@ -25,28 +25,28 @@ set(MANTAVERSION "0.13")
 # - allow override from command line on OsX, eg use "cmake ..  -DCMAKE_PREFIX_PATH=/Users/someone/qt5.2.1/5.2.1/clang_64/
 
 if(WIN32)
-	#set(WIN_QT_PATH        "C:/Qt/5.9/msvc2013_64_opengl") # qt5/win64
-	set(WIN_PYTHON_PATH    "C:/Python37") # choose python version with PYTHON_VERSION above
-	#set(CMAKE_LIBRARY_PATH "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64") # messes vcpkg's boost
-	#set(CMAKE_PREFIX_PATH ${WIN_QT_PATH}) # messes vcpkg's boost
+    #set(WIN_QT_PATH        "C:/Qt/5.9/msvc2013_64_opengl") # qt5/win64
+    set(WIN_PYTHON_PATH    "C:/Python37") # choose python version with PYTHON_VERSION above
+    #set(CMAKE_LIBRARY_PATH "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64") # messes vcpkg's boost
+    #set(CMAKE_PREFIX_PATH ${WIN_QT_PATH}) # messes vcpkg's boost
     
     set( CMAKE_CONFIGURATION_TYPES "Debug" "RelWithDebInfo" )
 endif()
 
 if(APPLE)
-	if(NOT CMAKE_PREFIX_PATH)
-		set(CMAKE_PREFIX_PATH "/usr/local/opt/qt5/") #  mac/homebrew (version independent)
-		#set(CMAKE_PREFIX_PATH "/home/myname/qt/5.5/clang_64") #  other...
-	endif()
+    if(NOT CMAKE_PREFIX_PATH)
+        set(CMAKE_PREFIX_PATH "/usr/local/opt/qt5/") #  mac/homebrew (version independent)
+        #set(CMAKE_PREFIX_PATH "/home/myname/qt/5.5/clang_64") #  other...
+    endif()
 endif()
 
 #******************************************************************************
 # setup default params
 
 if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "Release")
+    set(CMAKE_BUILD_TYPE "Release")
 else()
-	MESSAGE("Build-type: '${CMAKE_BUILD_TYPE}'")
+    MESSAGE("Build-type: '${CMAKE_BUILD_TYPE}'")
 endif()
 
 # compilation versions
@@ -78,43 +78,43 @@ OPTION(BUILD_STATIC "Enable building static library" OFF)
 # this also means: static lib output , instead of executable
 OPTION(NOPYTHON "Compile without python support (limited functionality!)" OFF)
 if(NOPYTHON)
-	set(BUILD_STATIC ON)
+    set(BUILD_STATIC ON)
 endif()
 
 # check consistency of MT options
 set(MT OFF)
 set(MT_TYPE "NONE")
 if(TBB)
-	set(MT_TYPE "TBB")
-	set(MT ON)
+    set(MT_TYPE "TBB")
+    set(MT ON)
 endif()
 if(OPENMP)
-	set(MT_TYPE "OPENMP")
-	set(MT ON)
+    set(MT_TYPE "OPENMP")
+    set(MT ON)
 endif()
 if(TBB AND OPENMP)
-	message(FATAL_ERROR "Cannot activate both OPENMP and TBB")
+    message(FATAL_ERROR "Cannot activate both OPENMP and TBB")
 endif()
 
 # make sure debug settings match...
 if(NOT DEBUG)
-	if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-		set(DEBUG 1)
-	endif()
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        set(DEBUG 1)
+    endif()
 endif()
 
 add_definitions ( -DMANTAVERSION="${MANTAVERSION}" )
 
 if(DEBUG)
-	set(CMAKE_BUILD_TYPE "Debug")
-	add_definitions ( -DDEBUG=1 )
+    set(CMAKE_BUILD_TYPE "Debug")
+    add_definitions ( -DDEBUG=1 )
 endif()
 
 if(BLENDER)
-	add_definitions ( -DBLENDER=1 )
+    add_definitions ( -DBLENDER=1 )
 endif()
 if(BLENDER AND GUI)
-	message(FATAL_ERROR "Cannot activate both BLENDER and GUI")
+    message(FATAL_ERROR "Cannot activate both BLENDER and GUI")
 endif()
 
 # translate option into python version string
@@ -125,21 +125,21 @@ else()
 endif()
 
 if(OPENVDB AND NOT TBB)
-	message(FATAL_ERROR "Cannot activate OPENVDB without TBB")
+    message(FATAL_ERROR "Cannot activate OPENVDB without TBB")
 endif()
 
 MESSAGE(STATUS "")
 MESSAGE(STATUS "Options - "
-	" -DDEBUG='${DEBUG}' "
-	" -DGUI='${GUI}' "
-	" -DTBB='${TBB}' "
-	" -DOPENMP='${OPENMP}' "
-	" -DPREPDEBUG='${PREPDEBUG}' "
-	" -DDOUBLEPRECISION='${DOUBLEPRECISION}' "
-	" -DPYTHON_VERSION='${PYTHON_VERSION}' "
-	" -DNUMPY='${NUMPY}' "
-	" -DNOPYTHON='${NOPYTHON}' "
-	)
+    " -DDEBUG='${DEBUG}' "
+    " -DGUI='${GUI}' "
+    " -DTBB='${TBB}' "
+    " -DOPENMP='${OPENMP}' "
+    " -DPREPDEBUG='${PREPDEBUG}' "
+    " -DDOUBLEPRECISION='${DOUBLEPRECISION}' "
+    " -DPYTHON_VERSION='${PYTHON_VERSION}' "
+    " -DNUMPY='${NUMPY}' "
+    " -DNOPYTHON='${NOPYTHON}' "
+    )
 MESSAGE(STATUS "Multithreading type : ${MT_TYPE}")
 MESSAGE(STATUS "")
 
@@ -148,18 +148,18 @@ MESSAGE(STATUS "")
 
 # compile prep
 set(SOURCES
-	source/preprocessor/main.cpp
-	source/preprocessor/code.cpp
-	source/preprocessor/tokenize.cpp
-	source/preprocessor/parse.cpp
-	source/preprocessor/util.cpp
-	source/preprocessor/merge.cpp
-	source/preprocessor/codegen_python.cpp
-	source/preprocessor/codegen_kernel.cpp
+    source/preprocessor/main.cpp
+    source/preprocessor/code.cpp
+    source/preprocessor/tokenize.cpp
+    source/preprocessor/parse.cpp
+    source/preprocessor/util.cpp
+    source/preprocessor/merge.cpp
+    source/preprocessor/codegen_python.cpp
+    source/preprocessor/codegen_kernel.cpp
 )
 add_executable(prep ${SOURCES})
 if(NOT WIN32)
-	set_target_properties(prep PROPERTIES COMPILE_FLAGS "-Wall -O2")
+    set_target_properties(prep PROPERTIES COMPILE_FLAGS "-Wall -O2")
 endif()
 
 #******************************************************************************
@@ -173,101 +173,101 @@ set(SILENT_SOURCES)
 
 # need pre-processing
 set(PP_SOURCES
-	source/general.cpp
-	source/fluidsolver.cpp
-	source/conjugategrad.cpp
-	source/multigrid.cpp
-	source/grid.cpp
-	source/grid4d.cpp
-	source/levelset.cpp
-	source/fastmarch.cpp
-	source/shapes.cpp
-	source/mesh.cpp
-	source/particle.cpp
-	source/movingobs.cpp
-	source/fileio/ioutil.cpp
-	source/fileio/iogrids.cpp
-	source/fileio/iomeshes.cpp
-	source/fileio/ioparticles.cpp
-	source/fileio/iovdb.cpp
-	source/fileio/mantaio.cpp
-	source/noisefield.cpp
-	source/kernel.cpp
-	source/vortexsheet.cpp
-	source/vortexpart.cpp
-	source/turbulencepart.cpp
-	source/timing.cpp
-	source/edgecollapse.cpp
-	source/plugin/advection.cpp
-	source/plugin/extforces.cpp
-	source/plugin/apic.cpp
-	source/plugin/flip.cpp
-	source/plugin/fire.cpp
-	source/plugin/fluidguiding.cpp
-	source/plugin/kepsilon.cpp
-	source/plugin/initplugins.cpp
-	source/plugin/meshplugins.cpp
-	source/plugin/pressure.cpp
-	source/plugin/ptsplugins.cpp
-	source/plugin/secondaryparticles.cpp
-	source/plugin/surfaceturbulence.cpp
-	source/plugin/vortexplugins.cpp
-	source/plugin/waveletturbulence.cpp
-	source/plugin/waves.cpp
+    source/general.cpp
+    source/fluidsolver.cpp
+    source/conjugategrad.cpp
+    source/multigrid.cpp
+    source/grid.cpp
+    source/grid4d.cpp
+    source/levelset.cpp
+    source/fastmarch.cpp
+    source/shapes.cpp
+    source/mesh.cpp
+    source/particle.cpp
+    source/movingobs.cpp
+    source/fileio/ioutil.cpp
+    source/fileio/iogrids.cpp
+    source/fileio/iomeshes.cpp
+    source/fileio/ioparticles.cpp
+    source/fileio/iovdb.cpp
+    source/fileio/mantaio.cpp
+    source/noisefield.cpp
+    source/kernel.cpp
+    source/vortexsheet.cpp
+    source/vortexpart.cpp
+    source/turbulencepart.cpp
+    source/timing.cpp
+    source/edgecollapse.cpp
+    source/plugin/advection.cpp
+    source/plugin/extforces.cpp
+    source/plugin/apic.cpp
+    source/plugin/flip.cpp
+    source/plugin/fire.cpp
+    source/plugin/fluidguiding.cpp
+    source/plugin/kepsilon.cpp
+    source/plugin/initplugins.cpp
+    source/plugin/meshplugins.cpp
+    source/plugin/pressure.cpp
+    source/plugin/ptsplugins.cpp
+    source/plugin/secondaryparticles.cpp
+    source/plugin/surfaceturbulence.cpp
+    source/plugin/vortexplugins.cpp
+    source/plugin/waveletturbulence.cpp
+    source/plugin/waves.cpp
     source/plugin/implicitdensityprojection.cpp
-	source/python/defines.py
-	source/test.cpp
+    source/python/defines.py
+    source/test.cpp
 )
 
 set(PP_HEADERS
-	source/general.h
-	source/commonkernels.h
-	source/conjugategrad.h
-	source/multigrid.h
-	source/fastmarch.h
-	source/fluidsolver.h
-	source/grid.h
-	source/grid4d.h
-	source/mesh.h
-	source/particle.h
-	source/levelset.h
-	source/shapes.h
-	source/noisefield.h
-	source/vortexsheet.h
-	source/kernel.h
-	source/timing.h
-	source/movingobs.h
-	source/fileio/mantaio.h
-	source/edgecollapse.h
-	source/vortexpart.h
-	source/turbulencepart.h
+    source/general.h
+    source/commonkernels.h
+    source/conjugategrad.h
+    source/multigrid.h
+    source/fastmarch.h
+    source/fluidsolver.h
+    source/grid.h
+    source/grid4d.h
+    source/mesh.h
+    source/particle.h
+    source/levelset.h
+    source/shapes.h
+    source/noisefield.h
+    source/vortexsheet.h
+    source/kernel.h
+    source/timing.h
+    source/movingobs.h
+    source/fileio/mantaio.h
+    source/edgecollapse.h
+    source/vortexpart.h
+    source/turbulencepart.h
 )
 
 # no pre-processing needed
 set(NOPP_SOURCES
-	source/pwrapper/pymain.cpp
-	source/pwrapper/pclass.cpp
-	source/pwrapper/pvec3.cpp
-	source/pwrapper/pconvert.cpp
-	source/pwrapper/registry.cpp
-	source/util/vectorbase.cpp
-	source/util/vector4d.cpp
-	source/util/simpleimage.cpp
+    source/pwrapper/pymain.cpp
+    source/pwrapper/pclass.cpp
+    source/pwrapper/pvec3.cpp
+    source/pwrapper/pconvert.cpp
+    source/pwrapper/registry.cpp
+    source/util/vectorbase.cpp
+    source/util/vector4d.cpp
+    source/util/simpleimage.cpp
 )
 
 set(NOPP_HEADERS
-	source/pwrapper/pythonInclude.h
-	source/pwrapper/pclass.h
-	source/pwrapper/registry.h
-	source/pwrapper/pconvert.h
-	source/util/integrator.h
-	source/util/vectorbase.h
-	source/util/vector4d.h
-	source/util/quaternion.h
-	source/util/interpol.h
-	source/util/mcubes.h
-	source/util/randomstream.h
-	source/util/solvana.h
+    source/pwrapper/pythonInclude.h
+    source/pwrapper/pclass.h
+    source/pwrapper/registry.h
+    source/pwrapper/pconvert.h
+    source/util/integrator.h
+    source/util/vectorbase.h
+    source/util/vector4d.h
+    source/util/quaternion.h
+    source/util/interpol.h
+    source/util/mcubes.h
+    source/util/randomstream.h
+    source/util/solvana.h
 )
 
 # zl
@@ -278,66 +278,66 @@ if(1)
 endif()
 
 if(GUI)
-	# need QT preprocessor
-	set(QT_HEADERS
-		source/gui/mainwindow.h
-		source/gui/glwidget.h
-		source/gui/painter.h
-		source/gui/meshpainter.h
-		source/gui/qtmain.h
-		source/gui/customctrl.h
-		source/gui/particlepainter.h
-	)
-	set(QT_SOURCES
-		source/gui/customctrl.cpp
-		source/gui/mainwindow.cpp
-		source/gui/glwidget.cpp
-		source/gui/customctrl.cpp
-		source/gui/painter.cpp
-		source/gui/meshpainter.cpp
-		source/gui/particlepainter.cpp
-		source/gui/qtmain.cpp
-	)
-	list(APPEND PP_SOURCES ${QT_SOURCES})
-	list(APPEND PP_HEADERS ${QT_HEADERS})
+    # need QT preprocessor
+    set(QT_HEADERS
+        source/gui/mainwindow.h
+        source/gui/glwidget.h
+        source/gui/painter.h
+        source/gui/meshpainter.h
+        source/gui/qtmain.h
+        source/gui/customctrl.h
+        source/gui/particlepainter.h
+    )
+    set(QT_SOURCES
+        source/gui/customctrl.cpp
+        source/gui/mainwindow.cpp
+        source/gui/glwidget.cpp
+        source/gui/customctrl.cpp
+        source/gui/painter.cpp
+        source/gui/meshpainter.cpp
+        source/gui/particlepainter.cpp
+        source/gui/qtmain.cpp
+    )
+    list(APPEND PP_SOURCES ${QT_SOURCES})
+    list(APPEND PP_HEADERS ${QT_HEADERS})
 endif()
 
 # include dirs
 set(INCLUDE_PATHS
-	${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source
-	${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/util
-	${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/fileio
-	source/pwrapper
-	source/util
-	source/fileio
+    ${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source
+    ${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/util
+    ${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/fileio
+    source/pwrapper
+    source/util
+    source/fileio
 )
 
 # reduced version without python
 if(NOPYTHON)
-	# replace some of the source lists
-	set(NOPP_SOURCES
-		source/nopython/pclass.cpp
-		source/util/vectorbase.cpp
-		source/util/vector4d.cpp
-		source/util/simpleimage.cpp
-	) 
-	# update paths to use nopython versions
-	set(INCLUDE_PATHS
-		${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source
-		${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/util
-		${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/fileio
-		source/nopython
-		source/util
-		source/fileio
-	)
+    # replace some of the source lists
+    set(NOPP_SOURCES
+        source/nopython/pclass.cpp
+        source/util/vectorbase.cpp
+        source/util/vector4d.cpp
+        source/util/simpleimage.cpp
+    ) 
+    # update paths to use nopython versions
+    set(INCLUDE_PATHS
+        ${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source
+        ${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/util
+        ${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/fileio
+        source/nopython
+        source/util
+        source/fileio
+    )
 
-	add_definitions( -DNOPYTHON=1 )
+    add_definitions( -DNOPYTHON=1 )
 endif()
 
 # Multithreading
 if(MT)
-	add_definitions( -DMANTA_MT=1 )
-	if(TBB)
+    add_definitions( -DMANTA_MT=1 )
+    if(TBB)
         if( 1 )
             # Intel TBB
             add_definitions( -DTBB=1 )
@@ -358,68 +358,68 @@ if(MT)
                 list(APPEND F_LIB_PATHS ${TBB_LIBRARY_DIRS})
             endif()
         endif()
-	else()
-		# OpenMP
-		add_definitions( -DOPENMP=1 )
+    else()
+        # OpenMP
+        add_definitions( -DOPENMP=1 )
 
-		if(WIN32)
-			add_definitions( /openmp)
-		else()
-			add_definitions(-fopenmp)
-			set(F_LINKADD "${F_LINKADD} -fopenmp ")
-		endif()
-	endif()
+        if(WIN32)
+            add_definitions( /openmp)
+        else()
+            add_definitions(-fopenmp)
+            set(F_LINKADD "${F_LINKADD} -fopenmp ")
+        endif()
+    endif()
 endif()
 
 #******************************************************************************
 # optional - openvdb support
 
 if(OPENVDB)
-	add_definitions(-DOPENVDB=1)
-	message("Note - mantaflow assumes OpenVDB is installed in '<manta-dir>/openVDB'. For windows you can find an example zip package on the mantaflow homepage under downloads.")
+    add_definitions(-DOPENVDB=1)
+    message("Note - mantaflow assumes OpenVDB is installed in '<manta-dir>/openVDB'. For windows you can find an example zip package on the mantaflow homepage under downloads.")
 
-	find_package(Boost)
-	set(Boost_INCLUDE_DIR "${Boost_INCLUDE_DIR}" CACHE PATH "")
-	list(APPEND INCLUDE_PATHS ${Boost_INCLUDE_DIR})
-	if(Boost_FOUND)
-		message("Found Boost")
-		set(Boost_LIBRARY_DIRS Boost_LIBRARY_DIRS CACHE PATH "")
-	endif()
-	
+    find_package(Boost)
+    set(Boost_INCLUDE_DIR "${Boost_INCLUDE_DIR}" CACHE PATH "")
+    list(APPEND INCLUDE_PATHS ${Boost_INCLUDE_DIR})
+    if(Boost_FOUND)
+        message("Found Boost")
+        set(Boost_LIBRARY_DIRS Boost_LIBRARY_DIRS CACHE PATH "")
+    endif()
+    
     find_package(OpenVDB REQUIRED)
-	if(OPENVDB_FOUND)
-		message("Found OpenVDB") 
-		list(APPEND INCLUDE_PATHS ${OPENVDB_INCLUDE_DIR})
-		list(APPEND F_LIB_PATHS ${OPENVDB_LIBRARY_DIR})
-		list(APPEND F_LIBS ${OPENVDB_LIBRARY})
-		add_definitions(${OPENVDB_DEFINITIONS})
-	else()
-		if(WIN32)
-			message(FATAL_ERROR "Cannot find OpenVDB")
-		else()
-			message("Warning - OpenVDB not found, trying default paths") 
-			# might be in path...
-			list(APPEND F_LIBS Half openvdb tbb)
-		endif()
-	endif()
-	
-	# for windows try houdini, otherwise use openExr directly
-	if(WIN32)
-		find_package(Houdini REQUIRED)
-		if(HOUDINI_FOUND)
-			message("Found Houdini") 
-			list(APPEND INCLUDE_PATHS ${HOUDINI_INCLUDE_DIRS})
-			list(APPEND INCLUDE_PATHS ${HOUDINI_INCLUDE_DIRS}/OpenEXR)
-			list(APPEND F_LIB_PATHS ${HOUDINI_LIBRARY_DIRS})
-			#list(APPEND F_LIBS "Half.lib")
-		endif()
-	else()
-		# for open exr - should be in the default path, add includes if necessary
-	endif()
+    if(OPENVDB_FOUND)
+        message("Found OpenVDB") 
+        list(APPEND INCLUDE_PATHS ${OPENVDB_INCLUDE_DIR})
+        list(APPEND F_LIB_PATHS ${OPENVDB_LIBRARY_DIR})
+        list(APPEND F_LIBS ${OPENVDB_LIBRARY})
+        add_definitions(${OPENVDB_DEFINITIONS})
+    else()
+        if(WIN32)
+            message(FATAL_ERROR "Cannot find OpenVDB")
+        else()
+            message("Warning - OpenVDB not found, trying default paths") 
+            # might be in path...
+            list(APPEND F_LIBS Half openvdb tbb)
+        endif()
+    endif()
+    
+    # for windows try houdini, otherwise use openExr directly
+    if(WIN32)
+        find_package(Houdini REQUIRED)
+        if(HOUDINI_FOUND)
+            message("Found Houdini") 
+            list(APPEND INCLUDE_PATHS ${HOUDINI_INCLUDE_DIRS})
+            list(APPEND INCLUDE_PATHS ${HOUDINI_INCLUDE_DIRS}/OpenEXR)
+            list(APPEND F_LIB_PATHS ${HOUDINI_LIBRARY_DIRS})
+            #list(APPEND F_LIBS "Half.lib")
+        endif()
+    else()
+        # for open exr - should be in the default path, add includes if necessary
+    endif()
 endif()
 
 if(OPENVDB_BLOSC)
-	add_definitions(-DOPENVDB_BLOSC=1)
+    add_definitions(-DOPENVDB_BLOSC=1)
 endif()
 
 #******************************************************************************
@@ -427,28 +427,28 @@ endif()
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-	set(DX_PATH "doxy")
-	foreach(it ${PP_SOURCES} ${PP_HEADERS} ${NOPP_SOURCES} ${NOPP_HEADERS})
-		get_filename_component(CURPATH ${it} PATH)
-		file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${DX_PATH}/${CURPATH}")
-		set(CURDX "${DX_PATH}/${it}")
-		string(REPLACE "/" "_" TGT ${CURDX})
-		string(REPLACE "source/" "" INFILE ${it})
-		add_custom_command(OUTPUT ${TGT}
-						COMMAND prep docgen "0" ${MT_TYPE} "${CMAKE_CURRENT_SOURCE_DIR}/source/" "${INFILE}" "${CURDX}"
-						DEPENDS prep
-						IMPLICIT_DEPENDS CXX ${it}
-						WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-		list(APPEND TGLIST ${TGT})
-	endforeach(it)
+    set(DX_PATH "doxy")
+    foreach(it ${PP_SOURCES} ${PP_HEADERS} ${NOPP_SOURCES} ${NOPP_HEADERS})
+        get_filename_component(CURPATH ${it} PATH)
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${DX_PATH}/${CURPATH}")
+        set(CURDX "${DX_PATH}/${it}")
+        string(REPLACE "/" "_" TGT ${CURDX})
+        string(REPLACE "source/" "" INFILE ${it})
+        add_custom_command(OUTPUT ${TGT}
+                        COMMAND prep docgen "0" ${MT_TYPE} "${CMAKE_CURRENT_SOURCE_DIR}/source/" "${INFILE}" "${CURDX}"
+                        DEPENDS prep
+                        IMPLICIT_DEPENDS CXX ${it}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        list(APPEND TGLIST ${TGT})
+    endforeach(it)
 
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-	add_custom_target(doc
-		${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		DEPENDS ${TGLIST}
-		COMMENT "Generating API documentation with Doxygen" VERBATIM
-	)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+    add_custom_target(doc
+        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS ${TGLIST}
+        COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
 endif(DOXYGEN_FOUND)
 
 
@@ -462,35 +462,35 @@ endif(DOXYGEN_FOUND)
 #set(Python_LIBRARIES "PYTHON_PATH/libs/pythonX.Y.lib/so")
 # auto block
 if(WIN32)
-	find_package(Python COMPONENTS Development REQUIRED)
+    find_package(Python COMPONENTS Development REQUIRED)
     message(STATUS "Python:")
     message(STATUS "    Python_INCLUDE_DIRS: ${Python_INCLUDE_DIRS}")
     message(STATUS "    Python_LIBRARIES: ${Python_LIBRARIES}")
     message(STATUS "    Python_LIBRARY_DIRS: ${Python_LIBRARY_DIRS}")
 else()
-	# try to configure from python itself first
-	execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('INCLUDEPY'))" OUTPUT_VARIABLE Python_INCLUDE_DIRS) 
-	execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('LIBDIR'))"    OUTPUT_VARIABLE PYTHON_LIB1) 
-	if(APPLE)
-		# LDLIBRARY doesnt seem to work for Macs...
-		set(PYTHON_LIB2 "../Python")
-	else()
-		execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('LDLIBRARY'))" OUTPUT_VARIABLE PYTHON_LIB2) 
-	endif()
-	set(Python_LIBRARIES "${PYTHON_LIB1}/${PYTHON_LIB2}")
-	if(EXISTS "${Python_INCLUDE_DIRS}" AND EXISTS "${Python_LIBRARIES}")
-		message("Found python configuration")
-	else()
-		# otherwise, fall back to cmake find
-		if(NOT PYTHON_VERSION)
-			find_package(PythonLibs REQUIRED) # use any
-		else()
-			find_package(PythonLibs ${PYTHON_VER_ID} EXACT QUIET) # fixed version
-		endif()
-		if(NOT PYTHONLIBS_FOUND)
-			message(FATAL_ERROR "No python found, please manually set PYTHON_VERSION for cmake, or PYTHON_ paths in CMakeLists.txt")
-		endif()
-	endif()
+    # try to configure from python itself first
+    execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('INCLUDEPY'))" OUTPUT_VARIABLE Python_INCLUDE_DIRS) 
+    execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('LIBDIR'))"    OUTPUT_VARIABLE PYTHON_LIB1) 
+    if(APPLE)
+        # LDLIBRARY doesnt seem to work for Macs...
+        set(PYTHON_LIB2 "../Python")
+    else()
+        execute_process(COMMAND python${PYTHON_VER_ID} -c "import sys,sysconfig; sys.stdout.write(sysconfig.get_config_var('LDLIBRARY'))" OUTPUT_VARIABLE PYTHON_LIB2) 
+    endif()
+    set(Python_LIBRARIES "${PYTHON_LIB1}/${PYTHON_LIB2}")
+    if(EXISTS "${Python_INCLUDE_DIRS}" AND EXISTS "${Python_LIBRARIES}")
+        message("Found python configuration")
+    else()
+        # otherwise, fall back to cmake find
+        if(NOT PYTHON_VERSION)
+            find_package(PythonLibs REQUIRED) # use any
+        else()
+            find_package(PythonLibs ${PYTHON_VER_ID} EXACT QUIET) # fixed version
+        endif()
+        if(NOT PYTHONLIBS_FOUND)
+            message(FATAL_ERROR "No python found, please manually set PYTHON_VERSION for cmake, or PYTHON_ paths in CMakeLists.txt")
+        endif()
+    endif()
 endif()
 # end auto block, python config done
 list(APPEND INCLUDE_PATHS ${Python_INCLUDE_DIRS})
@@ -500,85 +500,85 @@ message("Using python include path '${Python_INCLUDE_DIRS}' and libs '${Python_L
 #******************************************************************************
 # optional - compile with numpy support?
 if(NUMPY)
-	# if the python command below doesnt work, manually set path, e.g., use "numpy.get_include()" to find path 
-	# set(NUMPY_INCLUDE_DIR "${Python_INCLUDE_DIRS}/dist-packages/numpy/core/include") 
+    # if the python command below doesnt work, manually set path, e.g., use "numpy.get_include()" to find path 
+    # set(NUMPY_INCLUDE_DIR "${Python_INCLUDE_DIRS}/dist-packages/numpy/core/include") 
     
     #set( CMD python${PYTHON_VER_ID} " -c import numpy, sys\; sys.stdout.write( numpy.get_include() )" )
     #set( CMD "python" " -c \"import numpy, sys\; sys.stdout.write( numpy.get_include() )\"" )
     set( CMD "python" )
     set( ARG "get_numpy_path.py" )
-	execute_process(COMMAND ${CMD} ${ARG} WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} OUTPUT_VARIABLE NUMPY_INCLUDE_DIR) 
+    execute_process(COMMAND ${CMD} ${ARG} WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} OUTPUT_VARIABLE NUMPY_INCLUDE_DIR) 
     
     message( "NUMPY_INCLUDE_DIR: " ${NUMPY_INCLUDE_DIR} )
-	if("${NUMPY_INCLUDE_DIR}" STREQUAL "")
-		message(FATAL_ERROR "No numpy path found, please manually set NUMPY_INCLUDE_DIR in CMakeLists.txt using get_numpy_path.py")
-	endif()
-	message("Using numpy include path '${NUMPY_INCLUDE_DIR}' ")  
-	list(APPEND INCLUDE_PATHS ${NUMPY_INCLUDE_DIR}) 
-	list(APPEND   PP_SOURCES source/plugin/numpyconvert.cpp)
-	list(APPEND   PP_SOURCES source/plugin/tfplugins.cpp)
-	list(APPEND NOPP_SOURCES source/pwrapper/numpyWrap.cpp)
-	list(APPEND NOPP_HEADERS source/pwrapper/numpyWrap.h)
-	add_definitions( -DNUMPY=1 )
+    if("${NUMPY_INCLUDE_DIR}" STREQUAL "")
+        message(FATAL_ERROR "No numpy path found, please manually set NUMPY_INCLUDE_DIR in CMakeLists.txt using get_numpy_path.py")
+    endif()
+    message("Using numpy include path '${NUMPY_INCLUDE_DIR}' ")  
+    list(APPEND INCLUDE_PATHS ${NUMPY_INCLUDE_DIR}) 
+    list(APPEND   PP_SOURCES source/plugin/numpyconvert.cpp)
+    list(APPEND   PP_SOURCES source/plugin/tfplugins.cpp)
+    list(APPEND NOPP_SOURCES source/pwrapper/numpyWrap.cpp)
+    list(APPEND NOPP_HEADERS source/pwrapper/numpyWrap.h)
+    add_definitions( -DNUMPY=1 )
 endif()
 
 #******************************************************************************
 # Z lib compression
 if(1)
-	# default: build from own sources
-	set(ZLIB_SRC adler32.c compress.c crc32.c deflate.c gzclose.c gzlib.c gzread.c gzwrite.c
-				 inflate.c infback.c inftrees.c inffast.c trees.c uncompr.c zutil.c)
-	foreach(it ${ZLIB_SRC})
-		list(APPEND SILENT_SOURCES dependencies/zlib-1.2.8/${it}) 
-	endforeach(it)
+    # default: build from own sources
+    set(ZLIB_SRC adler32.c compress.c crc32.c deflate.c gzclose.c gzlib.c gzread.c gzwrite.c
+                 inflate.c infback.c inftrees.c inffast.c trees.c uncompr.c zutil.c)
+    foreach(it ${ZLIB_SRC})
+        list(APPEND SILENT_SOURCES dependencies/zlib-1.2.8/${it}) 
+    endforeach(it)
 
-	set(ZLIB_ADDFLAGS "-Dverbose=-1")
-	if(NOT WIN32)
-		# otherwise we get warnings that we could only fix by upgrading zlib to a version > 1.2.8
-		set(ZLIB_ADDFLAGS "-Wno-implicit-function-declaration -Wno-shift-negative-value -Dverbose=-1")
-	endif()
-	set_source_files_properties(${SILENT_SOURCES} PROPERTIES COMPILE_FLAGS "${ZLIB_ADDFLAGS}")
+    set(ZLIB_ADDFLAGS "-Dverbose=-1")
+    if(NOT WIN32)
+        # otherwise we get warnings that we could only fix by upgrading zlib to a version > 1.2.8
+        set(ZLIB_ADDFLAGS "-Wno-implicit-function-declaration -Wno-shift-negative-value -Dverbose=-1")
+    endif()
+    set_source_files_properties(${SILENT_SOURCES} PROPERTIES COMPILE_FLAGS "${ZLIB_ADDFLAGS}")
 
-	list(APPEND INCLUDE_PATHS dependencies/zlib-1.2.8)
+    list(APPEND INCLUDE_PATHS dependencies/zlib-1.2.8)
 endif()
 if(0)
-	# try to locate and use system libs
-	include(FindZLIB)
-	list(APPEND INCLUDE_PATHS ${ZLIB_INCLUDE_DIR})
-	list(APPEND F_LIBS ${ZLIB_LIBRARIES})
+    # try to locate and use system libs
+    include(FindZLIB)
+    list(APPEND INCLUDE_PATHS ${ZLIB_INCLUDE_DIR})
+    list(APPEND F_LIBS ${ZLIB_LIBRARIES})
 endif()
 if(0)
-	# disable 
-	add_definitions(-DNO_ZLIB=1)
+    # disable 
+    add_definitions(-DNO_ZLIB=1)
 endif()
 
 # increase FP precision?
 if(DOUBLEPRECISION)
-	add_definitions(-DFLOATINGPOINT_PRECISION=2)
+    add_definitions(-DFLOATINGPOINT_PRECISION=2)
 endif()
 
 #******************************************************************************
 # cnpy support (import/export numpy arrays)
 if(TRUE)
-	# default: build from own sources
-	list(APPEND SILENT_SOURCES dependencies/cnpy/cnpy.cpp)
+    # default: build from own sources
+    list(APPEND SILENT_SOURCES dependencies/cnpy/cnpy.cpp)
 
-	set(CNPY_ADDFLAGS "-std=c++11")
-	set_source_files_properties(dependencies/cnpy/cnpy.cpp PROPERTIES COMPILE_FLAGS "${CNPY_ADDFLAGS}")
+    set(CNPY_ADDFLAGS "-std=c++11")
+    set_source_files_properties(dependencies/cnpy/cnpy.cpp PROPERTIES COMPILE_FLAGS "${CNPY_ADDFLAGS}")
 
-	list(APPEND INCLUDE_PATHS dependencies/cnpy)
+    list(APPEND INCLUDE_PATHS dependencies/cnpy)
 endif()
 
 #******************************************************************************
 # generate git repository info , currently only for unix systems
 
 if(NOT WIN32)
-	set(GITINFO "${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/gitinfo.h")
-	MESSAGE(STATUS "Git info target header ${GITINFO}")
-	add_custom_command(OUTPUT ${GITINFO}
-					   COMMAND python${PYTHON_VER_ID} "${CMAKE_CURRENT_SOURCE_DIR}/tools/getGitVersion.py" "${GITINFO}"
-					   DEPENDS ${PP_SOURCES} ${PP_HEADERS} ${NOPP_SOURCES} ${NOPP_HEADERS} ${QT_SOURCES} ${QT_HEADERS}
-					   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
+    set(GITINFO "${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/gitinfo.h")
+    MESSAGE(STATUS "Git info target header ${GITINFO}")
+    add_custom_command(OUTPUT ${GITINFO}
+                       COMMAND python${PYTHON_VER_ID} "${CMAKE_CURRENT_SOURCE_DIR}/tools/getGitVersion.py" "${GITINFO}"
+                       DEPENDS ${PP_SOURCES} ${PP_HEADERS} ${NOPP_SOURCES} ${NOPP_HEADERS} ${QT_SOURCES} ${QT_HEADERS}
+                       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
 endif()
 
 #******************************************************************************
@@ -591,11 +591,11 @@ set(PP_REGS)
 set(PP_PREPD "0")
 set(PREPPED_SOURCES)
 if(PREPDEBUG)
-	set(PP_PREPD "1")
+    set(PP_PREPD "1")
 endif()
 FOREACH(it ${PP_SOURCES} ${PP_HEADERS})
-	get_filename_component(CURPATH ${it} PATH)
-	get_filename_component(CUREXT ${it} EXT)
+    get_filename_component(CURPATH ${it} PATH)
+    get_filename_component(CUREXT ${it} EXT)
     get_filename_component(CURNAME ${it} NAME)
     if( NOT IS_ABSOLUTE ${it} )
         #message( "Relative: ${it}" )
@@ -609,29 +609,29 @@ FOREACH(it ${PP_SOURCES} ${PP_HEADERS})
         set( CURPP "${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/external/${CURNAME}" )
         set( INFILE "${CURNAME}" )
         set( INDIR "${CURPATH}/" )
-	endif()
+    endif()
     
-	set(OUTFILES "${CURPP}")
-	if("${CUREXT}" STREQUAL ".h" OR "${CUREXT}" STREQUAL ".py")
-		if(NOT NOPYTHON)
-			list(APPEND PP_REGS "${CURPP}.reg")
-			list(APPEND PP_REGCPP "${CURPP}.reg.cpp")
-		endif()
-		set_source_files_properties("${CURPP}.reg.cpp" OBJECT_DEPENDS "${CURPP}")
-		list(APPEND OUTFILES "${CURPP}.reg")
-	endif()
+    set(OUTFILES "${CURPP}")
+    if("${CUREXT}" STREQUAL ".h" OR "${CUREXT}" STREQUAL ".py")
+        if(NOT NOPYTHON)
+            list(APPEND PP_REGS "${CURPP}.reg")
+            list(APPEND PP_REGCPP "${CURPP}.reg.cpp")
+        endif()
+        set_source_files_properties("${CURPP}.reg.cpp" OBJECT_DEPENDS "${CURPP}")
+        list(APPEND OUTFILES "${CURPP}.reg")
+    endif()
 
-	# preprocessor
-	add_custom_command(OUTPUT ${OUTFILES}
+    # preprocessor
+    add_custom_command(OUTPUT ${OUTFILES}
                     COMMAND attrib -R "${CURPP}" # zk
-					COMMAND prep generate ${PP_PREPD} ${MT_TYPE} "${INDIR}" "${INFILE}" "${CURPP}"
+                    COMMAND prep generate ${PP_PREPD} ${MT_TYPE} "${INDIR}" "${INFILE}" "${CURPP}"
                     COMMAND attrib +R "${CURPP}"
-					DEPENDS prep
-					IMPLICIT_DEPENDS CXX ${it}
-					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+                    DEPENDS prep
+                    IMPLICIT_DEPENDS CXX ${it}
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-	set_source_files_properties(${OUTFILES} PROPERTIES GENERATED 1)
-	list(APPEND PREPPED_SOURCES ${CURPP})
+    set_source_files_properties(${OUTFILES} PROPERTIES GENERATED 1)
+    list(APPEND PREPPED_SOURCES ${CURPP})
 ENDFOREACH(it)
 list(APPEND SOURCES ${PREPPED_SOURCES})
 
@@ -640,68 +640,68 @@ list(APPEND SOURCES ${sources2})
 
 # link reg files , for python glue code
 if(NOT NOPYTHON)
-	add_custom_command(OUTPUT ${PP_REGCPP}
-					COMMAND prep link ${PP_REGS}
-					DEPENDS prep ${PP_REGS}
-					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-					COMMENT "Linking reg files")
-	list(APPEND SOURCES ${PP_REGCPP})
-	set_source_files_properties(${PP_REGCPP} PROPERTIES GENERATED 1)	
-	set(PP_REGISTER ${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/registration.cpp) # path to register, pass to prep as last argument
-	add_custom_command(OUTPUT ${PP_REGISTER}
-					COMMAND prep register ${SOURCES} ${PP_REGISTER}
-					DEPENDS prep ${PP_REGS} ${SOURCES}
-					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-					COMMENT "Ensuring registration functions are not removed by compiler")
-	list(APPEND SOURCES ${PP_REGISTER})
+    add_custom_command(OUTPUT ${PP_REGCPP}
+                    COMMAND prep link ${PP_REGS}
+                    DEPENDS prep ${PP_REGS}
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                    COMMENT "Linking reg files")
+    list(APPEND SOURCES ${PP_REGCPP})
+    set_source_files_properties(${PP_REGCPP} PROPERTIES GENERATED 1)    
+    set(PP_REGISTER ${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/registration.cpp) # path to register, pass to prep as last argument
+    add_custom_command(OUTPUT ${PP_REGISTER}
+                    COMMAND prep register ${SOURCES} ${PP_REGISTER}
+                    DEPENDS prep ${PP_REGS} ${SOURCES}
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                    COMMENT "Ensuring registration functions are not removed by compiler")
+    list(APPEND SOURCES ${PP_REGISTER})
 endif()
 
 #******************************************************************************
 # QT for GUI
 
 if(GUI)
-	# remap
-	set(QT_REMAP)
-	foreach(it ${QT_HEADERS})
-		list(APPEND QT_REMAP "${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/${it}")
-	endforeach(it)
-	add_definitions(-DGUI=1)
-	list(APPEND INCLUDE_PATHS ${CMAKE_CURRENT_BINARY_DIR}
-				${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/gui source/gui)
+    # remap
+    set(QT_REMAP)
+    foreach(it ${QT_HEADERS})
+        list(APPEND QT_REMAP "${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/${it}")
+    endforeach(it)
+    add_definitions(-DGUI=1)
+    list(APPEND INCLUDE_PATHS ${CMAKE_CURRENT_BINARY_DIR}
+                ${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/gui source/gui)
 
-	cmake_policy(SET CMP0020 NEW)
-	find_package(Qt5Core QUIET)
-	if(Qt5Core_FOUND)
-		message("Using Qt5")
-		find_package(Qt5Widgets REQUIRED)
-		find_package(Qt5OpenGL REQUIRED)
+    cmake_policy(SET CMP0020 NEW)
+    find_package(Qt5Core QUIET)
+    if(Qt5Core_FOUND)
+        message("Using Qt5")
+        find_package(Qt5Widgets REQUIRED)
+        find_package(Qt5OpenGL REQUIRED)
 
-		qt5_wrap_cpp(MOC_OUTFILES ${QT_REMAP} )
-		qt5_add_resources(QT_RES resources/res.qrc )
-		add_definitions(${Qt5Widgets_DEFINITIONS})
-		list(APPEND INCLUDE_PATHS ${Qt5Widgets_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS})
-		list(APPEND F_LIBS ${Qt5Core_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES})
-		list(APPEND SOURCES ${MOC_OUTFILES} ${QT_RES})
-	else()
-		message("No Qt5 found (recommended!), trying to use Qt4")
-		find_package(Qt4 REQUIRED)
-		set(QT_USE_QTOPENGL TRUE)
+        qt5_wrap_cpp(MOC_OUTFILES ${QT_REMAP} )
+        qt5_add_resources(QT_RES resources/res.qrc )
+        add_definitions(${Qt5Widgets_DEFINITIONS})
+        list(APPEND INCLUDE_PATHS ${Qt5Widgets_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS})
+        list(APPEND F_LIBS ${Qt5Core_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES})
+        list(APPEND SOURCES ${MOC_OUTFILES} ${QT_RES})
+    else()
+        message("No Qt5 found (recommended!), trying to use Qt4")
+        find_package(Qt4 REQUIRED)
+        set(QT_USE_QTOPENGL TRUE)
 
-		qt4_wrap_cpp(MOC_OUTFILES ${QT_REMAP} )
-		qt4_add_resources(QT_RES resources/res.qrc )
-		include(${QT_USE_FILE})
-		add_definitions(${QT_DEFINITIONS})
-		list(APPEND F_LIBS ${QT_LIBRARIES})
-		list(APPEND SOURCES ${MOC_OUTFILES} ${QT_RES})
-	endif()
+        qt4_wrap_cpp(MOC_OUTFILES ${QT_REMAP} )
+        qt4_add_resources(QT_RES resources/res.qrc )
+        include(${QT_USE_FILE})
+        add_definitions(${QT_DEFINITIONS})
+        list(APPEND F_LIBS ${QT_LIBRARIES})
+        list(APPEND SOURCES ${MOC_OUTFILES} ${QT_RES})
+    endif()
 
-	if(APPLE)
-		# mac opengl framework
-		set(F_LINKADD "${F_LINKADD} -framework OpenGL ")
-	else()
-		find_package(OpenGL REQUIRED)
-		list(APPEND F_LIBS ${OPENGL_LIBRARIES})
-	endif()
+    if(APPLE)
+        # mac opengl framework
+        set(F_LINKADD "${F_LINKADD} -framework OpenGL ")
+    else()
+        find_package(OpenGL REQUIRED)
+        list(APPEND F_LIBS ${OPENGL_LIBRARIES})
+    endif()
 endif()
 
 # zl 
@@ -738,46 +738,46 @@ include_directories( ${INCLUDE_PATHS})
 link_directories( ${F_LIB_PATHS} )
 
 if(NOT NOPYTHON)
-	# build regular executable
+    # build regular executable
 
-	if(WIN32)
-		# make nice folders for Visual Studio
-		set_source_files_properties(${PP_SOURCES} ${PP_HEADERS} ${NOPP_HEADERS} PROPERTIES HEADER_FILE_ONLY TRUE)
-		add_executable(${EXECCMD} ${SOURCES} ${PP_SOURCES} ${PP_HEADERS})
-		source_group(Generated FILES ${SOURCES} ${HEADERS})
-	else()
-		add_executable(${EXECCMD} ${SOURCES} ${GITINFO})
-	endif()
+    if(WIN32)
+        # make nice folders for Visual Studio
+        set_source_files_properties(${PP_SOURCES} ${PP_HEADERS} ${NOPP_HEADERS} PROPERTIES HEADER_FILE_ONLY TRUE)
+        add_executable(${EXECCMD} ${SOURCES} ${PP_SOURCES} ${PP_HEADERS})
+        source_group(Generated FILES ${SOURCES} ${HEADERS})
+    else()
+        add_executable(${EXECCMD} ${SOURCES} ${GITINFO})
+    endif()
     message( "F_LIBS: ${F_LIBS}" )
-	target_link_libraries( ${EXECCMD} ${F_LIBS} )
+    target_link_libraries( ${EXECCMD} ${F_LIBS} )
 
-	# fix for "el capitan" TBB and changed dynamic library env vars, lookup of TBB can cause problems without @rpath
-	if(APPLE)
-		EXEC_PROGRAM(uname ARGS -v  OUTPUT_VARIABLE OSX_VERSION)
-		STRING(REGEX MATCH "[0-9]+" OSX_VERSION ${OSX_VERSION})
-		if(OSX_VERSION GREATER 14)
-			ADD_CUSTOM_COMMAND(TARGET manta   POST_BUILD COMMAND 
-				${CMAKE_INSTALL_NAME_TOOL} -change libtbb.dylib @rpath/libtbb.dylib $<TARGET_FILE:manta> )
-		endif()
-	endif()
+    # fix for "el capitan" TBB and changed dynamic library env vars, lookup of TBB can cause problems without @rpath
+    if(APPLE)
+        EXEC_PROGRAM(uname ARGS -v  OUTPUT_VARIABLE OSX_VERSION)
+        STRING(REGEX MATCH "[0-9]+" OSX_VERSION ${OSX_VERSION})
+        if(OSX_VERSION GREATER 14)
+            ADD_CUSTOM_COMMAND(TARGET manta   POST_BUILD COMMAND 
+                ${CMAKE_INSTALL_NAME_TOOL} -change libtbb.dylib @rpath/libtbb.dylib $<TARGET_FILE:manta> )
+        endif()
+    endif()
 
 elseif(BUILD_STATIC)
-	# only build static library in nopython mode
-	set(EXECCMD manta_static)
-	# only build static library, e.g. for nopython mode
-	ADD_LIBRARY (core OBJECT ${SOURCES} ${GITINFO})
-	ADD_LIBRARY (${EXECCMD} STATIC $<TARGET_OBJECTS:core>)
+    # only build static library in nopython mode
+    set(EXECCMD manta_static)
+    # only build static library, e.g. for nopython mode
+    ADD_LIBRARY (core OBJECT ${SOURCES} ${GITINFO})
+    ADD_LIBRARY (${EXECCMD} STATIC $<TARGET_OBJECTS:core>)
 endif()
 
 # gcc compiler flags 
 if(NOT WIN32)
-	if(DEBUG)
-		# stricter: no optimizations and inlining
-		set_target_properties(${EXECMD} PROPERTIES COMPILE_FLAGS " -O0 -fno-inline -Wall ")
-	else()
-		# non-debug, optimized version
-		set_target_properties(${EXECMD} PROPERTIES COMPILE_FLAGS " -O3 -Wall ")
-	endif()
+    if(DEBUG)
+        # stricter: no optimizations and inlining
+        set_target_properties(${EXECMD} PROPERTIES COMPILE_FLAGS " -O0 -fno-inline -Wall ")
+    else()
+        # non-debug, optimized version
+        set_target_properties(${EXECMD} PROPERTIES COMPILE_FLAGS " -O3 -Wall ")
+    endif()
 endif()
 
 # if supported, use c++14 for all pre-processed c++ sources
@@ -799,54 +799,56 @@ endif()
 
 # sanity check for openvdb support
 if(OPENVDB AND NOT COMPILER_SUPPORTS_CXX14)
-	#message(FATAL_ERROR "Compilation with OpenVDB requires a compiler with C++14 support")
+    #message(FATAL_ERROR "Compilation with OpenVDB requires a compiler with C++14 support")
 endif()
 
 # necessary for newer LLVM clang versions, to prevent abundance of "Namify" template warnings... for compatibility disable unknown warnings
 if(APPLE)
-	set_source_files_properties(${PP_REGCPP} ${PREPPED_SOURCES} ${NOPP_SOURCES} PROPERTIES COMPILE_FLAGS " -Wno-undefined-var-template  -Wno-unknown-warning-option ${CXX_STANDARD_FLAG}" )
-	if(GUI)
-		set_source_files_properties(${MOC_OUTFILES} PROPERTIES COMPILE_FLAGS " -Wno-undefined-var-template  -Wno-unknown-warning-option ${CXX_STANDARD_FLAG}" )
-	endif()
+    set_source_files_properties(${PP_REGCPP} ${PREPPED_SOURCES} ${NOPP_SOURCES} PROPERTIES COMPILE_FLAGS " -Wno-undefined-var-template  -Wno-unknown-warning-option ${CXX_STANDARD_FLAG}" )
+    if(GUI)
+        set_source_files_properties(${MOC_OUTFILES} PROPERTIES COMPILE_FLAGS " -Wno-undefined-var-template  -Wno-unknown-warning-option ${CXX_STANDARD_FLAG}" )
+    endif()
 endif()
 
 # thread support for linux
 if(NOT APPLE AND NOT WIN32)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 endif()
 
 # python debugging
 if(DEBUG_PYTHON_WITH_RELEASE)
-	add_definitions(-DDEBUG_PYTHON_WITH_RELEASE=1)
+    add_definitions(-DDEBUG_PYTHON_WITH_RELEASE=1)
 endif()
 
 # MSVC compiler settings
 if(WIN32)
-	# get rid of some MSVC warnings
-	add_definitions( /wd4018 /wd4146 /wd4800 )
+    #add_definitions( /std:c++20 )
 
-	# for zlib
-	add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
-	add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
+    # get rid of some MSVC warnings
+    add_definitions( /wd4018 /wd4146 /wd4800 )
 
-	# unsigned to signed conversions
-	add_definitions( /wd4267 )
-	# double <> single precision
-	add_definitions( /wd4244 /wd4305 )
-	# disable warnings for unsecure functions
-	add_definitions( /D "_CRT_SECURE_NO_WARNINGS" )
+    # for zlib
+    add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
+    add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
+
+    # unsigned to signed conversions
+    add_definitions( /wd4267 )
+    # double <> single precision
+    add_definitions( /wd4244 /wd4305 )
+    # disable warnings for unsecure functions
+    add_definitions( /D "_CRT_SECURE_NO_WARNINGS" )
 
     add_definitions( /bigobj )
 
-	if(BLENDER)
-		set(CMAKE_CXX_FLAGS_DEBUG          "/MTd /Od /Ob0 /D_DEBUG /D PLATFORM_WINDOWS /Zi /RTC1  " )
-		set(CMAKE_CXX_FLAGS_MINSIZEREL     "/MT /O1 /Ob1 /D NDEBUG /D PLATFORM_WINDOWS            " )
-		set(CMAKE_CXX_FLAGS_RELEASE        "/MT /O2 /Ob2 /D NDEBUG /D PLATFORM_WINDOWS            " )
-		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MT /O2 /Ob1 /D NDEBUG /D PLATFORM_WINDOWS /Zi        " )
-	endif()
+    if(BLENDER)
+        set(CMAKE_CXX_FLAGS_DEBUG          "/MTd /Od /Ob0 /D_DEBUG /D PLATFORM_WINDOWS /Zi /RTC1  " )
+        set(CMAKE_CXX_FLAGS_MINSIZEREL     "/MT /O1 /Ob1 /D NDEBUG /D PLATFORM_WINDOWS            " )
+        set(CMAKE_CXX_FLAGS_RELEASE        "/MT /O2 /Ob2 /D NDEBUG /D PLATFORM_WINDOWS            " )
+        set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MT /O2 /Ob1 /D NDEBUG /D PLATFORM_WINDOWS /Zi        " )
+    endif()
 
-	# enable when using Qt creator:
-	#add_definitions(/FS)
+    # enable when using Qt creator:
+    #add_definitions(/FS)
 endif()
 
 # print debug summary
