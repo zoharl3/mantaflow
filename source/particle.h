@@ -186,12 +186,12 @@ protected:
 //! getPosPdata / setPosPdata.
 struct BasicParticleData {
 public:
-	BasicParticleData() : pos(0.), flag(0) {}
+    BasicParticleData() : pos( 0. ), pos0( 0. ), flag( 0 ) {}
 	BasicParticleData(const Vec3& p) : pos(p), flag(0) {}
 	static ParticleBase::SystemType getType() { return ParticleBase::PARTICLE; }
 
 	//! data (note, this size is currently hard coded for uni i/o)
-	Vec3 pos;
+	Vec3 pos, pos0;
 	int  flag;
 };
 

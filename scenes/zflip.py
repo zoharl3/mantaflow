@@ -43,7 +43,7 @@ bScreenShot = 1
 dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 116 # 300, 500, 1200, 1500
-res = 9 # 32, 48, 64(default), 96, 128(large)
+res = 11 # 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -182,7 +182,6 @@ else:
 copyFlagsToFlags( flags, flagsPos )
 
 print( '# particles:', pp.pySize() )
-pos1 = s.create( PdataVec3 )
 
 if 1 and GUI:
     gui = Gui()
@@ -296,8 +295,7 @@ while 1:
     if 1:
         scale_particle_pos( pp=pp, scale=scale2 )
         #markFluidCells( parts=pp, flags=flags2 )
-        pos1.pyResize( pp.pySize() )
-        pp.getPosPdata( target=pos1 ) # save position
+        set_particles_pos0( pp=pp )
         scale_particle_pos( pp=pp, scale=1/scale2 )
     
     # FLIP velocity update
@@ -335,7 +333,7 @@ while 1:
         dt_bound = s.timestep/3
 
         tic()
-        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, x0=pos1, flags=flags2, dt=s.timestep, dt_bound=dt_bound, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
+        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags2, dt=s.timestep, dt_bound=dt_bound, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
         if s.timestep < 0:
             ret = -1
             s.timestep *= -1
