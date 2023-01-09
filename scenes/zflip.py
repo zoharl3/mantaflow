@@ -42,7 +42,7 @@ bScreenShot = 1
 # solver params
 dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
-it_max = 116 # 300, 500, 1200, 1500
+it_max = 99 # 300, 500, 1200, 1500
 res = 11 # 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
