@@ -41,13 +41,13 @@ bScreenShot = 1
 
 # solver params
 dim = 2 # 2, 3
-part_per_cell_1d = 1 # 3, 2(default), 1
+part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 116 # 300, 500, 1200, 1500
 res = 9 # 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
-narrowBandWidth = 3 # 4
+narrowBandWidth = 2 # 4
 
 combineBandWidth = narrowBandWidth - 1
 
