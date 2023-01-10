@@ -71,27 +71,31 @@ PYTHON() void sampleLevelsetWithParticles(const LevelsetGrid& phi, const FlagGri
 		parts.doCompress();
 	}
 
-	FOR_IJK_BND(phi, 0) {
-		if ( flags.isObstacle(i,j,k) ) continue;
-		if ( refillEmpty && flags.isFluid(i,j,k) ) continue;
-		if ( phi(i,j,k) < 1.733 ) {
-			const Vec3 pos (i,j,k);
-			for (int dk=0; dk<(is3D ? discretization : 1); dk++)
-			for (int dj=0; dj<discretization; dj++)
-			for (int di=0; di<discretization; di++) {
-				Vec3 subpos = pos + disp * Vec3(0.5+di, 0.5+dj, 0.5+dk);
-				subpos += jlen * (Vec3(1,1,1) - 2.0 * mRand.getVec3());
-				if(!is3D) subpos[2] = 0.5; 
-				if( phi.getInterpolated(subpos) > 0. ) continue; 
-				if(particleFlag < 0){
-					parts.addBuffered(subpos);
-				}
-				else{
-					parts.addBuffered(subpos, particleFlag);
-				}
-			}
-		}
-	}
+    FOR_IJK_BND( phi, 0 ) {
+        if ( flags.isObstacle( i, j, k ) )
+            continue;
+        if ( refillEmpty && flags.isFluid( i, j, k ) )
+            continue;
+        if ( phi( i, j, k ) < 1.733 ) {
+            const Vec3 pos( i, j, k );
+            for ( int dk = 0; dk < ( is3D ? discretization : 1 ); dk++ )
+                for ( int dj = 0; dj < 1; dj++ )
+                //for ( int dj = 0; dj < discretization; dj++ )
+                    for ( int di = 0; di < discretization; di++ ) {
+                        Vec3 subpos = pos + disp * Vec3( 0.5 + di, 0.5 + dj, 0.5 + dk );
+                        subpos += jlen * ( Vec3( 1, 1, 1 ) - 2.0 * mRand.getVec3() );
+                        if ( !is3D )
+                            subpos[2] = 0.5;
+                        if ( phi.getInterpolated( subpos ) > 0. )
+                            continue;
+                        if ( particleFlag < 0 ) {
+                            parts.addBuffered( subpos );
+                        } else {
+                            parts.addBuffered( subpos, particleFlag );
+                        }
+                    }
+        }
+    }
 
 	parts.insertBufferedParticles();
 }

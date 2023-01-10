@@ -60,6 +60,8 @@ if dim == 2:
     gs2.z = 1
     bMesh = 0
     bSaveParts = 0
+#ppc = part_per_cell_1d**dim
+ppc = part_per_cell_1d
 
 boundary_width = 0
 if scale2 < 1:
@@ -71,7 +73,7 @@ gravity *= math.sqrt( res )
 #gravity = -0.003 # flip5
 
 print()
-print( 'dim:', dim, ', res:', res, ', part_per_cell_1d:', part_per_cell_1d )
+print( 'dim:', dim, ', res:', res, ', ppc:', ppc )
 print( 'narrowBand:', narrowBand, ', narrowBandWidth:', narrowBandWidth )
 print( 'b_fixed_vol:', b_fixed_vol )
 print( 'gravity:', gravity )
@@ -115,9 +117,9 @@ Lambda = s.create(RealGrid)
 deltaX = s.create(MACGrid)
 flagsPos = s.create(FlagGrid)
 pMass = pp.create(PdataReal)
-mass = 1.0 / (part_per_cell_1d * part_per_cell_1d * part_per_cell_1d) 
+mass = 1.0 / part_per_cell_1d**3
 if dim == 2:
-    mass = 1.0 / (part_per_cell_1d * part_per_cell_1d) 
+    mass = 1.0 / part_per_cell_1d**2
 
 resampleParticles = False # must be a boolean type
 
@@ -333,7 +335,7 @@ while 1:
         dt_bound = s.timestep/3
 
         tic()
-        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags2, dt=s.timestep, dt_bound=dt_bound, dim=dim, part_per_cell_1d=int(part_per_cell_1d/scale2), phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
+        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags2, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
         if s.timestep < 0:
             ret = -1
             s.timestep *= -1
@@ -395,7 +397,7 @@ while 1:
     # resample particles
     if not b_fixed_vol:
         pVel.setSource( vel, isMAC=True ) # set source grids for resampling, used in adjustNumber
-        minParticles = pow( part_per_cell_1d, dim )
+        minParticles = ppc
         maxParticles = minParticles
         if narrowBand:
             phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
