@@ -351,6 +351,30 @@ void ParticlePainter::paintBasicSys() {
 	}
 	
 	// draw basic part sys done
+
+    // zl trail
+    if ( 1 && bp->getParent()->is2D() ) {
+        glBegin( GL_LINES );
+        for ( int i = 0; i < (int)bp->size(); i++ ) {
+            if ( !bp->isActive( i ) )
+                continue;
+            Vec3 pos0 = ( *bp )[i].pos0;
+            Vec3 pos = ( *bp )[i].pos;
+
+            Vec3i c0 = toVec3i( pos0 ), c = toVec3i( pos );
+            if ( c0 == c )
+                continue;
+
+            Vec3 d = toVec3( c0 - c );
+
+            glColor3f( 0.5, 0.0, 0 );
+            glVertex( pos + d * 0.25, dx );
+
+            glColor3f( 1.0, 1.0, 1.0 );
+            glVertex( pos + d * 0.01, dx );
+        }
+        glEnd();
+    }
 }
 
 } // namespace

@@ -71,6 +71,9 @@ PYTHON() void sampleLevelsetWithParticles(const LevelsetGrid& phi, const FlagGri
 		parts.doCompress();
 	}
 
+	// zl
+	bool sample_1D = 0;
+
     FOR_IJK_BND( phi, 0 ) {
         if ( flags.isObstacle( i, j, k ) )
             continue;
@@ -79,8 +82,7 @@ PYTHON() void sampleLevelsetWithParticles(const LevelsetGrid& phi, const FlagGri
         if ( phi( i, j, k ) < 1.733 ) {
             const Vec3 pos( i, j, k );
             for ( int dk = 0; dk < ( is3D ? discretization : 1 ); dk++ )
-                for ( int dj = 0; dj < 1; dj++ )
-                //for ( int dj = 0; dj < discretization; dj++ )
+                for ( int dj = 0; dj < ( !sample_1D ? discretization : 1 ); dj++ )
                     for ( int di = 0; di < discretization; di++ ) {
                         Vec3 subpos = pos + disp * Vec3( 0.5 + di, 0.5 + dj, 0.5 + dk );
                         subpos += jlen * ( Vec3( 1, 1, 1 ) - 2.0 * mRand.getVec3() );

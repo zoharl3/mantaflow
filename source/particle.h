@@ -646,6 +646,7 @@ void ParticleSystem<S>::insertBufferedParticles() {
 		int flag = (mNewBufferFlag.size() > 0) ? mNewBufferFlag[i] : 0;
 		// note, other fields are not initialized here...
 		mData[newCnt].pos  = mNewBufferPos[i];
+        mData[newCnt].pos0 = mData[newCnt].pos;
 		mData[newCnt].flag = PNEW | flag;
 		// now init pdata fields from associated grids...
 		for(IndexInt pd=0; pd<(IndexInt)mPdataReal.size(); ++pd) 

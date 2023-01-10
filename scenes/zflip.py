@@ -40,14 +40,14 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
+dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
-it_max = 199 # 300, 500, 1200, 1500
-res = 14 # 32, 48, 64(default), 96, 128(large)
+it_max = 200 # 300, 500, 1200, 1500
+res = 128 # 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
-narrowBandWidth = 3 # 4
+narrowBandWidth = 4 # 4
 
 combineBandWidth = narrowBandWidth - 1
 
@@ -60,8 +60,10 @@ if dim == 2:
     gs2.z = 1
     bMesh = 0
     bSaveParts = 0
-#ppc = part_per_cell_1d**dim
-ppc = part_per_cell_1d
+if 0: # sample 1D; requires changing sampleLevelsetWithParticles()
+    ppc = part_per_cell_1d
+else:
+    ppc = part_per_cell_1d**dim
 
 boundary_width = 0
 if scale2 < 1:
