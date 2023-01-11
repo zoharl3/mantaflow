@@ -155,8 +155,10 @@ void FluidSolver::step() {
         mLockDt = false;
 	}
 
+//cout << "before updateQTGui" << endl;
 	//updateQtGui(true, mFrame, mTimeTotal, "FluidSolver::step");
     updateQtGui( true, mFrame, mCount, "FluidSolver::step" ); // zl
+//cout << "after updateQTGui" << endl;
 }
 
 void FluidSolver::printMemInfo() {

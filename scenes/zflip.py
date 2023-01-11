@@ -27,7 +27,7 @@ os.system( 'rm %s*.*' % out )
 os.system( 'cp %s../video.bat %s' % (out, out) )
 
 # (debug) for consistent result
-if 1:
+if 0:
     limit_to_one_core()
 
 # flags
@@ -43,7 +43,7 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 200 # 300, 500, 1200, 1500
-res = 64 # 32, 48, 64(default), 96, 128(large)
+res = 256 # 32, 48, 64(default), 96, 128(large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -429,6 +429,7 @@ while 1:
     # step
     print( '- step (%d)' % it )
     s.step()
+    #print( 'after step' )
 
     it += s.timestep / dt
     it2 += 1

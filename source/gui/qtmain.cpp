@@ -127,8 +127,10 @@ void updateQtGui(bool full, int frame, float time, const string& curPlugin) {
 	if (gGuiThread->getWindow()->closeRequest()) throw Error("User interrupt");    
 	
 	if (full && frame >= 0) gGuiThread->getWindow()->setStep(frame, time);
+//cout << "before sendAndWait" << endl;
 	gMainThread->sendAndWait(full ? (int)MainWnd::EventFullUpdate : (int)MainWnd::EventStepUpdate);
-	
+//cout << "after sendAndWait" << endl;
+
 	if (gGuiThread->getWindow()->pauseRequest()) {
 		if (!curPlugin.empty()) {
 			cout << "Step: " << curPlugin <<  endl;
