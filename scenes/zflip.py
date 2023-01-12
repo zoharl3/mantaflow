@@ -26,7 +26,7 @@ out = r'c:/prj-external-libs/mantaflow/out/'
 os.system( 'rm %s*.*' % out )
 os.system( 'cp %s../video.bat %s' % (out, out) )
 
-# (debug) for consistent result
+# (debug) for consistent result; for large res, the step() hangs?
 if 0:
     limit_to_one_core()
 
@@ -40,10 +40,10 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 200 # 300, 500, 1200, 1500
-res = 256 # 32, 48, 64(default), 96, 128(large)
+res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
