@@ -40,10 +40,10 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
+dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 200 # 300, 500, 1200, 1500
-res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 128 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
@@ -78,7 +78,7 @@ print()
 print( 'dim:', dim, ', res:', res, ', ppc:', ppc )
 print( 'narrowBand:', narrowBand, ', narrowBandWidth:', narrowBandWidth )
 print( 'b_fixed_vol:', b_fixed_vol )
-print( 'gravity:', gravity )
+print( 'gravity: %0.02f' % gravity )
 print( 'timestep:', dt )
 
 # adaptive time stepping; from flip5
@@ -233,6 +233,8 @@ while 1:
     if not it < it_max:
         break
 
+    tic()
+
     maxVel = vel.getMax()
     if 1:
         s.frameLength = dt
@@ -290,17 +292,19 @@ while 1:
         setWallBcs( flags=flags, vel=vel )
         #vel.printGrid()
 
-    #extrapolateMACSimple( flags=flags, vel=vel, distance=res )
-    extrapolateMACSimple( flags=flags, vel=vel, distance=int(maxVel*1.25 + 2) )
+    dist = int(maxVel*1.25 + 2) # res
+    print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
+    extrapolateMACSimple( flags=flags, vel=vel, distance=dist )
     #flags.printGrid()
     #vel.printGrid()
 
     # fixed volume pre-process
     if 1:
-        scale_particle_pos( pp=pp, scale=scale2 )
+        #scale_particle_pos( pp=pp, scale=scale2 )
         #markFluidCells( parts=pp, flags=flags2 )
+        print( '- set particles\' pos0' )
         set_particles_pos0( pp=pp )
-        scale_particle_pos( pp=pp, scale=1/scale2 )
+        #scale_particle_pos( pp=pp, scale=1/scale2 )
     
     # FLIP velocity update
     print( '- FLIP velocity update' )
@@ -323,7 +327,7 @@ while 1:
     # fixed volume (my scheme)
     include_walls = false
     if b_fixed_vol:
-        scale_particle_pos( pp=pp, scale=scale2 )
+        #scale_particle_pos( pp=pp, scale=scale2 )
 
         #markFluidCells( parts=pp, flags=flags2 )
         copyFlagsToFlags( flags, flags2 )
@@ -333,22 +337,20 @@ while 1:
 
         pVel.setSource( vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()
 
-        #dt_bound = dt/3
-        dt_bound = s.timestep/3
+        dt_bound = dt/4
+        #dt_bound = s.timestep/3
+        #dt_bound = max( dt_bound, dt/4 )
 
-        tic()
         s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags2, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
         if s.timestep < 0:
             ret = -1
             s.timestep *= -1
-        print( '  (fixed vol) ', end='' )
-        toc()
 
         # if using band
         if 0 and narrowBand:
             include_walls = true
 
-        scale_particle_pos( pp=pp, scale=1/scale2 )
+        #scale_particle_pos( pp=pp, scale=1/scale2 )
 
         copyFlagsToFlags( flags2, flags )
 
@@ -426,6 +428,9 @@ while 1:
         pp.printParts()
         #pp.writeParticlesText( out + 'flipt_%04d.txt' % it )
     
+    print( '(iteration) ', end='' )
+    toc()
+
     # step
     print( '- step (%d)' % it )
     s.step()
