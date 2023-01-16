@@ -20,10 +20,10 @@ narrowBand = 1
 
 # Choose dimension (2 or 3) and resolution
 dim = 3
-res = 64
+res = 128
 
 # Configuration 
-narrowBandWidth  = 3;                   # Narrow band width in cells  (= R in [1])
+narrowBandWidth  = 4;                   # Narrow band width in cells  (= R in [1])
 combineBandWidth = narrowBandWidth - 1; # Combine band width in cells (= r in [1])
 
 # Solver params
@@ -87,7 +87,7 @@ if 1 and (GUI):
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     gui.show( dim==3 )
-    gui.pause()
+    #gui.pause()
         
 # Main loop
 step = -1

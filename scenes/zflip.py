@@ -52,7 +52,7 @@ narrowBandWidth = 4 # 4
 combineBandWidth = narrowBandWidth - 1
 
 scale2 = 1 # scale fixed_vol grid
-dt = .2 # .2, .5, 1(flip5, easier to debug)
+dt = .2 # .2(default), .5, 1(flip5, easier to debug)
 gs = vec3(res, res, res)
 gs2 = vec3(res*scale2, res*scale2, res*scale2)
 if dim == 2:
@@ -82,7 +82,8 @@ print( 'gravity: %0.02f' % gravity )
 print( 'timestep:', dt )
 
 # adaptive time stepping; from flip5
-if 0:
+b_adaptive_time_step = 0
+if b_adaptive_time_step:
     s.frameLength = 1.0   # length of one frame (in "world time")
     s.timestep    = 1.0
     s.timestepMin = 0.5   # time step range
@@ -236,7 +237,7 @@ while 1:
     tic()
 
     maxVel = vel.getMax()
-    if 1:
+    if not b_adaptive_time_step:
         s.frameLength = dt
         s.timestep = ( 1 - it % 1 ) * dt
     else: # flip5
@@ -273,8 +274,10 @@ while 1:
     # forces
     if 1:
         print( '- forces' )
-        addGravityNoScale( flags=flags, vel=vel, gravity=(0, gravity, 0) )
-        #addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0) ) # adaptive to grid size; flip5
+        if 1:
+            addGravityNoScale( flags=flags, vel=vel, gravity=(0, gravity, 0) )
+        else:
+            addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0) ) # adaptive to grid size; flip5
     #vel.printGrid()
 
     # set solid (walls)
@@ -308,7 +311,7 @@ while 1:
     
     # FLIP velocity update
     print( '- FLIP velocity update' )
-    alpha = 0. # 0
+    alpha = 0.05 # 0
     flipVelocityUpdate( vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1 - alpha )
     #vel.printGrid()
     
@@ -316,8 +319,8 @@ while 1:
     print( '- advect' )
     # advect particles
     pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
-    # advect phi; why? the particles should determine phi, which should flow on its own
-    if 0:
+    # advect phi; why? the particles should determine phi, which should flow on its own; without it, it creates artifacts in flip5
+    if 1:
         advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
         flags.updateFromLevelset( phi ) 
     # advect grid velocity
@@ -337,8 +340,8 @@ while 1:
 
         pVel.setSource( vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()
 
-        dt_bound = dt/4
-        #dt_bound = s.timestep/3
+        dt_bound = dt/2
+        #dt_bound = s.timestep/2
         #dt_bound = max( dt_bound, dt/4 )
 
         s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags2, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
@@ -402,7 +405,7 @@ while 1:
     if not b_fixed_vol:
         pVel.setSource( vel, isMAC=True ) # set source grids for resampling, used in adjustNumber
         minParticles = ppc
-        maxParticles = minParticles
+        maxParticles = 2*minParticles # 2, 1(exacerbates artifact in flip5 dam 128?)
         if narrowBand:
             phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
             #phi.printGrid()
@@ -414,7 +417,7 @@ while 1:
     # mesh
     if bMesh:
         phiMesh.copyFrom( phi )
-        improvedParticleLevelset( pp, pindex, flags, gpi, phiMesh, radiusFactor, 1, 1 , 0.4, 3.5 )
+        improvedParticleLevelset( pp, pindex, flags, gpi, phiMesh, radiusFactor, 1, 1 , 0.4, 3.5 ) # creates artifacts in dam flip05 128
 
         # mesh
         phiMesh.setBound( value=0., boundaryWidth=1 )
@@ -438,7 +441,7 @@ while 1:
 
     it += s.timestep / dt
     it2 += 1
-    if abs( it - round(it) ) < 1e-7:
+    if 0 or abs( it - round(it) ) < 1e-7:
         it = round( it )
 
         if bScreenShot:
