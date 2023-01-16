@@ -311,7 +311,7 @@ while 1:
     
     # FLIP velocity update
     print( '- FLIP velocity update' )
-    alpha = 0.05 # 0
+    alpha = 0.0 # 0
     flipVelocityUpdate( vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1 - alpha )
     #vel.printGrid()
     
@@ -320,7 +320,7 @@ while 1:
     # advect particles
     pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
     # advect phi; why? the particles should determine phi, which should flow on its own; without it, it creates artifacts in flip5
-    if 1:
+    if not b_fixed_vol:
         advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
         flags.updateFromLevelset( phi ) 
     # advect grid velocity
@@ -340,8 +340,8 @@ while 1:
 
         pVel.setSource( vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()
 
-        dt_bound = dt/2
-        #dt_bound = s.timestep/2
+        #dt_bound = dt/4
+        dt_bound = s.timestep/4
         #dt_bound = max( dt_bound, dt/4 )
 
         s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags2, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
