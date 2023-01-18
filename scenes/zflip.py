@@ -42,7 +42,7 @@ bScreenShot = 1
 # solver params
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
-it_max = 200 # 300, 500, 1200, 1500
+it_max = 1400 # 300, 500, 1200, 1500
 res = 128 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
@@ -340,8 +340,9 @@ while 1:
 
         pVel.setSource( vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()
 
+        dt_bound = 0
         #dt_bound = dt/4
-        dt_bound = s.timestep/4
+        #dt_bound = s.timestep/4
         #dt_bound = max( dt_bound, dt/4 )
 
         s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags2, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
@@ -357,10 +358,10 @@ while 1:
 
         copyFlagsToFlags( flags2, flags )
 
-    # position solver, Thuerey21
+    # correct21 (position solver, Thuerey21)
+    # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
     if 0:
         print( '- position solver' )
-        assert( not narrowBand ) # noisy
         copyFlagsToFlags(flags, flagsPos)
         mapMassToGrid(flags=flagsPos, density=density, parts=pp, source=pMass, deltaX=deltaX, phiObs=phiObs, dt=s.timestep, particleMass=mass, noDensityClamping=resampleParticles)
         #gui.pause()
@@ -459,7 +460,7 @@ while 1:
             save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
         
 # video
-if 0:
+if 1:
     os.system( r'c:\prj-external-libs\mantaflow\out\video.bat > nul 2>&1' )
 
 # code not reached if quitting manta (with esc); pausing in run.py instead
