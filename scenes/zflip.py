@@ -40,7 +40,7 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
 res = 128 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
@@ -100,7 +100,8 @@ velOld   = s.create(MACGrid)
 velParts = s.create(MACGrid)
 pressure = s.create(RealGrid)
 mapWeights = s.create(MACGrid)
-pp       = s.create(BasicParticleSystem) 
+pp       = s.create(BasicParticleSystem)
+
 # add velocity data to particles
 pVel     = pp.create(PdataVec3) 
 phiObs   = s.create(LevelsetGrid, name='phiObs')
@@ -236,7 +237,7 @@ while 1:
 
     tic()
 
-    maxVel = vel.getMax()
+    maxVel = vel.getMaxAbs()
     if not b_adaptive_time_step:
         s.frameLength = dt
         s.timestep = ( 1 - it % 1 ) * dt
@@ -255,6 +256,7 @@ while 1:
         combineGridVel( vel=velParts, weight=mapWeights, combineVel=vel, phi=phi, narrowBand=combineBandWidth, thresh=0 )
         #print( '>> combine' )
         #vel.printGrid()
+        #limit_velocity( vel, pVel, 225 ) # 64:15, 128:?
         velOld.copyFrom( vel )
     elif 1:
         # map particle velocities to grid
@@ -295,7 +297,7 @@ while 1:
         setWallBcs( flags=flags, vel=vel )
         #vel.printGrid()
 
-    dist = int(maxVel*1.25 + 2) # res
+    dist = min( int(maxVel*1.25 + 2), 8 ) # res
     print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
     extrapolateMACSimple( flags=flags, vel=vel, distance=dist )
     #flags.printGrid()
@@ -311,7 +313,7 @@ while 1:
     
     # FLIP velocity update
     print( '- FLIP velocity update' )
-    alpha = 0.0 # 0
+    alpha = 0.1 # 0
     flipVelocityUpdate( vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1 - alpha )
     #vel.printGrid()
     
