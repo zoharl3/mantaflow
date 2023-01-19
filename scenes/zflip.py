@@ -40,7 +40,7 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
+dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
 res = 128 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
@@ -70,7 +70,7 @@ if scale2 < 1:
     boundary_width = 1/scale2 - 1
 
 s = Solver( name='main', gridSize=gs, dim=dim )
-gravity = -0.1
+gravity = -0.1 # -0.1
 gravity *= math.sqrt( res )
 #gravity = -0.003 # flip5
 
@@ -254,10 +254,10 @@ while 1:
         #vel.printGrid()
         #velParts.printGrid()
         combineGridVel( vel=velParts, weight=mapWeights, combineVel=vel, phi=phi, narrowBand=combineBandWidth, thresh=0 )
+        #limit_velocity( vel, pVel, 256 ) # 64:15, 128:?
+        velOld.copyFrom( vel )
         #print( '>> combine' )
         #vel.printGrid()
-        #limit_velocity( vel, pVel, 225 ) # 64:15, 128:?
-        velOld.copyFrom( vel )
     elif 1:
         # map particle velocities to grid
         mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
