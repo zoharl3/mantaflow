@@ -27,7 +27,7 @@ os.system( 'rm %s*.*' % out )
 os.system( 'cp %s../video.bat %s' % (out, out) )
 
 # (debug) for consistent result; for large res, the step() hangs?
-if 0:
+if 1:
     limit_to_one_core()
 
 # flags
@@ -42,7 +42,7 @@ bScreenShot = 1
 # solver params
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
-it_max = 1400 # 300, 500, 1200, 1500
+it_max = 6 # 300, 500, 1200, 1500
 res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
