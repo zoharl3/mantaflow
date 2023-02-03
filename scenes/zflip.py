@@ -27,7 +27,7 @@ os.system( 'rm %s*.*' % out )
 os.system( 'cp %s../video.bat %s' % (out, out) )
 
 # (debug) for consistent result; for large res, the step() hangs?
-if 1:
+if 0:
     limit_to_one_core()
 
 # flags
