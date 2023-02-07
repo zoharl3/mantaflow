@@ -31,6 +31,10 @@ if(!bp->isActive(i) ) {
         - "[%+4.2f,%+4.2f]"
         - Vector3D<int>::toString() in vectorbase.cpp
 
+- Incorrect FLIP · Issue #7 · thunil/mantaflow · GitHub
+https://github.com/thunil/mantaflow/issues/7
+    - see update_particles() in fluid2d_sph.m
+
 - Needs env var
 set PYTHONHOME=c:\Python37\
 
