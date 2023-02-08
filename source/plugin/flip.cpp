@@ -607,8 +607,10 @@ PYTHON() void mapPartsToMAC(const FlagGrid& flags, MACGrid& vel, MACGrid& velOld
 	weight->stomp(Vec3(VECTOR_EPSILON));
 	vel.safeDivide(*weight);
 	
+	// zl store current state?
 	// store original state
 	velOld.copyFrom( vel );
+
 	if(freeTmp) delete weight;
 }
 

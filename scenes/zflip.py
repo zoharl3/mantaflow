@@ -40,14 +40,14 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
+dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 128 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
-b_fixed_vol = 0
-narrowBand = bool( 0 )
-narrowBandWidth = 4 # 64:4, 128:8
+b_fixed_vol = 1
+narrowBand = bool( 1 )
+narrowBandWidth = 3 # 64:6, 128:12
 
 combineBandWidth = narrowBandWidth - 1
 
@@ -138,9 +138,10 @@ s2 = Solver( name='secondary', gridSize=gs2, dim=dim )
 flags2 = s2.create( FlagGrid )
 flags2.initDomain( boundaryWidth=0 ) 
 
-if 1: # breaking dam
+if 0: # breaking dam
     # my dam
-    fluidbox = Box( parent=s, p0=gs*( vec3(0,0,0.3) ), p1=gs*( vec3(0.4,0.8,.7) ) ) 
+    #fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.3) ), p1=gs*( vec3(0.4, 0.8, .7) ) )
+    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.35) ), p1=gs*( vec3(0.3, 0.6, .65) ) ) # new dam
 
     # flip05_nbflip.py
     #fluidbox = Box( parent=s, p0=gs*vec3(0, 0.15, 0), p1=gs*vec3(0.4, 0.5, 0.8) )
@@ -246,16 +247,16 @@ while 1:
 
     # map particle velocities to grid
     print( '- mapPartsToMAC' )
-    # extrapolate velocities throughout the liquid region
     if 1 and narrowBand:
-        # combine particles velocities with advected grid velocities
+        # combine particles velocities with advected grid velocities; stores mapWeights; saves velOld
         mapPartsToMAC( vel=velParts, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
+        # extrapolate velocities throughout the liquid region
         extrapolateMACFromWeight( vel=velParts , distance=2, weight=mapWeights )
         #vel.printGrid()
         #velParts.printGrid()
         combineGridVel( vel=velParts, weight=mapWeights, combineVel=vel, phi=phi, narrowBand=combineBandWidth, thresh=0 )
         #limit_velocity( vel, pVel, 256 ) # 64:15, 128:?
-        velOld.copyFrom( vel )
+        velOld.copyFrom( vel ) # save before forces and pressure; like the end of mapPartsToMAC()
         #print( '>> combine' )
         #vel.printGrid()
     elif 1:
@@ -278,8 +279,8 @@ while 1:
         print( '- forces' )
         if 1:
             addGravityNoScale( flags=flags, vel=vel, gravity=(0, gravity, 0) )
-        else:
-            addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0) ) # adaptive to grid size; flip5
+        else: # adaptive to grid size; flip5
+            addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0) )
     #vel.printGrid()
 
     # set solid (walls)
@@ -304,7 +305,7 @@ while 1:
     #vel.printGrid()
 
     # fixed volume pre-process
-    if 1:
+    if b_fixed_vol:
         #scale_particle_pos( pp=pp, scale=scale2 )
         #markFluidCells( parts=pp, flags=flags2 )
         print( '- set particles\' pos0' )
@@ -313,7 +314,7 @@ while 1:
     
     # FLIP velocity update
     print( '- FLIP velocity update' )
-    alpha = 1. # 0
+    alpha = .1 # 0
     flipVelocityUpdate( vel=vel, velOld=velOld, flags=flags, parts=pp, partVel=pVel, flipRatio=1 - alpha )
     #vel.printGrid()
     
@@ -321,7 +322,7 @@ while 1:
     print( '- advect' )
     # advect particles
     pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
-    # advect phi; why? the particles should determine phi, which should flow on its own; without it, it creates artifacts in flip5
+    # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5 but makes it worse for fixed_vol
     if not b_fixed_vol:
         advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
         flags.updateFromLevelset( phi ) 
@@ -335,9 +336,9 @@ while 1:
         #scale_particle_pos( pp=pp, scale=scale2 )
 
         #markFluidCells( parts=pp, flags=flags2 )
-        copyFlagsToFlags( flags, flags2 )
+        #copyFlagsToFlags( flags, flags2 )
 
-        phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
+        phi.setBoundNeumann( 0 ) # make sure no (new) particles are placed at outer boundary
         #phi.printGrid()
 
         pVel.setSource( vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()
@@ -347,7 +348,7 @@ while 1:
         #dt_bound = s.timestep/4
         #dt_bound = max( dt_bound, dt/4 )
 
-        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags2, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
+        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
         if s.timestep < 0:
             ret = -1
             s.timestep *= -1
@@ -358,7 +359,7 @@ while 1:
 
         #scale_particle_pos( pp=pp, scale=1/scale2 )
 
-        copyFlagsToFlags( flags2, flags )
+        #copyFlagsToFlags( flags2, flags )
 
     # correct21 (position solver, Thuerey21)
     # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
@@ -396,7 +397,7 @@ while 1:
         unionParticleLevelset( pp, pindex, flags, gpi, phiParts, radiusFactor ) 
         if narrowBand:
             # combine level set of particles with grid level set
-            phi.addConst(1.); # shrink slightly
+            phi.addConst( 1. ); # shrink slightly
             phi.join( phiParts )
             extrapolateLsSimple( phi=phi, distance=narrowBandWidth+2, inside=True, include_walls=include_walls )
         else:
