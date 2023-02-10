@@ -250,6 +250,8 @@ PYTHON() void adjustNumber(BasicParticleSystem& parts, const MACGrid& vel, const
 			for (int m=cnt; m < minParticles; m++) { 
 				Vec3 pos = Vec3(i,j,k) + mRand.getVec3();
 				//Vec3 pos (i + 0.5, j + 0.5, k + 0.5); // cell center
+				if ( flags.getParent()->is2D() )
+					pos[2] = 0.5;
 				parts.addBuffered( pos ); 
 			}
 		}

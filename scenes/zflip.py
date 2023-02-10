@@ -27,7 +27,7 @@ os.system( 'rm %s*.*' % out )
 os.system( 'cp %s../video.bat %s' % (out, out) )
 
 # (debug) for consistent result; for large res, the step() hangs?
-if 0:
+if 1:
     limit_to_one_core()
 
 # flags
@@ -40,14 +40,14 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 16 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
-narrowBand = bool( 0 )
-narrowBandWidth = 6 # 64:6, 96:9, 128:12
+narrowBand = bool( 1 )
+narrowBandWidth = 3 # 64:6, 96:9, 128:12
 
 combineBandWidth = narrowBandWidth - 1
 
@@ -138,7 +138,7 @@ s2 = Solver( name='secondary', gridSize=gs2, dim=dim )
 flags2 = s2.create( FlagGrid )
 flags2.initDomain( boundaryWidth=0 ) 
 
-if 0: # breaking dam
+if 1: # breaking dam
     # my dam
     #fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.3) ), p1=gs*( vec3(0.4, 0.8, .7) ) )
     fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.35) ), p1=gs*( vec3(0.3, 0.6, .65) ) ) # new dam
@@ -305,13 +305,14 @@ while 1:
     #vel.printGrid()
 
     # fixed volume pre-process
-    if b_fixed_vol:
+    #if b_fixed_vol:
         #scale_particle_pos( pp=pp, scale=scale2 )
         #markFluidCells( parts=pp, flags=flags2 )
-        print( '- set particles\' pos0' )
-        set_particles_pos0( pp=pp )
         #scale_particle_pos( pp=pp, scale=1/scale2 )
-    
+
+    print( '- set particles\' pos0' )
+    set_particles_pos0( pp=pp )
+
     # FLIP velocity update
     print( '- FLIP velocity update' )
     alpha = .1 # 0
