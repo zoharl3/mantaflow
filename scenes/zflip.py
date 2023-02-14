@@ -40,14 +40,21 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 128 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 narrowBand = bool( 1 )
-narrowBandWidth = 12 # 64:6, 96:9, 128:12
+narrowBandWidth = 8 # 64:6, 96:6, 128:8
+b_correct21 = 0
+
+###
+
+if b_correct21:
+    b_fixed_vol = 0
+    narrowBand = bool( 0 )
 
 combineBandWidth = narrowBandWidth - 1
 
@@ -138,7 +145,7 @@ s2 = Solver( name='secondary', gridSize=gs2, dim=dim )
 flags2 = s2.create( FlagGrid )
 flags2.initDomain( boundaryWidth=0 ) 
 
-if 0: # breaking dam
+if 1: # breaking dam
     # my dam
     #fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.3) ), p1=gs*( vec3(0.4, 0.8, .7) ) )
     fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.35) ), p1=gs*( vec3(0.3, 0.6, .65) ) ) # new dam
@@ -364,7 +371,7 @@ while 1:
 
     # correct21 (position solver, Thuerey21)
     # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
-    if 0:
+    if b_correct21:
         print( '- position solver' )
         copyFlagsToFlags(flags, flagsPos)
         mapMassToGrid(flags=flagsPos, density=density, parts=pp, source=pMass, deltaX=deltaX, phiObs=phiObs, dt=s.timestep, particleMass=mass, noDensityClamping=resampleParticles)
