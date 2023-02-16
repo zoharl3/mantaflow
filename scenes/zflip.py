@@ -46,8 +46,8 @@ it_max = 1400 # 300, 500, 1200, 1500
 res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
-narrowBand = bool( 1 )
-narrowBandWidth = 9 # 64:6, 96:6, 128:8
+narrowBand = bool( 0 )
+narrowBandWidth = 12 # 64:6, 96:6, 128:8
 b_correct21 = 0
 
 ###
