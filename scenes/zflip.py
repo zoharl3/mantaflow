@@ -40,15 +40,15 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 narrowBand = bool( 0 )
 narrowBandWidth = 12 # 64:6, 96:6, 128:8
-b_correct21 = 0
+b_correct21 = 1
 
 ###
 
@@ -228,6 +228,9 @@ if bSaveParts:
     fname = out + 'fluid_data_%04d.vdb' % it
     print( fname )
     save( name=fname, objects=objects ) # error in debug mode "string too long?"
+
+# energy
+f_energy = open( out + '_energy.txt', 'w' )
 
 # loop
 ret = 0
@@ -456,6 +459,12 @@ while 1:
     if 0 or abs( it - round(it) ) < 1e-7:
         it = round( it )
 
+        # energy
+        e = energy( pp, pVel, gravity )
+        f_energy.write( f'{e}\n' )
+        f_energy.flush()
+
+        # screenshot
         if bScreenShot:
             gui.screenshot( out + 'frame_%04d.png' % it ) # slow
 
