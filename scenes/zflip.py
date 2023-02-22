@@ -230,7 +230,7 @@ if bSaveParts:
     save( name=fname, objects=objects ) # error in debug mode "string too long?"
 
 # energy
-f_energy = open( out + '_energy.txt', 'w' )
+f_measure = open( out + '_energy.txt', 'w' )
 
 # loop
 ret = 0
@@ -459,10 +459,10 @@ while 1:
     if 0 or abs( it - round(it) ) < 1e-7:
         it = round( it )
 
-        # energy
-        e = energy( pp, pVel, gravity )
-        f_energy.write( f'{e}\n' )
-        f_energy.flush()
+        # measure
+        m = measure( pp, pVel, gravity )
+        f_measure.write( f'{m}\n' )
+        f_measure.flush()
 
         # screenshot
         if bScreenShot:
