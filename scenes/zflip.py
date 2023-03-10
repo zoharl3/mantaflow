@@ -40,12 +40,12 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
 res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
-b_fixed_vol = 1
+b_fixed_vol = 0
 narrowBand = bool( 0 )
 narrowBandWidth = 6 # 64:6, 96:6, 128:8
 b_correct21 = 0
@@ -461,7 +461,7 @@ while 1:
 
         # measure
         m = measure( pp, pVel, gravity )
-        f_measure.write( f'{m}\n' )
+        f_measure.write( f'{m[0]}\n' )
         f_measure.flush()
 
         # screenshot

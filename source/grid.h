@@ -340,10 +340,10 @@ public:
 	inline bool isStick(int i, int j, int k) const { return get(i,j,k) & TypeStick; }
 	inline bool isStick(const Vec3i& pos) const { return get(pos) & TypeStick; }
 	inline bool isStick(const Vec3& pos) const { return getAt(pos) & TypeStick; }
-    inline bool isInterface( IndexInt idx ) const { return get( idx ) & TypeSurface; }
-    inline bool isInterface( int i, int j, int k ) const { return get( i, j, k ) & TypeSurface; }
-    inline bool isInterface( const Vec3i &pos ) const { return get( pos ) & TypeSurface; }
-    inline bool isInterface( const Vec3 &pos ) const { return getAt( pos ) & TypeSurface; }
+    inline bool isSurface( IndexInt idx ) const { return get( idx ) & TypeSurface; }
+    inline bool isSurface( int i, int j, int k ) const { return get( i, j, k ) & TypeSurface; }
+    inline bool isSurface( const Vec3i &pos ) const { return get( pos ) & TypeSurface; }
+    inline bool isSurface( const Vec3 &pos ) const { return getAt( pos ) & TypeSurface; }
 	
 	void InitMinXWall(const int &boundaryWidth, Grid<Real>& phiWalls);
 	void InitMaxXWall(const int &boundaryWidth, Grid<Real>& phiWalls);
