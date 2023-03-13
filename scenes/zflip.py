@@ -43,9 +43,9 @@ bScreenShot = 1
 dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 20 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
-b_fixed_vol = 0
+b_fixed_vol = 1
 narrowBand = bool( 0 )
 narrowBandWidth = 6 # 64:6, 96:6, 128:8
 b_correct21 = 0
@@ -229,8 +229,8 @@ if bSaveParts:
     print( fname )
     save( name=fname, objects=objects ) # error in debug mode "string too long?"
 
-# energy
-f_measure = open( out + '_energy.txt', 'w' )
+# measure
+f_measure = open( out + '_measure.txt', 'w' )
 
 # loop
 ret = 0
@@ -460,7 +460,7 @@ while 1:
         it = round( it )
 
         # measure
-        m = measure( pp, pVel, gravity )
+        m = measure( pp, pVel, flags, gravity, ppc )
         f_measure.write( f'{m[0]}\n' )
         f_measure.flush()
 

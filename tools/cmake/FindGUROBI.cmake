@@ -6,7 +6,7 @@ find_path(
 
 find_library(
   GUROBI_LIBRARY
-  NAMES gurobi gurobi81 gurobi90 gurobi95
+  NAMES gurobi gurobi95 gurobi100
   HINTS ${GUROBI_DIR} $ENV{GUROBI_HOME}
   PATH_SUFFIXES lib)
 
@@ -14,7 +14,7 @@ if(CXX)
   if(MSVC)
     # determine Visual Studio year
     if(MSVC_TOOLSET_VERSION EQUAL 142)
-      set(MSVC_YEAR "2019")
+      set(MSVC_YEAR "2017") # zl I changed it from 2019 (no such files) to 2017
     elseif(MSVC_TOOLSET_VERSION EQUAL 141)
       set(MSVC_YEAR "2017")
     elseif(MSVC_TOOLSET_VERSION EQUAL 140)
