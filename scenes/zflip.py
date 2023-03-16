@@ -40,15 +40,15 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
-narrowBand = bool( 0 )
-narrowBandWidth = 6 # 64:6, 96:6, 128:8
-b_correct21 = 1
+narrowBand = bool( 1 )
+narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
+b_correct21 = 0
 
 ###
 
@@ -196,6 +196,7 @@ else:
 copyFlagsToFlags( flags, flagsPos )
 
 print( '# particles:', pp.pySize() )
+V0 = float(pp.pySize()) / ppc
 
 if 1 and GUI:
     gui = Gui()
@@ -402,10 +403,6 @@ while 1:
             deltaX.printGrid()
             #gui.pause()
     
-    # mark int
-    if not b_fixed_vol:
-        flags.mark_surface()
-
     # create level set from particles
     if 1:
         gridParticleIndex( parts=pp, flags=flags, indexSys=pindex, index=gpi )
@@ -432,6 +429,16 @@ while 1:
             adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, narrowBand=narrowBandWidth ) 
         elif 0:
             adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi ) 
+
+    # mark int for measure
+    if not b_fixed_vol:
+        flags.mark_surface()
+
+    # measure
+    if 1:
+        m = measure( pp, pVel, flags, gravity, ppc, V0 )
+        f_measure.write( f'{m[0]}\n' )
+        f_measure.flush()
 
     # mesh
     if bMesh:
@@ -462,11 +469,6 @@ while 1:
     it2 += 1
     if 0 or abs( it - round(it) ) < 1e-7:
         it = round( it )
-
-        # measure
-        m = measure( pp, pVel, flags, gravity, ppc )
-        f_measure.write( f'{m[0]}\n' )
-        f_measure.flush()
 
         # screenshot
         if bScreenShot:
