@@ -69,7 +69,7 @@ if 1:
 
 
 flags.updateFromLevelset(phi)
-phi.subtract( phiObs );
+phi.subtract( phiObs )
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=2, randomness=0.05 )
 
 if fluidVel!=0:

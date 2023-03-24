@@ -1,4 +1,6 @@
 
+# flip5 in the comments refers to the scene script flip05_nbflip.py
+
 import os, sys, math
 import keyboard, copy
 
@@ -45,7 +47,7 @@ part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
 res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
-b_fixed_vol = 1
+b_fixed_vol = 0
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
 b_correct21 = 0
@@ -111,9 +113,10 @@ pp       = s.create(BasicParticleSystem)
 
 # add velocity data to particles
 pVel     = pp.create(PdataVec3) 
-phiObs   = s.create(LevelsetGrid, name='phiObs')
 phiParts = s.create(LevelsetGrid)
 phiMesh  = s.create(LevelsetGrid)
+phiObs   = s.create(LevelsetGrid, name='phiObs')
+fractions = s.create(MACGrid)
 mesh     = s.create(Mesh)
 bfs      = s.create(IntGrid) # discrete distance from surface
 
@@ -138,17 +141,17 @@ if resampleParticles:
     gCnt = s.create(IntGrid)
     
 # scene setup
-flags.initDomain( boundaryWidth=boundary_width ) 
+flags.initDomain( boundaryWidth=boundary_width, phiWalls=phiObs ) 
 
 # my vars
 s2 = Solver( name='secondary', gridSize=gs2, dim=dim )
 flags2 = s2.create( FlagGrid )
 flags2.initDomain( boundaryWidth=0 ) 
 
-if 1: # breaking dam
+if 0: # breaking dam
     # my dam
     #fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.3) ), p1=gs*( vec3(0.4, 0.8, .7) ) )
-    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.35) ), p1=gs*( vec3(0.3, 0.6, .65) ) ) # new dam
+    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.35) ), p1=gs*( vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
 
     # flip05_nbflip.py
     #fluidbox = Box( parent=s, p0=gs*vec3(0, 0.15, 0), p1=gs*vec3(0.4, 0.5, 0.8) )
@@ -166,8 +169,9 @@ if 1: # breaking dam
 
     # phi
     phi = fluidbox.computeLevelset()
+    flags.updateFromLevelset( phi )
 
-else: # falling drop
+elif 0: # falling drop
     fluidBasin = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(1.0,0.1,1.0)) # basin
     dropCenter = vec3(0.5,0.3,0.5)
     dropRadius = 0.1
@@ -176,11 +180,29 @@ else: # falling drop
     fluidSetVel= vec3(0,-1,0)
     phi = fluidBasin.computeLevelset()
     phi.join( fluidDrop.computeLevelset() ) # add drop
+    flags.updateFromLevelset( phi )
 
-flags.updateFromLevelset( phi )
+else: # vortex
+    # water
+    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0.3, 0) ), p1=gs*( vec3(1, 0.6, 1) ) )
+    phi = fluidbox.computeLevelset()
+
+    # obstacle
+    obs = Box( parent=s, p0=gs*( vec3(0, 0.21, 0) ), p1=gs*( vec3(1, 0.3, 1) ) )
+    phiObs.join( obs.computeLevelset() )
+
+    # hole
+
+    flags.updateFromLevelset( phi )
+    phi.subtract( phiObs )
+
 #phi.printGrid()
 
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
+
+# also sets boundary flags for phiObs
+updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
+setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
 
 # phi is influenced by the walls for some reason
 # create a level set from particles
@@ -289,14 +311,13 @@ while 1:
     if 1:
         print( '- forces' )
         if 1:
-            addGravityNoScale( flags=flags, vel=vel, gravity=(0, gravity, 0) )
-        else: # adaptive to grid size; flip5
-            addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0) )
+            bscale = 0 # 1:adaptive to grid size; flip5
+            addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0), scale=bool(bscale) )
     #vel.printGrid()
 
     # set solid (walls)
     print( '- setWallBcs' )
-    setWallBcs( flags=flags, vel=vel ) # clear velocity from solid
+    setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs ) # clear velocity from solid
     #vel.printGrid()
 
     # pressure solve
@@ -306,12 +327,12 @@ while 1:
         solvePressure( flags=flags, vel=vel, pressure=pressure, phi=phi )
         print( '  (pressure) ', end='' )
         toc()
-        setWallBcs( flags=flags, vel=vel )
         #vel.printGrid()
 
     dist = min( int(maxVel*1.25 + 2), 8 ) # res
     print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
-    extrapolateMACSimple( flags=flags, vel=vel, distance=dist )
+    extrapolateMACSimple( flags=flags, vel=vel, distance=dist, intoObs=True )
+    setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs )
     #flags.printGrid()
     #vel.printGrid()
 
@@ -333,7 +354,8 @@ while 1:
     # advect
     print( '- advect' )
     # advect particles
-    pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False ) # IntEuler, IntRK2, IntRK4
+    pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
+    pushOutofObs( parts=pp, flags=flags, phiObs=phiObs )
     # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5 but makes it worse for fixed_vol
     if not b_fixed_vol:
         advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
@@ -411,7 +433,7 @@ while 1:
             # combine level set of particles with grid level set
             phi.addConst( 1. ); # shrink slightly
             phi.join( phiParts )
-            extrapolateLsSimple( phi=phi, distance=narrowBandWidth+2, inside=True, include_walls=include_walls )
+            extrapolateLsSimple( phi=phi, distance=narrowBandWidth+2, inside=True, include_walls=include_walls, intoObs=True )
         else:
             # overwrite grid level set with level set of particles
             phi.copyFrom( phiParts )
@@ -426,9 +448,9 @@ while 1:
             phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
             #phi.printGrid()
             # vel is used only to get the parent
-            adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, narrowBand=narrowBandWidth ) 
+            adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, narrowBand=narrowBandWidth, exclude=phiObs ) 
         elif 0:
-            adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi ) 
+            adjustNumber( parts=pp, vel=vel, flags=flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, exclude=phiObs ) 
 
     # mark int for measure
     if not b_fixed_vol:
