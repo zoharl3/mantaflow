@@ -45,9 +45,9 @@ bScreenShot = 1
 dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
-b_fixed_vol = 0
+b_fixed_vol = 1
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
 b_correct21 = 0
@@ -184,25 +184,38 @@ elif 0: # falling drop
 
 else: # vortex
     # water
-    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0.3, 0) ), p1=gs*( vec3(1, 0.6, 1) ) )
+    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0.3, 0) ), p1=gs*( vec3(1, 0.92, 1) ) )
     phi = fluidbox.computeLevelset()
-
-    # obstacle
-    obs = Box( parent=s, p0=gs*( vec3(0, 0.21, 0) ), p1=gs*( vec3(1, 0.3, 1) ) )
-    phiObs.join( obs.computeLevelset() )
-
-    # hole
-
     flags.updateFromLevelset( phi )
+
+    # obstacle: shouldn't be smaller than one cell or touch the border
+    #mesh2 = s.create(Mesh) # it renders only one mesh (mLocalMesh)?
+
+    #mesh.load( r'c:\prj\mantaflow_mod\resources\cube1.obj' )
+    #mesh.scale( Vec3(1) )
+
+    mesh.load( r'c:\prj\mantaflow_mod\resources\funnel.obj' )
+    mesh.scale( Vec3(res) ) # the scale needs to be in all axes (i.e. can't use gs)
+
+    mesh.offset( gs * Vec3(0.5, 0.2, 0.5) )
+    meshObs = s.create( LevelsetGrid )
+    mesh.computeLevelset( meshObs, 2. )
+    #meshObs.printGrid()
+    #phiObs.printGrid()
+    phiObs.join( meshObs )
+    #sphere = Sphere( parent=s , center=gs*vec3(0.66,0.3,0.5), radius=res*0.2)
+    #phiObs.join( sphere.computeLevelset() )
     phi.subtract( phiObs )
 
 #phi.printGrid()
+#phiObs.printGrid()
 
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
 
 # also sets boundary flags for phiObs
 updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
 setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
+#flags.fillGrid()
 
 # phi is influenced by the walls for some reason
 # create a level set from particles
@@ -222,7 +235,8 @@ V0 = float(pp.pySize()) / ppc
 
 if 1 and GUI:
     gui = Gui()
-    #gui.nextMeshDisplay() # invisible
+    for i in range(2):
+        gui.nextMeshDisplay() # invisible, x-ray
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     if 1 and dim == 3: # camera
@@ -355,7 +369,7 @@ while 1:
     print( '- advect' )
     # advect particles
     pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
-    pushOutofObs( parts=pp, flags=flags, phiObs=phiObs )
+    #pushOutofObs( parts=pp, flags=flags, phiObs=phiObs ) # creates issues for correct21 and fixedVol
     # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5 but makes it worse for fixed_vol
     if not b_fixed_vol:
         advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
