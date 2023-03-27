@@ -45,12 +45,12 @@ bScreenShot = 1
 dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 0
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
-b_correct21 = 0
+b_correct21 = 1
 
 ###
 
@@ -116,7 +116,7 @@ pVel     = pp.create(PdataVec3)
 phiParts = s.create(LevelsetGrid)
 phiMesh  = s.create(LevelsetGrid)
 phiObs   = s.create(LevelsetGrid, name='phiObs')
-#fractions = s.create(MACGrid)
+fractions = s.create(MACGrid) # sticks to walls and becomes slow without this?
 mesh     = s.create(Mesh)
 bfs      = s.create(IntGrid) # discrete distance from surface
 
@@ -148,7 +148,7 @@ s2 = Solver( name='secondary', gridSize=gs2, dim=dim )
 flags2 = s2.create( FlagGrid )
 flags2.initDomain( boundaryWidth=0 ) 
 
-if 1: # breaking dam
+if 0: # breaking dam
     # my dam
     #fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.3) ), p1=gs*( vec3(0.4, 0.8, .7) ) )
     fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.35) ), p1=gs*( vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -184,7 +184,7 @@ elif 0: # falling drop
 
 else: # vortex
     # water
-    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0.4, 0) ), p1=gs*( vec3(1, 0.92, 1) ) )
+    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0.43, 0) ), p1=gs*( vec3(1, 0.92, 1) ) )
     phi = fluidbox.computeLevelset()
     flags.updateFromLevelset( phi )
 
@@ -213,9 +213,9 @@ else: # vortex
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
 
 # also sets boundary flags for phiObs
-#updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
-#setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
-setObstacleFlags( flags=flags, phiObs=phiObs )
+updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
+setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
+#setObstacleFlags( flags=flags, phiObs=phiObs )
 #flags.fillGrid()
 
 # phi is influenced by the walls for some reason
@@ -332,8 +332,8 @@ while 1:
 
     # set solid (walls)
     print( '- setWallBcs' )
-    #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs ) # clear velocity from solid
-    setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
+    setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs ) # clear velocity from solid
+    #setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
     #vel.printGrid()
 
     # pressure solve
@@ -348,8 +348,8 @@ while 1:
     dist = min( int(maxVel*1.25 + 2), 8 ) # res
     print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
     extrapolateMACSimple( flags=flags, vel=vel, distance=dist, intoObs=True )
-    #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs )
-    setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
+    setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs )
+    #setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
     #flags.printGrid()
     #vel.printGrid()
 
