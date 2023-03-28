@@ -61,12 +61,16 @@ PYTHON() void markFluidAndBoundaryCells(const BasicParticleSystem& particles, Fl
 			//If it is already larger than the displacement of the current particle then we don't set it.
 			int i = p.x; int j = p.y; int k = p.z;
 			if (fabs(dir.x) > fabs(deltaX(i, j, k).x)) deltaX(i, j, k).x = dir.x;
-			if (fabs(dir.x) > fabs(deltaX(i + 1, j, k).x)) deltaX(i + 1, j, k).x = dir.x;
+			// zl I added inbounds check
+            if ( i + 1 < deltaX.getSizeX() && fabs( dir.x ) > fabs( deltaX( i + 1, j, k ).x ) )
+                deltaX( i + 1, j, k ).x = dir.x;
 			if (fabs(dir.y) > fabs(deltaX(i, j, k).y)) deltaX(i, j, k).y = dir.y;
-			if (fabs(dir.y) > fabs(deltaX(i, j + 1, k).y)) deltaX(i, j + 1, k).y = dir.y;
+            if ( j + 1 < deltaX.getSizeY() && fabs( dir.y ) > fabs( deltaX( i, j + 1, k ).y ) )
+                deltaX( i, j + 1, k ).y = dir.y;
 			if (flags.is3D()) {
 				if (fabs(dir.z) > fabs(deltaX(i, j, k).z)) deltaX(i, j, k).z = dir.z;
-				if (fabs(dir.z) > fabs(deltaX(i, j, k + 1).z)) deltaX(i, j, k + 1).z = dir.z;
+                if ( k + 1 < deltaX.getSizeZ() && fabs( dir.z ) > fabs( deltaX( i, j, k + 1 ).z ) )
+                    deltaX( i, j, k + 1 ).z = dir.z;
 			}
 		}
 	}

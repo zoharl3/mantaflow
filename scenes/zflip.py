@@ -34,23 +34,23 @@ if 0:
 
 # flags
 bMesh       = 1
-bSaveParts  = 0
-bSaveUni    = 0
+bSaveParts  = 1 # .vdb
+bSaveUni    = 0 # .uni
 if bSaveParts or bSaveUni:
     bMesh = 1
 
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
+dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 0
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
-b_correct21 = 1
+b_correct21 = 0
 
 ###
 
@@ -184,7 +184,7 @@ elif 0: # falling drop
 
 else: # vortex
     # water
-    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0.43, 0) ), p1=gs*( vec3(1, 0.92, 1) ) )
+    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0.5, 0) ), p1=gs*( vec3(1, 0.9, 1) ) )
     phi = fluidbox.computeLevelset()
     flags.updateFromLevelset( phi )
 
@@ -197,9 +197,9 @@ else: # vortex
     mesh.load( r'c:\prj\mantaflow_mod\resources\funnel.obj' )
     mesh.scale( Vec3(res) ) # the scale needs to be in all axes (i.e. can't use gs)
 
-    mesh.offset( gs * Vec3(0.5, 0.2, 0.5) )
+    mesh.offset( gs * Vec3(0.5, 0.3, 0.5) )
     meshObs = s.create( LevelsetGrid )
-    mesh.computeLevelset( meshObs, 2. )
+    mesh.computeLevelset( meshObs, 2 ) # uses normals, thus a smooth mesh is better
     #meshObs.printGrid()
     #phiObs.printGrid()
     phiObs.join( meshObs )
@@ -213,10 +213,9 @@ else: # vortex
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
 
 # also sets boundary flags for phiObs
+#setObstacleFlags( flags=flags, phiObs=phiObs )
 updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
 setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
-#setObstacleFlags( flags=flags, phiObs=phiObs )
-#flags.fillGrid()
 
 # phi is influenced by the walls for some reason
 # create a level set from particles
@@ -237,7 +236,7 @@ V0 = float(pp.pySize()) / ppc
 if 1 and GUI:
     gui = Gui()
     for i in range(2):
-        gui.nextMeshDisplay() # invisible, x-ray
+        gui.nextMeshDisplay() # 0:full, 1:invisible, 2:x-ray
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     if 1 and dim == 3: # camera
