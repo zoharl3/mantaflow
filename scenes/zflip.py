@@ -42,10 +42,10 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 0
 narrowBand = bool( 0 )
@@ -182,30 +182,37 @@ elif 0: # falling drop
     phi.join( fluidDrop.computeLevelset() ) # add drop
     flags.updateFromLevelset( phi )
 
-else: # vortex
+elif 0: # basin
     # water
     fluidbox = Box( parent=s, p0=gs*( vec3(0, 0.5, 0) ), p1=gs*( vec3(1, 0.9, 1) ) )
     phi = fluidbox.computeLevelset()
     flags.updateFromLevelset( phi )
 
     # obstacle
-    #mesh2 = s.create(Mesh) # it renders only one mesh (mLocalMesh)?
+    if 1:
+        #mesh2 = s.create(Mesh) # it renders only one mesh (mLocalMesh)?
 
-    #mesh.load( r'c:\prj\mantaflow_mod\resources\cube1.obj' )
-    #mesh.scale( Vec3(1) )
+        #mesh.load( r'c:\prj\mantaflow_mod\resources\cube1.obj' )
+        #mesh.scale( Vec3(1) )
 
-    mesh.load( r'c:\prj\mantaflow_mod\resources\funnel.obj' )
-    mesh.scale( Vec3(res) ) # the scale needs to be in all axes (i.e. can't use gs)
+        mesh.load( r'c:\prj\mantaflow_mod\resources\funnel.obj' )
+        mesh.scale( Vec3(res) ) # the scale needs to be in all axes (i.e. can't use gs)
 
-    mesh.offset( gs * Vec3(0.5, 0.3, 0.5) )
-    meshObs = s.create( LevelsetGrid )
-    mesh.computeLevelset( meshObs, 2 ) # uses normals, thus a smooth mesh is better
-    #meshObs.printGrid()
-    #phiObs.printGrid()
-    phiObs.join( meshObs )
-    #sphere = Sphere( parent=s , center=gs*vec3(0.66,0.3,0.5), radius=res*0.2)
-    #phiObs.join( sphere.computeLevelset() )
-    phi.subtract( phiObs )
+        mesh.offset( gs * Vec3(0.5, 0.3, 0.5) )
+        meshObs = s.create( LevelsetGrid )
+        mesh.computeLevelset( meshObs, 2 ) # uses normals, thus a smooth mesh is better
+        #meshObs.printGrid()
+        #phiObs.printGrid()
+        phiObs.join( meshObs )
+        #sphere = Sphere( parent=s , center=gs*vec3(0.66,0.3,0.5), radius=res*0.2)
+        #phiObs.join( sphere.computeLevelset() )
+        phi.subtract( phiObs )
+
+else: # vortex
+    # water
+    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0., 0) ), p1=gs*( vec3(1, 0.9, 1) ) )
+    phi = fluidbox.computeLevelset()
+    flags.updateFromLevelset( phi )
 
 #phi.printGrid()
 #phiObs.printGrid()
@@ -324,7 +331,9 @@ while 1:
     # forces
     if 1:
         print( '- forces' )
-        if 1:
+        
+        # gravity
+        if 0:
             bscale = 0 # 1:adaptive to grid size; flip5
             addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0), scale=bool(bscale) )
     #vel.printGrid()

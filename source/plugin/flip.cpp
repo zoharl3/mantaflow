@@ -588,7 +588,7 @@ void knMapLinearVec3ToMACGrid(const BasicParticleSystem& p, const FlagGrid& flag
 	vel.setInterpolated( p[idx].pos, pvel[idx], &tmp[0] );
 }
 
-// optionally , this function can use an existing vec3 grid to store the weights
+// optionally, this function can use an existing vec3 grid to store the weights
 // this is useful in combination with the simple extrapolation function
 PYTHON() void mapPartsToMAC(const FlagGrid& flags, MACGrid& vel, MACGrid& velOld,
 			    const BasicParticleSystem& parts, const ParticleDataImpl<Vec3>& partVel, Grid<Vec3>* weight=NULL,
