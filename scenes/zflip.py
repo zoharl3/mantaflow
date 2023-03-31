@@ -42,15 +42,15 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
+dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 0
+b_correct21 = 0
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
-b_correct21 = 0
 
 ###
 
@@ -60,13 +60,10 @@ if b_correct21:
 
 combineBandWidth = narrowBandWidth - 1
 
-scale2 = 1 # scale fixed_vol grid
 dt = .2 # .2(default), .5, 1(flip5, easier to debug)
 gs = vec3(res, res, res)
-gs2 = vec3(res*scale2, res*scale2, res*scale2)
 if dim == 2:
     gs.z = 1
-    gs2.z = 1
     bMesh = 0
     bSaveParts = 0
 if 0: # sample 1D; requires changing sampleLevelsetWithParticles()
@@ -75,8 +72,6 @@ else:
     ppc = part_per_cell_1d**dim
 
 boundary_width = 0
-if scale2 < 1:
-    boundary_width = 1/scale2 - 1
 
 s = Solver( name='main', gridSize=gs, dim=dim )
 gravity = -0.1 # -0.1
@@ -105,6 +100,7 @@ radiusFactor = 1.0
 # prepare grids and particles
 flags    = s.create(FlagGrid)
 vel      = s.create(MACGrid)
+vel2     = s.create(MACGrid)
 velOld   = s.create(MACGrid)
 velParts = s.create(MACGrid)
 pressure = s.create(RealGrid)
@@ -112,7 +108,8 @@ mapWeights = s.create(MACGrid)
 pp       = s.create(BasicParticleSystem)
 
 # add velocity data to particles
-pVel     = pp.create(PdataVec3) 
+pVel     = pp.create(PdataVec3)
+pVel2     = pp.create(PdataVec3)
 phiParts = s.create(LevelsetGrid)
 phiMesh  = s.create(LevelsetGrid)
 phiObs   = s.create(LevelsetGrid, name='phiObs')
@@ -142,11 +139,6 @@ if resampleParticles:
     
 # scene setup
 flags.initDomain( boundaryWidth=boundary_width, phiWalls=phiObs ) 
-
-# my vars
-s2 = Solver( name='secondary', gridSize=gs2, dim=dim )
-flags2 = s2.create( FlagGrid )
-flags2.initDomain( boundaryWidth=0 ) 
 
 if 0: # breaking dam
     # my dam
@@ -182,7 +174,7 @@ elif 0: # falling drop
     phi.join( fluidDrop.computeLevelset() ) # add drop
     flags.updateFromLevelset( phi )
 
-elif 0: # basin
+elif 1: # basin
     # water
     fluidbox = Box( parent=s, p0=gs*( vec3(0, 0.5, 0) ), p1=gs*( vec3(1, 0.9, 1) ) )
     phi = fluidbox.computeLevelset()
@@ -333,10 +325,16 @@ while 1:
         print( '- forces' )
         
         # gravity
-        if 0:
+        if 1:
             bscale = 0 # 1:adaptive to grid size; flip5
             addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0), scale=bool(bscale) )
     #vel.printGrid()
+
+        # vortex
+        if 1:
+            vortex( pp=pp, c=gs/2, rad=0.1*res, pVel=pVel2 )
+            mapPartsToMAC( vel=vel2, flags=flags, velOld=vel2, parts=pp, partVel=pVel2 )
+            vel.add( vel2 )
 
     # set solid (walls)
     print( '- setWallBcs' )
@@ -361,12 +359,6 @@ while 1:
     #flags.printGrid()
     #vel.printGrid()
 
-    # fixed volume pre-process
-    #if b_fixed_vol:
-        #scale_particle_pos( pp=pp, scale=scale2 )
-        #markFluidCells( parts=pp, flags=flags2 )
-        #scale_particle_pos( pp=pp, scale=1/scale2 )
-
     print( '- set particles\' pos0' )
     set_particles_pos0( pp=pp )
 
@@ -379,7 +371,7 @@ while 1:
     # advect
     print( '- advect' )
     # advect particles
-    pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
+    pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=True ) # IntEuler, IntRK2, IntRK4
     #pushOutofObs( parts=pp, flags=flags, phiObs=phiObs ) # creates issues for correct21 and fixedVol
     # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5 but makes it worse for fixed_vol
     if not b_fixed_vol:
@@ -392,11 +384,6 @@ while 1:
     # fixed volume (my scheme)
     include_walls = false
     if b_fixed_vol:
-        #scale_particle_pos( pp=pp, scale=scale2 )
-
-        #markFluidCells( parts=pp, flags=flags2 )
-        #copyFlagsToFlags( flags, flags2 )
-
         phi.setBoundNeumann( 0 ) # make sure no (new) particles are placed at outer boundary
         #phi.printGrid()
 
@@ -415,10 +402,6 @@ while 1:
         # if using band
         if 0 and narrowBand:
             include_walls = true
-
-        #scale_particle_pos( pp=pp, scale=1/scale2 )
-
-        #copyFlagsToFlags( flags2, flags )
 
     # correct21 (position solver, Thuerey21)
     # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
