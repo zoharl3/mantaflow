@@ -156,7 +156,7 @@ void MeshPainter::paint() {
 	bool nodeColor = (mLocalMesh->getType() == Mesh::TypeVortexSheet) && (mVorticityMode==VModeTex);
 	
 	// setup OpenGL lighting and material
-	const float isoAlpha = 0.4;  
+	const float isoAlpha = 0.9;
 	setupLights(false);
 	glColorMaterial ( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE ) ;
 	glEnable(GL_COLOR_MATERIAL);

@@ -45,7 +45,7 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 0
 b_correct21 = 0
@@ -234,7 +234,7 @@ V0 = float(pp.pySize()) / ppc
 
 if 1 and GUI:
     gui = Gui()
-    for i in range(2):
+    for i in range( 2 ):
         gui.nextMeshDisplay() # 0:full, 1:invisible, 2:x-ray
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
@@ -332,7 +332,9 @@ while 1:
 
         # vortex
         if 1:
-            vortex( pp=pp, c=gs/2, rad=0.1*res, pVel=pVel2 )
+            #c = gs/2
+            c = Vec3( res/2, 0.6*res, res/2 )
+            vortex( pp=pp, dt=dt, c=c, rad=0.1*res, h=0.2*res, pVel=pVel2 )
             mapPartsToMAC( vel=vel2, flags=flags, velOld=vel2, parts=pp, partVel=pVel2 )
             vel.add( vel2 )
 

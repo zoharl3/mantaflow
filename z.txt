@@ -1,6 +1,7 @@
 
 - Code
-    - print_cam()
+    - mesh transparency level is set in isoAlpha in meshpainter.cpp
+    - print_cam(): print camera
     - I excluded build/pp from resharper
     - The python script is run from c++ using 
 PyRun_SimpleString(buf);
