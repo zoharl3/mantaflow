@@ -2,7 +2,7 @@
 # flip5 in the comments refers to the scene script flip05_nbflip.py
 
 import os, sys, math
-import keyboard, copy
+import keyboard
 
 from manta import *
 
@@ -42,7 +42,7 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
 res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
@@ -112,7 +112,9 @@ pVel     = pp.create(PdataVec3)
 pVel2     = pp.create(PdataVec3)
 phiParts = s.create(LevelsetGrid)
 phiMesh  = s.create(LevelsetGrid)
-phiObs   = s.create(LevelsetGrid, name='phiObs')
+phiObs   = s.create(LevelsetGrid)
+phiObsInit = s.create(LevelsetGrid)
+obsVel  = s.create(MACGrid)
 fractions = s.create(MACGrid) # sticks to walls and becomes slow without this?
 mesh     = s.create(Mesh)
 bfs      = s.create(IntGrid) # discrete distance from surface
@@ -140,7 +142,7 @@ if resampleParticles:
 # scene setup
 flags.initDomain( boundaryWidth=boundary_width, phiWalls=phiObs ) 
 
-if 0: # breaking dam
+if 0: # dam
     # my dam
     #fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.3) ), p1=gs*( vec3(0.4, 0.8, .7) ) )
     fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.35) ), p1=gs*( vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -174,7 +176,7 @@ elif 0: # falling drop
     phi.join( fluidDrop.computeLevelset() ) # add drop
     flags.updateFromLevelset( phi )
 
-elif 1: # basin
+elif 0: # basin
     # water
     fluidbox = Box( parent=s, p0=gs*( vec3(0, 0.5, 0) ), p1=gs*( vec3(1, 0.9, 1) ) )
     phi = fluidbox.computeLevelset()
@@ -196,25 +198,35 @@ elif 1: # basin
         #meshObs.printGrid()
         #phiObs.printGrid()
         phiObs.join( meshObs )
-        #sphere = Sphere( parent=s , center=gs*vec3(0.66,0.3,0.5), radius=res*0.2)
-        #phiObs.join( sphere.computeLevelset() )
         phi.subtract( phiObs )
 
-else: # vortex
+else: # low full box
     # water
-    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0., 0) ), p1=gs*( vec3(1, 0.9, 1) ) )
+    h = 0.3 # 0.3, 0.9
+    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0., 0) ), p1=gs*( vec3(.4, h, 1) ) )
     phi = fluidbox.computeLevelset()
     flags.updateFromLevelset( phi )
+
+    # moving obstacle
+    if 1:
+        obsC = gs*vec3( 0.5, 0.5, 0.5 )
+        sphere = Sphere( parent=s, center=obsC, radius=res*0.1 )
+        phiObsInit.copyFrom( phiObs )
+        phiObs.join( sphere.computeLevelset() )
+
+        obsVelVec = vec3( 0, -0.1, 0 )
+        obsVel.setConst( obsVelVec )
+        obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
 
 #phi.printGrid()
 #phiObs.printGrid()
 
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
 
-# also sets boundary flags for phiObs
-#setObstacleFlags( flags=flags, phiObs=phiObs )
-updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
-setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
+# also sets boundary flags for phiObs (and shrinks it)
+setObstacleFlags( flags=flags, phiObs=phiObs )
+#updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
+#setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
 
 # phi is influenced by the walls for some reason
 # create a level set from particles
@@ -234,7 +246,7 @@ V0 = float(pp.pySize()) / ppc
 
 if 1 and GUI:
     gui = Gui()
-    for i in range( 2 ):
+    for i in range( 0 ):
         gui.nextMeshDisplay() # 0:full, 1:invisible, 2:x-ray
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
@@ -328,19 +340,31 @@ while 1:
         if 1:
             bscale = 0 # 1:adaptive to grid size; flip5
             addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0), scale=bool(bscale) )
-    #vel.printGrid()
 
         # vortex
-        if 1:
+        if 0:
             #c = gs/2
-            c = Vec3( res/2, 0.6*res, res/2 )
-            vortex( pp=pp, dt=dt, c=c, rad=0.1*res, h=0.2*res, pVel=pVel2 )
+            c = Vec3( res/2, 0.3*res, res/2 )
+            vortex( pp=pp, dt=dt, c=c, rad=0.1*res, h=0.9*res, pVel=pVel2 )
             mapPartsToMAC( vel=vel2, flags=flags, velOld=vel2, parts=pp, partVel=pVel2 )
             vel.add( vel2 )
 
+    # moving obstacle
+    if it < 150:
+        rad = 0.1
+        if obsC.y - res*rad > 5:
+            obsC += gs* dt*obsVelVec
+        else:
+            obsVel.setConst(Vec3(0.))
+        sphere = Sphere( parent=s, center=obsC, radius=res*rad )
+        phiObs.copyFrom( phiObsInit )
+        phiObs.join( sphere.computeLevelset() )
+        setObstacleFlags( flags=flags, phiObs=phiObs )
+        flags.fillGrid()
+
     # set solid (walls)
     print( '- setWallBcs' )
-    setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs ) # clear velocity from solid
+    setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel ) # clear velocity from solid
     #setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
     #vel.printGrid()
 
@@ -356,7 +380,7 @@ while 1:
     dist = min( int(maxVel*1.25 + 2), 8 ) # res
     print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
     extrapolateMACSimple( flags=flags, vel=vel, distance=dist, intoObs=True )
-    setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs )
+    setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel )
     #setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
     #flags.printGrid()
     #vel.printGrid()
@@ -373,9 +397,9 @@ while 1:
     # advect
     print( '- advect' )
     # advect particles
-    pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=True ) # IntEuler, IntRK2, IntRK4
+    pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
     #pushOutofObs( parts=pp, flags=flags, phiObs=phiObs ) # creates issues for correct21 and fixedVol
-    # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5 but makes it worse for fixed_vol
+    # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5; it makes it worse for fixed_vol
     if not b_fixed_vol:
         advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
         flags.updateFromLevelset( phi ) 
