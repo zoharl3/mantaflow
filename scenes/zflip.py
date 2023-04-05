@@ -47,8 +47,8 @@ part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
 res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
-b_fixed_vol = 0
-b_correct21 = 0
+b_fixed_vol = 1
+b_correct21 = 1
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
 
@@ -203,7 +203,7 @@ elif 0: # basin
 else: # low full box
     # water
     h = 0.3 # 0.3, 0.9
-    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0., 0) ), p1=gs*( vec3(.4, h, 1) ) )
+    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0., 0) ), p1=gs*( vec3(1, h, 1) ) )
     phi = fluidbox.computeLevelset()
     flags.updateFromLevelset( phi )
 
@@ -214,7 +214,7 @@ else: # low full box
         phiObsInit.copyFrom( phiObs )
         phiObs.join( sphere.computeLevelset() )
 
-        obsVelVec = vec3( 0, -0.1, 0 )
+        obsVelVec = vec3( 0, -0.03, 0 )
         obsVel.setConst( obsVelVec )
         obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
 
@@ -322,10 +322,26 @@ while 1:
         mapPartsToMAC( vel=vel, flags=flags, velOld=velOld, parts=pp, partVel=pVel, weight=mapWeights )
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
+    # moving obstacle
+    if it < 150:
+        #flags.printGrid()
+        #print( '- move obstacle' )
+        rad = 0.1
+        if obsC.y - res*rad > 1:
+            obsC += gs* dt*obsVelVec
+        else:
+            obsVel.setConst(Vec3(0.))
+        sphere = Sphere( parent=s, center=obsC, radius=res*rad )
+        phiObs.copyFrom( phiObsInit )
+        phiObs.join( sphere.computeLevelset() )
+        setObstacleFlags( flags=flags, phiObs=phiObs )
+        #flags.printGrid()
+
     # update flags
     if not b_fixed_vol or it == 0:
         print( '- markFluidCells (update flags)' )
         markFluidCells( parts=pp, flags=flags )
+        #markFluidCells( parts=pp, flags=flags, phiObs=phiObs )
         if narrowBand:
             update_fluid_from_phi( flags=flags, phi=phi, band_width=narrowBandWidth )
         #flags.printGrid()
@@ -348,19 +364,6 @@ while 1:
             vortex( pp=pp, dt=dt, c=c, rad=0.1*res, h=0.9*res, pVel=pVel2 )
             mapPartsToMAC( vel=vel2, flags=flags, velOld=vel2, parts=pp, partVel=pVel2 )
             vel.add( vel2 )
-
-    # moving obstacle
-    if it < 150:
-        rad = 0.1
-        if obsC.y - res*rad > 5:
-            obsC += gs* dt*obsVelVec
-        else:
-            obsVel.setConst(Vec3(0.))
-        sphere = Sphere( parent=s, center=obsC, radius=res*rad )
-        phiObs.copyFrom( phiObsInit )
-        phiObs.join( sphere.computeLevelset() )
-        setObstacleFlags( flags=flags, phiObs=phiObs )
-        flags.fillGrid()
 
     # set solid (walls)
     print( '- setWallBcs' )
