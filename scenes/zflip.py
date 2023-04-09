@@ -34,7 +34,7 @@ if 0:
 
 # flags
 bMesh       = 1
-bSaveParts  = 1 # .vdb
+bSaveParts  = 0 # .vdb
 bSaveUni    = 0 # .uni
 if bSaveParts or bSaveUni:
     bMesh = 1
@@ -42,13 +42,13 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
+dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
 res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
-b_fixed_vol = 1
-b_correct21 = 1
+b_fixed_vol = 0
+b_correct21 = 0
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
 
@@ -200,7 +200,7 @@ elif 0: # basin
         phiObs.join( meshObs )
         phi.subtract( phiObs )
 
-else: # low full box
+else: # low, full box
     # water
     h = 0.3 # 0.3, 0.9
     fluidbox = Box( parent=s, p0=gs*( vec3(0, 0., 0) ), p1=gs*( vec3(1, h, 1) ) )
@@ -209,12 +209,12 @@ else: # low full box
 
     # moving obstacle
     if 1:
-        obsC = gs*vec3( 0.5, 0.5, 0.5 )
+        obsC = gs*vec3( 0.5, 0.4, 0.5 )
         sphere = Sphere( parent=s, center=obsC, radius=res*0.1 )
         phiObsInit.copyFrom( phiObs )
         phiObs.join( sphere.computeLevelset() )
 
-        obsVelVec = vec3( 0, -0.03, 0 )
+        obsVelVec = vec3( 0, -5, 0 )
         obsVel.setConst( obsVelVec )
         obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
 
@@ -224,9 +224,11 @@ else: # low full box
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
 
 # also sets boundary flags for phiObs (and shrinks it)
-setObstacleFlags( flags=flags, phiObs=phiObs )
-#updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
-#setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
+if 0:
+    setObstacleFlags( flags=flags, phiObs=phiObs )
+else:
+    updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
+    setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
 
 # phi is influenced by the walls for some reason
 # create a level set from particles
@@ -246,7 +248,7 @@ V0 = float(pp.pySize()) / ppc
 
 if 1 and GUI:
     gui = Gui()
-    for i in range( 0 ):
+    for i in range( 2 ):
         gui.nextMeshDisplay() # 0:full, 1:invisible, 2:x-ray
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
@@ -323,39 +325,51 @@ while 1:
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
     # moving obstacle
-    if it < 150:
+    if 1 and it < 700:
         #flags.printGrid()
-        #print( '- move obstacle' )
         rad = 0.1
-        if obsC.y - res*rad > 1:
-            obsC += gs* dt*obsVelVec
+        if obsC.y - res*rad > 1: # move center
+            print( '- move obstacle' )
+            #obsVelVec += dt*vec3(0, gravity, 0) # acceleration
+            obsVel.setConst( obsVelVec )
+            obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
+            obsC += dt*obsVelVec
         else:
+            print( '- obstacle stopped' )
             obsVel.setConst(Vec3(0.))
+        #obsVel.printGrid()
+
         sphere = Sphere( parent=s, center=obsC, radius=res*rad )
         phiObs.copyFrom( phiObsInit )
         phiObs.join( sphere.computeLevelset() )
-        setObstacleFlags( flags=flags, phiObs=phiObs )
+        if 0:
+            setObstacleFlags( flags=flags, phiObs=phiObs )
+        else:
+            updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
+            setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
         #flags.printGrid()
 
     # update flags
-    if not b_fixed_vol or it == 0:
+    if 1:
         print( '- markFluidCells (update flags)' )
-        markFluidCells( parts=pp, flags=flags )
+        markFluidCells( parts=pp, flags=flags ) # needed for a moving obstacle
         #markFluidCells( parts=pp, flags=flags, phiObs=phiObs )
-        if narrowBand:
+        if narrowBand and ( not b_fixed_vol or it == 0 ):
             update_fluid_from_phi( flags=flags, phi=phi, band_width=narrowBandWidth )
         #flags.printGrid()
 
     #vel.printGrid()
     #flags.printGrid()
     # forces
-    if 1:
+    if 0:
         print( '- forces' )
         
         # gravity
         if 1:
             bscale = 0 # 1:adaptive to grid size; flip5
-            addGravity( flags=flags, vel=vel, gravity=(0, gravity, 0), scale=bool(bscale) )
+            g = gravity*dt/1 # see addGravity(); assuming s.mDt=1
+            #g = gravity
+            addGravity( flags=flags, vel=vel, gravity=(0, g, 0), scale=bool(bscale) )
 
         # vortex
         if 0:
@@ -367,9 +381,11 @@ while 1:
 
     # set solid (walls)
     print( '- setWallBcs' )
-    setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel ) # clear velocity from solid
-    #setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
+    #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcsFrac
+    setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcs
+    #setWallBcs( flags=flags, vel=vel, phiObs=phiObs ) # clear velocity from solid
     #vel.printGrid()
+    #flags.printGrid()
 
     # pressure solve
     if 1:
@@ -383,7 +399,8 @@ while 1:
     dist = min( int(maxVel*1.25 + 2), 8 ) # res
     print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
     extrapolateMACSimple( flags=flags, vel=vel, distance=dist, intoObs=True )
-    setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel )
+    #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel )
+    setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel )
     #setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
     #flags.printGrid()
     #vel.printGrid()
@@ -413,7 +430,7 @@ while 1:
     # fixed volume (my scheme)
     include_walls = false
     if b_fixed_vol:
-        phi.setBoundNeumann( 0 ) # make sure no (new) particles are placed at outer boundary
+        phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
         #phi.printGrid()
 
         pVel.setSource( vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()

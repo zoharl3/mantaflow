@@ -189,6 +189,7 @@ KERNEL() void KnSetWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* o
 	bool curFluid = flags.isFluid(i,j,k);
 	bool curObs   = flags.isObstacle(i,j,k);
 	Vec3 bcsVel(0.,0.,0.);
+
 	if (!curFluid && !curObs) return;
 
 	if (obvel) {
@@ -196,6 +197,11 @@ KERNEL() void KnSetWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* o
 		bcsVel.y = (*obvel)(i,j,k).y;
 		if((*obvel).is3D()) bcsVel.z = (*obvel)(i,j,k).z;
 	}
+
+// if ( curObs && !flags.is_boundary( Vec3i(i, j, k) ) ) { 
+// 	printf( "(%d, %d, %d) %d; ", i, j, k, flags( i, j, k ) );
+// 	cout << "curObs: " << endl << bcsVel << endl;
+// }
 
 	// we use i>0 instead of bnd=1 to check outer wall
     if ( i > 0 && flags.isObstacle( i - 1, j, k ) )

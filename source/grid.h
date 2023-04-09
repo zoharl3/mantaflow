@@ -52,6 +52,7 @@ public:
 	inline void checkIndex(int i, int j, int k) const;
 	//! Check if indices are within bounds, otherwise error (should only be called when debugging)
 	inline void checkIndex(IndexInt idx) const;
+
 	//! Check if index is within given boundaries
 	inline bool isInBounds(const Vec3i& p, int bnd) const;
 	//! Check if index is within given boundaries
@@ -60,6 +61,8 @@ public:
 	inline bool isInBounds(const Vec3& p, int bnd = 0) const { return isInBounds(toVec3i(p), bnd); }
 	//! Check if linear index is in the range of the array
 	inline bool isInBounds(IndexInt idx) const;
+
+	inline bool is_boundary( const Vec3i &p, int bnd ) const;
 
 	//! Get the type of grid
 	inline GridType getType() const { return mType; }
@@ -366,7 +369,7 @@ public:
 	//! set all cells (except obs/in/outflow) to type (fluid by default)
 	PYTHON() void fillGrid(int type=TypeFluid);
 
-	// mark as interface fluid cells that border non-fluid cells
+	// mark as surface fluid cells that border non-fluid cells
 	PYTHON() void mark_surface();
 
 	//! count no. of cells matching flags via "AND"
@@ -412,11 +415,11 @@ inline void GridBase::checkIndex(IndexInt idx) const {
 }
 
 bool GridBase::isInBounds(const Vec3i& p) const { 
-	return (p.x >= 0 && p.y >= 0 && p.z >= 0 && p.x < mSize.x && p.y < mSize.y && p.z < mSize.z); 
+	return p.x >= 0 && p.y >= 0 && p.z >= 0 && p.x < mSize.x && p.y < mSize.y && p.z < mSize.z; 
 }
 
 bool GridBase::isInBounds(const Vec3i& p, int bnd) const { 
-	bool ret = (p.x >= bnd && p.y >= bnd && p.x < mSize.x-bnd && p.y < mSize.y-bnd);
+	bool ret = p.x >= bnd && p.y >= bnd && p.x < mSize.x - bnd && p.y < mSize.y - bnd;
 	if(this->is3D()) {
 		ret &= (p.z >= bnd && p.z < mSize.z-bnd); 
 	} else {
@@ -430,6 +433,19 @@ bool GridBase::isInBounds(IndexInt idx) const {
 		return false;
 	}
 	return true;
+}
+
+bool GridBase::is_boundary( const Vec3i &p, int bnd = 0 ) const {
+    if ( !isInBounds( p ) )
+        return false;
+
+    bool ret = ( p.x <= bnd || p.x >= mSize.x - 1 - bnd ) || ( p.y <= bnd || p.y >= mSize.y - 1 - bnd );
+
+    if ( this->is3D() ) {
+        ret |= p.z <= bnd || p.z >= mSize.z - 1 - bnd;
+    }
+
+    return ret;
 }
 
 inline Vec3 MACGrid::getCentered(int i, int j, int k) const {
