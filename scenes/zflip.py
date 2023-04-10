@@ -45,10 +45,10 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 150 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 0
-b_correct21 = 0
+b_correct21 = 1
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
 
@@ -61,7 +61,7 @@ if b_correct21:
 combineBandWidth = narrowBandWidth - 1
 
 dt = .2 # .2(default), .5, 1(flip5, easier to debug)
-gs = vec3(res, res, res)
+gs = vec3( res, res, res )
 if dim == 2:
     gs.z = 1
     bMesh = 0
@@ -202,19 +202,20 @@ elif 0: # basin
 
 else: # low, full box
     # water
-    h = 0.3 # 0.3, 0.9
+    h = 0.25 # 0.3, 0.9
     fluidbox = Box( parent=s, p0=gs*( vec3(0, 0., 0) ), p1=gs*( vec3(1, h, 1) ) )
     phi = fluidbox.computeLevelset()
     flags.updateFromLevelset( phi )
 
     # moving obstacle
     if 1:
-        obsC = gs*vec3( 0.5, 0.4, 0.5 )
-        sphere = Sphere( parent=s, center=obsC, radius=res*0.1 )
+        obs_rad = .1
+        obs_center = gs*vec3( 0.5, 0.9 - obs_rad, 0.5 )
+        sphere = Sphere( parent=s, center=obs_center, radius=res*obs_rad )
         phiObsInit.copyFrom( phiObs )
         phiObs.join( sphere.computeLevelset() )
 
-        obsVelVec = vec3( 0, -5, 0 )
+        obsVelVec = vec3( 0, -0, 0 )
         obsVel.setConst( obsVelVec )
         obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
 
@@ -248,7 +249,7 @@ V0 = float(pp.pySize()) / ppc
 
 if 1 and GUI:
     gui = Gui()
-    for i in range( 2 ):
+    for i in range( 0 ):
         gui.nextMeshDisplay() # 0:full, 1:invisible, 2:x-ray
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
@@ -327,19 +328,18 @@ while 1:
     # moving obstacle
     if 1 and it < 700:
         #flags.printGrid()
-        rad = 0.1
-        if obsC.y - res*rad > 1: # move center
+        if obs_center.y - res*obs_rad > 1: # move center
             print( '- move obstacle' )
-            #obsVelVec += dt*vec3(0, gravity, 0) # acceleration
+            obsVelVec += dt*vec3(0, gravity, 0) # acceleration
             obsVel.setConst( obsVelVec )
             obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
-            obsC += dt*obsVelVec
+            obs_center += dt*obsVelVec
         else:
             print( '- obstacle stopped' )
             obsVel.setConst(Vec3(0.))
         #obsVel.printGrid()
 
-        sphere = Sphere( parent=s, center=obsC, radius=res*rad )
+        sphere = Sphere( parent=s, center=obs_center, radius=res*obs_rad )
         phiObs.copyFrom( phiObsInit )
         phiObs.join( sphere.computeLevelset() )
         if 0:
@@ -361,7 +361,7 @@ while 1:
     #vel.printGrid()
     #flags.printGrid()
     # forces
-    if 0:
+    if 1:
         print( '- forces' )
         
         # gravity
