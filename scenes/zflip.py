@@ -48,7 +48,7 @@ it_max = 1400 # 300, 500, 1200, 1500
 res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
-b_correct21 = 1
+b_correct21 = 0
 
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
@@ -62,7 +62,7 @@ if b_correct21:
 combineBandWidth = narrowBandWidth - 1
 
 dt = .2 # .2(default), .5, 1(flip5, easier to debug)
-gs = vec3( res, res, res )
+gs = Vec3( res, res, res )
 if dim == 2:
     gs.z = 1
     bMesh = 0
@@ -145,41 +145,41 @@ flags.initDomain( boundaryWidth=boundary_width, phiWalls=phiObs )
 
 if 0: # dam
     # my dam
-    #fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.3) ), p1=gs*( vec3(0.4, 0.8, .7) ) )
-    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0, 0.35) ), p1=gs*( vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
+    #fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0, 0.3) ), p1=gs*( Vec3(0.4, 0.8, .7) ) )
+    fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0, 0.35) ), p1=gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
 
     # flip05_nbflip.py
-    #fluidbox = Box( parent=s, p0=gs*vec3(0, 0.15, 0), p1=gs*vec3(0.4, 0.5, 0.8) )
+    #fluidbox = Box( parent=s, p0=gs*Vec3(0, 0.15, 0), p1=gs*Vec3(0.4, 0.5, 0.8) )
 
     # square
     if 0:
         t1 = 0.4 # 0.15, 0.3, .4
         sz1 = .1 # .2, .4
-        t = vec3(t1, t1, 0)
-        sz = vec3(sz1, sz1, 1)
-        fluidbox = Box( parent=s, p0=gs*( t + vec3(0,0,0) ), p1=gs*( t + sz ) )
+        t = Vec3(t1, t1, 0)
+        sz = Vec3(sz1, sz1, 1)
+        fluidbox = Box( parent=s, p0=gs*( t + Vec3(0,0,0) ), p1=gs*( t + sz ) )
 
     # manta dam
-    #fluidbox = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(0.4,0.6,1)) 
+    #fluidbox = Box( parent=s, p0=gs*Vec3(0,0,0), p1=gs*Vec3(0.4,0.6,1)) 
 
     # phi
     phi = fluidbox.computeLevelset()
     flags.updateFromLevelset( phi )
 
 elif 0: # falling drop
-    fluidBasin = Box( parent=s, p0=gs*vec3(0,0,0), p1=gs*vec3(1.0,0.1,1.0)) # basin
-    dropCenter = vec3(0.5,0.3,0.5)
+    fluidBasin = Box( parent=s, p0=gs*Vec3(0,0,0), p1=gs*Vec3(1.0,0.1,1.0)) # basin
+    dropCenter = Vec3(0.5,0.3,0.5)
     dropRadius = 0.1
     fluidDrop  = Sphere( parent=s , center=gs*dropCenter, radius=res*dropRadius)
     fluidVel   = Sphere( parent=s , center=gs*dropCenter, radius=res*(dropRadius+0.05) )
-    fluidSetVel= vec3(0,-1,0)
+    fluidSetVel= Vec3(0,-1,0)
     phi = fluidBasin.computeLevelset()
     phi.join( fluidDrop.computeLevelset() ) # add drop
     flags.updateFromLevelset( phi )
 
 elif 0: # basin
     # water
-    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0.5, 0) ), p1=gs*( vec3(1, 0.9, 1) ) )
+    fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0.5, 0) ), p1=gs*( Vec3(1, 0.9, 1) ) )
     phi = fluidbox.computeLevelset()
     flags.updateFromLevelset( phi )
 
@@ -204,24 +204,24 @@ elif 0: # basin
 else: # low, full box
     # water
     h = 0.25 # 0.3, 0.9
-    fluidbox = Box( parent=s, p0=gs*( vec3(0, 0., 0) ), p1=gs*( vec3(1, h, 1) ) )
+    fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0., 0) ), p1=gs*( Vec3(1, h, 1) ) )
     phi = fluidbox.computeLevelset()
     flags.updateFromLevelset( phi )
 
     # moving obstacle
     if 1:
         obs_rad = 11/res # .1, 3/res
-        obs_center = gs*vec3( 0.5, 0.9 - obs_rad, 0.5 )
-        shape = Box( parent=s, p0=obs_center - vec3(res*obs_rad), p1=obs_center + vec3(res*obs_rad) )
+        obs_center = gs*Vec3( 0.5, 0.9 - obs_rad, 0.5 )
+        shape = Box( parent=s, p0=obs_center - Vec3(res*obs_rad), p1=obs_center + Vec3(res*obs_rad) )
         #shape = Sphere( parent=s, center=obs_center, radius=res*obs_rad )
         phiObsInit.copyFrom( phiObs )
         phiObs.join( shape.computeLevelset() )
 
-        obs_vel_vec = vec3( 0, -0, 0 )
+        obs_vel_vec = Vec3( 0, -0, 0 )
         obsVel.setConst( obs_vel_vec )
         obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
 
-obs_vel_vec2 = vec3( 0, 0, 0 )
+obs_vel_vec2 = Vec3( 0, 0, 0 )
 
 #phi.printGrid()
 #phiObs.printGrid()
@@ -334,33 +334,18 @@ while 1:
         #flags.printGrid()
         if obs_center.y - res*obs_rad > 1: # move
             print( '- move obstacle' )
-            obs_vel_vec0 = obs_vel_vec
-            obs_center0 = obs_center
-            while 1:
-                obs_vel_vec2 = obs_vel_vec0 + s.timestep * vec3( 0, gravity, 0 )
-                obs_center = obs_center0 + s.timestep * obs_vel_vec # use old vel
+            obs_vel_vec2 = obs_vel_vec + s.timestep * Vec3( 0, gravity, 0 )
+            obs_center = obs_center + s.timestep * obs_vel_vec # using old vel
 
-                if 1 or not b_fixed_vol:
-                    break
-                #if abs( obs_center.y - obs_center0.y ) <= 1:
-                if abs( int(obs_center.y) - int(obs_center0.y) ) <= 1:
-                    break
-
-                # limit movement to up to one cell distance
-                s.timestep /= 2
-                print( "  - Halving time step due to obstacle movement: %g", s.timestep )
-            #print( "  - obs_center0:", obs_center0 )
-            #print( "  - obs_center: ", obs_center )
-
-            obsVel.setConst( obs_vel_vec )
-            obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
+            obsVel.setConst( obs_vel_vec ) # using old vel
+            obsVel.setBound( value=Vec3( 0. ), boundaryWidth=boundary_width+1 )
             
         else: # stay
             print( '- obstacle stopped' )
-            obsVel.setConst( Vec3(0.) )
+            obsVel.setConst( Vec3( 0. ) )
         #obsVel.printGrid()
 
-        shape = Box( parent=s, p0=obs_center - vec3(res*obs_rad), p1=obs_center + vec3(res*obs_rad) )
+        shape = Box( parent=s, p0=obs_center - Vec3(res*obs_rad), p1=obs_center + Vec3(res*obs_rad) )
         #shape = Sphere( parent=s, center=obs_center, radius=res*obs_rad )
         phiObs.copyFrom( phiObsInit )
         phiObs.join( shape.computeLevelset() )
@@ -472,8 +457,9 @@ while 1:
         # if using band
         if 0 and narrowBand:
             include_walls = true
-    else:
-        obs_vel_vec = obs_vel_vec2
+
+    # update obstacle velocity
+    obs_vel_vec = obs_vel_vec2
 
     # correct21 (position solver, Thuerey21)
     # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
