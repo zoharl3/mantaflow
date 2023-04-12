@@ -42,13 +42,14 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 3 # 2, 3
+dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 150 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 0
 b_correct21 = 1
+
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
 
@@ -209,15 +210,18 @@ else: # low, full box
 
     # moving obstacle
     if 1:
-        obs_rad = .1
+        obs_rad = 11/res # .1, 3/res
         obs_center = gs*vec3( 0.5, 0.9 - obs_rad, 0.5 )
-        sphere = Sphere( parent=s, center=obs_center, radius=res*obs_rad )
+        shape = Box( parent=s, p0=obs_center - vec3(res*obs_rad), p1=obs_center + vec3(res*obs_rad) )
+        #shape = Sphere( parent=s, center=obs_center, radius=res*obs_rad )
         phiObsInit.copyFrom( phiObs )
-        phiObs.join( sphere.computeLevelset() )
+        phiObs.join( shape.computeLevelset() )
 
-        obsVelVec = vec3( 0, -0, 0 )
-        obsVel.setConst( obsVelVec )
+        obs_vel_vec = vec3( 0, -0, 0 )
+        obsVel.setConst( obs_vel_vec )
         obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
+
+obs_vel_vec2 = vec3( 0, 0, 0 )
 
 #phi.printGrid()
 #phiObs.printGrid()
@@ -303,7 +307,7 @@ while 1:
     if not b_adaptive_time_step:
         s.frameLength = dt
         s.timestep = ( 1 - it % 1 ) * dt
-    else: # flip5
+    else: # adaptive for flip5
         s.adaptTimestep( maxVel ) # enable init above
 
     # map particle velocities to grid
@@ -326,22 +330,41 @@ while 1:
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
     # moving obstacle
-    if 1 and it < 700:
+    if 1:
         #flags.printGrid()
-        if obs_center.y - res*obs_rad > 1: # move center
+        if obs_center.y - res*obs_rad > 1: # move
             print( '- move obstacle' )
-            obsVelVec += dt*vec3(0, gravity, 0) # acceleration
-            obsVel.setConst( obsVelVec )
+            obs_vel_vec0 = obs_vel_vec
+            obs_center0 = obs_center
+            while 1:
+                obs_vel_vec2 = obs_vel_vec0 + s.timestep * vec3( 0, gravity, 0 )
+                obs_center = obs_center0 + s.timestep * obs_vel_vec # use old vel
+
+                if 1 or not b_fixed_vol:
+                    break
+                #if abs( obs_center.y - obs_center0.y ) <= 1:
+                if abs( int(obs_center.y) - int(obs_center0.y) ) <= 1:
+                    break
+
+                # limit movement to up to one cell distance
+                s.timestep /= 2
+                print( "  - Halving time step due to obstacle movement: %g", s.timestep )
+            #print( "  - obs_center0:", obs_center0 )
+            #print( "  - obs_center: ", obs_center )
+
+            obsVel.setConst( obs_vel_vec )
             obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
-            obs_center += dt*obsVelVec
-        else:
+            
+        else: # stay
             print( '- obstacle stopped' )
-            obsVel.setConst(Vec3(0.))
+            obsVel.setConst( Vec3(0.) )
         #obsVel.printGrid()
 
-        sphere = Sphere( parent=s, center=obs_center, radius=res*obs_rad )
+        shape = Box( parent=s, p0=obs_center - vec3(res*obs_rad), p1=obs_center + vec3(res*obs_rad) )
+        #shape = Sphere( parent=s, center=obs_center, radius=res*obs_rad )
         phiObs.copyFrom( phiObsInit )
-        phiObs.join( sphere.computeLevelset() )
+        phiObs.join( shape.computeLevelset() )
+
         if 0:
             setObstacleFlags( flags=flags, phiObs=phiObs )
         else:
@@ -367,7 +390,7 @@ while 1:
         # gravity
         if 1:
             bscale = 0 # 1:adaptive to grid size; flip5
-            g = gravity*dt/1 # see addGravity(); assuming s.mDt=1
+            g = gravity*s.timestep/1 # see addGravity(); assuming s.mDt=1
             #g = gravity
             addGravity( flags=flags, vel=vel, gravity=(0, g, 0), scale=bool(bscale) )
 
@@ -375,7 +398,7 @@ while 1:
         if 0:
             #c = gs/2
             c = Vec3( res/2, 0.3*res, res/2 )
-            vortex( pp=pp, dt=dt, c=c, rad=0.1*res, h=0.9*res, pVel=pVel2 )
+            vortex( pp=pp, dt=s.timestep, c=c, rad=0.1*res, h=0.9*res, pVel=pVel2 )
             mapPartsToMAC( vel=vel2, flags=flags, velOld=vel2, parts=pp, partVel=pVel2 )
             vel.add( vel2 )
 
@@ -448,7 +471,9 @@ while 1:
         # if using band
         if 0 and narrowBand:
             include_walls = true
-
+    else:
+        obs_vel_vec = obs_vel_vec2
+        
     # correct21 (position solver, Thuerey21)
     # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
     if b_correct21:
