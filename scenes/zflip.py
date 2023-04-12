@@ -47,7 +47,7 @@ part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
 res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
-b_fixed_vol = 0
+b_fixed_vol = 1
 b_correct21 = 1
 
 narrowBand = bool( 0 )
@@ -120,11 +120,11 @@ fractions = s.create(MACGrid) # sticks to walls and becomes slow without this?
 mesh     = s.create(Mesh)
 bfs      = s.create(IntGrid) # discrete distance from surface
 
-# Acceleration data for particle
+# acceleration data for particle
 pindex = s.create(ParticleIndexSystem)
 gpi    = s.create(IntGrid)
 
-#position solver stuff
+# correct21 stuff
 usePositionSolver = True
 density = s.create(RealGrid)
 Lambda = s.create(RealGrid)
@@ -463,7 +463,8 @@ while 1:
         #dt_bound = s.timestep/4
         #dt_bound = max( dt_bound, dt/4 )
 
-        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs )
+        # obs_vel: modifies it to either one cell distance or zero, staying in place and losing velocity (unlike particles)
+        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs, obs_vel=obs_vel_vec2 )
         if s.timestep < 0:
             ret = -1
             s.timestep *= -1
@@ -473,7 +474,7 @@ while 1:
             include_walls = true
     else:
         obs_vel_vec = obs_vel_vec2
-        
+
     # correct21 (position solver, Thuerey21)
     # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
     if b_correct21:
