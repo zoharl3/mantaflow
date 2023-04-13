@@ -116,6 +116,7 @@ phiMesh  = s.create(LevelsetGrid)
 phiObs   = s.create(LevelsetGrid)
 phiObsInit = s.create(LevelsetGrid)
 obsVel  = s.create(MACGrid)
+bObs = 0
 fractions = s.create(MACGrid) # sticks to walls and becomes slow without this?
 mesh     = s.create(Mesh)
 bfs      = s.create(IntGrid) # discrete distance from surface
@@ -209,7 +210,8 @@ else: # low, full box
     flags.updateFromLevelset( phi )
 
     # moving obstacle
-    if 1:
+    bObs = 1
+    if bObs:
         obs_rad = 11/res # .1, 3/res
         obs_center = gs*Vec3( 0.5, 0.9 - obs_rad, 0.5 )
         shape = Box( parent=s, p0=obs_center - Vec3(res*obs_rad), p1=obs_center + Vec3(res*obs_rad) )
@@ -220,8 +222,6 @@ else: # low, full box
         obs_vel_vec = Vec3( 0, -0, 0 )
         obsVel.setConst( obs_vel_vec )
         obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
-
-obs_vel_vec2 = Vec3( 0, 0, 0 )
 
 #phi.printGrid()
 #phiObs.printGrid()
@@ -330,19 +330,17 @@ while 1:
         extrapolateMACFromWeight( vel=vel , distance=2, weight=mapWeights )
 
     # moving obstacle
-    if 1:
+    if bObs:
         #flags.printGrid()
         if obs_center.y - res*obs_rad > 1: # move
             print( '- move obstacle' )
-            obs_vel_vec2 = obs_vel_vec + s.timestep * Vec3( 0, gravity, 0 )
-            obs_center = obs_center + s.timestep * obs_vel_vec # using old vel
-
-            obsVel.setConst( obs_vel_vec ) # using old vel
-            obsVel.setBound( value=Vec3( 0. ), boundaryWidth=boundary_width+1 )
-            
+            obs_vel_vec += s.timestep * Vec3( 0, gravity, 0 )
         else: # stay
             print( '- obstacle stopped' )
-            obsVel.setConst( Vec3( 0. ) )
+            obs_vel_vec = Vec3( 0. )
+
+        obsVel.setConst( obs_vel_vec )
+        obsVel.setBound( value=Vec3( 0. ), boundaryWidth=boundary_width+1 )
         #obsVel.printGrid()
 
         shape = Box( parent=s, p0=obs_center - Vec3(res*obs_rad), p1=obs_center + Vec3(res*obs_rad) )
@@ -449,7 +447,7 @@ while 1:
         #dt_bound = max( dt_bound, dt/4 )
 
         # obs_vel: modifies it to either one cell distance or zero, staying in place and losing velocity (unlike particles)
-        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs, obs_center=obs_center, obs_rad=obs_rad, obs_vel=obs_vel_vec2 )
+        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs, obs_center=obs_center, obs_rad=obs_rad, obs_vel=obs_vel_vec )
         if s.timestep < 0:
             ret = -1
             s.timestep *= -1
@@ -458,8 +456,9 @@ while 1:
         if 0 and narrowBand:
             include_walls = true
 
-    # update obstacle velocity
-    obs_vel_vec = obs_vel_vec2
+    # update obstacle
+    if bObs:
+        obs_center += s.timestep * obs_vel_vec
 
     # correct21 (position solver, Thuerey21)
     # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
