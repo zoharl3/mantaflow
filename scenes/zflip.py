@@ -212,10 +212,10 @@ else: # low, full box
     # moving obstacle
     bObs = 1
     if bObs:
-        obs_rad = 11/res # .1, 3/res
-        obs_center = gs*Vec3( 0.5, 0.9 - obs_rad, 0.5 )
-        shape = Box( parent=s, p0=obs_center - Vec3(res*obs_rad), p1=obs_center + Vec3(res*obs_rad) )
-        #shape = Sphere( parent=s, center=obs_center, radius=res*obs_rad )
+        obs_rad = 4 # .1*res, 3
+        obs_center = gs*Vec3( 0.5, 0.9 - obs_rad/res, 0.5 )
+        shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
+        #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
         phiObsInit.copyFrom( phiObs )
         phiObs.join( shape.computeLevelset() )
 
@@ -332,7 +332,7 @@ while 1:
     # moving obstacle
     if bObs:
         #flags.printGrid()
-        if obs_center.y - res*obs_rad > 1: # move
+        if obs_center.y - obs_rad > 1: # move
             print( '- move obstacle' )
             obs_vel_vec += s.timestep * Vec3( 0, gravity, 0 )
         else: # stay
@@ -343,8 +343,8 @@ while 1:
         obsVel.setBound( value=Vec3( 0. ), boundaryWidth=boundary_width+1 )
         #obsVel.printGrid()
 
-        shape = Box( parent=s, p0=obs_center - Vec3(res*obs_rad), p1=obs_center + Vec3(res*obs_rad) )
-        #shape = Sphere( parent=s, center=obs_center, radius=res*obs_rad )
+        shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
+        #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
         phiObs.copyFrom( phiObsInit )
         phiObs.join( shape.computeLevelset() )
 
@@ -458,6 +458,7 @@ while 1:
 
     # update obstacle
     if bObs:
+        print( f'  - obs_vel_vec={obs_vel_vec}, dt={dt}, obs_center={obs_center}' )
         obs_center += s.timestep * obs_vel_vec
 
     # correct21 (position solver, Thuerey21)
