@@ -456,6 +456,7 @@ while 1:
 
         # obs_vel: modifies it to either one cell distance or zero, staying in place and losing velocity (unlike particles)
         s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs, obs_center=obs_center, obs_rad=obs_rad, obs_vel=obs_vel_vec )
+        print( obs_vel_vec )
         if s.timestep < 0:
             ret = -1
             s.timestep *= -1
