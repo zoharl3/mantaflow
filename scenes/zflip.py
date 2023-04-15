@@ -212,7 +212,7 @@ else: # low, full box
     # moving obstacle
     bObs = 1
     if bObs:
-        obs_rad = 3 # .1*res, 3
+        obs_rad = 2.7 # .1*res, 3
         obs_center = gs*Vec3( 0.5, 0.9 - obs_rad/res, 0.5 )
         shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
         #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
@@ -331,7 +331,7 @@ while 1:
 
     # moving obstacle
     if bObs:
-        flags.printGrid()
+        #flags.printGrid()
         if obs_center.y - obs_rad > 1: # move
             print( '- move obstacle' )
             obs_vel_vec += s.timestep * Vec3( 0, gravity, 0 )
@@ -343,12 +343,20 @@ while 1:
         obsVel.setBound( value=Vec3( 0. ), boundaryWidth=boundary_width+1 )
         #obsVel.printGrid()
 
-        shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
+        print( f'  - obs_center={obs_center}, obs_rad={obs_rad}' )
+        p0 = obs_center - Vec3( obs_rad )
+        p1 = obs_center + Vec3( obs_rad )
+        if dim == 2:
+            p0.z = p1.z = 0.5
+        shape = Box( parent=s, p0=p0, p1=p1 )
         #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
         phiObs.copyFrom( phiObsInit )
         phiObs.join( shape.computeLevelset() )
+        phiObs.printGrid()
 
         if 1:
+            mark_obstacle_box( flags=flags, p0=p0, p1=p1 )
+        elif 0:
             setObstacleFlags( flags=flags, phiObs=phiObs )
         else:
             updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
@@ -356,13 +364,13 @@ while 1:
         flags.printGrid()
 
     # update flags
-    if 1:
+    if bObs:
         print( '- markFluidCells (update flags)' )
         markFluidCells( parts=pp, flags=flags ) # needed for a moving obstacle
         #markFluidCells( parts=pp, flags=flags, phiObs=phiObs )
         if narrowBand and ( not b_fixed_vol or it == 0 ):
             update_fluid_from_phi( flags=flags, phi=phi, band_width=narrowBandWidth )
-        flags.printGrid()
+        #flags.printGrid()
 
     #vel.printGrid()
     #flags.printGrid()
