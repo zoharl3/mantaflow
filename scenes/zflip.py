@@ -331,7 +331,7 @@ while 1:
 
     # moving obstacle
     if bObs:
-        #flags.printGrid()
+        flags.printGrid()
         if obs_center.y - obs_rad > 1: # move
             print( '- move obstacle' )
             obs_vel_vec += s.timestep * Vec3( 0, gravity, 0 )
@@ -353,7 +353,7 @@ while 1:
         else:
             updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
             setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
-        #flags.printGrid()
+        flags.printGrid()
 
     # update flags
     if 1:
@@ -362,7 +362,7 @@ while 1:
         #markFluidCells( parts=pp, flags=flags, phiObs=phiObs )
         if narrowBand and ( not b_fixed_vol or it == 0 ):
             update_fluid_from_phi( flags=flags, phi=phi, band_width=narrowBandWidth )
-        #flags.printGrid()
+        flags.printGrid()
 
     #vel.printGrid()
     #flags.printGrid()
