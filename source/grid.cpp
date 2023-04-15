@@ -909,7 +909,7 @@ void FlagGrid::mark_surface()
 				if ( !isInBounds( idx2 ) )
 					break;
 
-                // to be consistent with the level-set
+                // to be consistent with the level set
                 if ( 1&& mData[index( idx2 )] & TypeObstacle )
 					continue;
 

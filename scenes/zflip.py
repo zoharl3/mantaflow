@@ -43,9 +43,9 @@ bScreenShot = 1
 
 # solver params
 dim = 2 # 2, 3
-part_per_cell_1d = 2 # 3, 2(default), 1
+part_per_cell_1d = 1 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1500
-res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 12 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 b_correct21 = 0
@@ -117,7 +117,7 @@ phiObs   = s.create(LevelsetGrid)
 phiObsInit = s.create(LevelsetGrid)
 obsVel  = s.create(MACGrid)
 bObs = 0
-fractions = s.create(MACGrid) # sticks to walls and becomes slow without this?
+fractions = s.create(MACGrid) # Sticks to walls and becomes slow without this? Not anymore. Shrinks an obstacle box and draws it inaccurately.
 mesh     = s.create(Mesh)
 bfs      = s.create(IntGrid) # discrete distance from surface
 
@@ -212,7 +212,7 @@ else: # low, full box
     # moving obstacle
     bObs = 1
     if bObs:
-        obs_rad = 4 # .1*res, 3
+        obs_rad = 3 # .1*res, 3
         obs_center = gs*Vec3( 0.5, 0.9 - obs_rad/res, 0.5 )
         shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
         #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
@@ -229,7 +229,7 @@ else: # low, full box
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
 
 # also sets boundary flags for phiObs (and shrinks it)
-if 0:
+if 1:
     setObstacleFlags( flags=flags, phiObs=phiObs )
 else:
     updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
@@ -348,7 +348,7 @@ while 1:
         phiObs.copyFrom( phiObsInit )
         phiObs.join( shape.computeLevelset() )
 
-        if 0:
+        if 1:
             setObstacleFlags( flags=flags, phiObs=phiObs )
         else:
             updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
@@ -387,7 +387,7 @@ while 1:
 
     # set solid (walls)
     print( '- setWallBcs' )
-    #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcsFrac
+    #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcsFrac, which doesn't work?
     setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcs
     #setWallBcs( flags=flags, vel=vel, phiObs=phiObs ) # clear velocity from solid
     #vel.printGrid()
