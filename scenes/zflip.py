@@ -212,7 +212,7 @@ else: # low, full box
     # moving obstacle
     bObs = 1
     if bObs:
-        obs_rad = 2.7 # .1*res, 3
+        obs_rad = 2.8 # .1*res, 3
         obs_center = gs*Vec3( 0.5, 0.9 - obs_rad/res, 0.5 )
         shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
         #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
