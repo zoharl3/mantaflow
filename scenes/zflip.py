@@ -45,7 +45,7 @@ bScreenShot = 1
 dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1400
-res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 b_correct21 = 0
@@ -212,8 +212,8 @@ else: # low, full box
     # moving obstacle
     bObs = 1
     if bObs:
-        obs_rad = .1*res # .1*res, 3
-        obs_center = gs*Vec3( 0.5, 0.9 - obs_rad/res, 0.5 )
+        obs_rad = .3*res # .1*res, 3
+        obs_center = gs*Vec3( 0.5, 0.9 - obs_rad/res, 0.5 ) # y:0.5, 0.9
         shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
         #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
         phiObsInit.copyFrom( phiObs )
@@ -332,14 +332,16 @@ while 1:
     # moving obstacle
     if bObs:
         #flags.printGrid()
+        acc = s.timestep * Vec3( 0, gravity, 0 )
         if obs_center.y - obs_rad > 1: # move
             print( '- move obstacle' )
-            obs_vel_vec += s.timestep * Vec3( 0, gravity, 0 )
+            obs_vel_vec += acc
         else: # stay
             print( '- obstacle stopped' )
             obs_vel_vec = Vec3( 0. )
 
-        obsVel.setConst( obs_vel_vec )
+        obs_vel_vec2 = obs_vel_vec + acc # add some velocity in case it stopped to remove remaining particles from the bottom
+        obsVel.setConst( obs_vel_vec2 )
         obsVel.setBound( value=Vec3( 0. ), boundaryWidth=boundary_width+1 )
         #obsVel.printGrid()
 
@@ -442,6 +444,7 @@ while 1:
         advectSemiLagrange( flags=flags, vel=vel, grid=vel, order=2 )
 
     # fixed volume (my scheme)
+    #flags.printGrid()
     include_walls = false
     if b_fixed_vol:
         phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
