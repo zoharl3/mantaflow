@@ -48,7 +48,7 @@ it_max = 1400 # 300, 500, 1200, 1400
 res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
-b_correct21 = 0
+b_correct21 = 1
 
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
@@ -100,6 +100,7 @@ radiusFactor = 1.0
 
 # prepare grids and particles
 flags    = s.create(FlagGrid)
+flags2   = s.create(FlagGrid)
 vel      = s.create(MACGrid)
 vel2     = s.create(MACGrid)
 velOld   = s.create(MACGrid)
@@ -212,7 +213,7 @@ else: # low, full box
     # moving obstacle
     bObs = 1
     if bObs:
-        obs_rad = .3*res # .1*res, 3
+        obs_rad = .05*res # .05, .1, 3
         obs_center = gs*Vec3( 0.5, 0.9 - obs_rad/res, 0.5 ) # y:0.5, 0.9
         shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
         #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
@@ -332,18 +333,19 @@ while 1:
     # moving obstacle
     if bObs:
         #flags.printGrid()
-        acc = s.timestep * Vec3( 0, gravity, 0 )
-        if obs_center.y - obs_rad > 1: # move
+        dv = s.timestep * Vec3( 0, gravity, 0 )
+        if obs_center.y - obs_rad > 2: # move
             print( '- move obstacle' )
-            obs_vel_vec += acc
+            obs_vel_vec += dv
         else: # stay
             print( '- obstacle stopped' )
             obs_vel_vec = Vec3( 0. )
 
-        obs_vel_vec2 = obs_vel_vec + acc # add some velocity in case it stopped to remove remaining particles from the bottom
-        obsVel.setConst( obs_vel_vec2 )
-        obsVel.setBound( value=Vec3( 0. ), boundaryWidth=boundary_width+1 )
-        #obsVel.printGrid()
+        if 1:
+            obs_vel_vec2 = obs_vel_vec + dv # add some velocity in case it stopped to remove remaining particles from the bottom
+            obsVel.setConst( obs_vel_vec2 )
+            obsVel.setBound( value=Vec3( 0. ), boundaryWidth=boundary_width+1 )
+            #obsVel.printGrid()
 
         print( f'  - obs_center={obs_center}, obs_rad={obs_rad}' )
         p0 = obs_center - Vec3( obs_rad )
@@ -473,6 +475,18 @@ while 1:
 
     # update obstacle
     if bObs:
+        # test obstacle position
+        if 1:
+            obs_center2 = obs_center + s.timestep * obs_vel_vec
+            p0 = obs_center2 - Vec3( obs_rad )
+            p1 = obs_center2 + Vec3( obs_rad )
+            if dim == 2:
+                p0.z = p1.z = 0.5
+            flags2.copyFrom( flags )
+            if not mark_obstacle_box( flags=flags2, p0=p0, p1=p1 ):
+                emphasize( '  - obstacle position is invalid; resetting obs_vel_vec' )
+                obs_vel_vec = Vec3( 0 )
+
         print( f'  - obs_vel_vec={obs_vel_vec}, dt={dt}, obs_center={obs_center}' )
         obs_center += s.timestep * obs_vel_vec
 
