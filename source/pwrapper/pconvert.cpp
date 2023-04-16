@@ -299,6 +299,7 @@ template<> Vec3i* fromPyPtr<Vec3i>(PyObject* obj, std::vector<void*>* tmp) { ret
 template<> Vec4* fromPyPtr<Vec4>(PyObject* obj, std::vector<void*>* tmp) { return tmpAlloc<Vec4>(obj,tmp); }
 template<> Vec4i* fromPyPtr<Vec4i>(PyObject* obj, std::vector<void*>* tmp) { return tmpAlloc<Vec4i>(obj,tmp); }
 template<> std::vector<PbClass*>* fromPyPtr<std::vector<PbClass *>>(PyObject *obj, std::vector<void *> *tmp) { return tmpAlloc<std::vector<PbClass *>>(obj, tmp); }
+template<> std::vector<float>* fromPyPtr<std::vector<float>>(PyObject *obj, std::vector<void *> *tmp) { return tmpAlloc<std::vector<float>>(obj, tmp); } // zl
 
 template<> bool isPy<float>(PyObject* obj) {
 #if PY_MAJOR_VERSION <= 2

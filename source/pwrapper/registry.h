@@ -33,7 +33,7 @@ namespace Manta {
 
 // **************************************************
 //                      NOTE 
-// Everything in this file is intend only for internal
+// Everything in this file is intended only for internal
 // use by the generated wrappers or pclass/pconvert.
 // For user code, use the functionality exposed in
 // pclass.h / pconvert.h instead.

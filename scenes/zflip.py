@@ -43,9 +43,9 @@ bScreenShot = 1
 
 # solver params
 dim = 2 # 2, 3
-part_per_cell_1d = 1 # 3, 2(default), 1
-it_max = 1400 # 300, 500, 1200, 1500
-res = 12 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+part_per_cell_1d = 2 # 3, 2(default), 1
+it_max = 1400 # 300, 500, 1200, 1400
+res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 b_correct21 = 0
@@ -212,7 +212,7 @@ else: # low, full box
     # moving obstacle
     bObs = 1
     if bObs:
-        obs_rad = 2.8 # .1*res, 3
+        obs_rad = .1*res # .1*res, 3
         obs_center = gs*Vec3( 0.5, 0.9 - obs_rad/res, 0.5 )
         shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
         #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
@@ -352,7 +352,7 @@ while 1:
         #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
         phiObs.copyFrom( phiObsInit )
         phiObs.join( shape.computeLevelset() )
-        phiObs.printGrid()
+        #phiObs.printGrid()
 
         if 1:
             mark_obstacle_box( flags=flags, p0=p0, p1=p1 )
@@ -361,7 +361,7 @@ while 1:
         else:
             updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
             setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
-        flags.printGrid()
+        #flags.printGrid()
 
     # update flags
     if bObs:
@@ -455,15 +455,18 @@ while 1:
         #dt_bound = max( dt_bound, dt/4 )
 
         # obs_vel: modifies it to either one cell distance or zero, staying in place and losing velocity (unlike particles)
-        s.timestep = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs, obs_center=obs_center, obs_rad=obs_rad, obs_vel=obs_vel_vec )
-        print( obs_vel_vec )
-        if s.timestep < 0:
+        ret2 = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs, obs_center=obs_center, obs_rad=obs_rad, obs_vel=obs_vel_vec )
+        if not ret2:
             ret = -1
             s.timestep *= -1
+        else:
+            s.timestep = ret2[0]
+            obs_vel_vec = Vec3( ret2[1], ret2[2], ret2[3] )
 
         # if using band
         if 0 and narrowBand:
             include_walls = true
+    #flags.printGrid()
 
     # update obstacle
     if bObs:
