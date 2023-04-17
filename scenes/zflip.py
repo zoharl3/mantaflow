@@ -146,9 +146,10 @@ if resampleParticles:
     gCnt = s.create(IntGrid)
     
 # scene setup
+#flags.initDomain( boundaryWidth=boundary_width ) 
 flags.initDomain( boundaryWidth=boundary_width, phiWalls=phiObs ) 
 
-if 1: # dam
+if 0: # dam
     # my dam
     #fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0, 0.3) ), p1=gs*( Vec3(0.4, 0.8, .7) ) )
     fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0, 0.35) ), p1=gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -405,10 +406,12 @@ while 1:
 
     # set solid (walls)
     print( '- setWallBcs' )
-    setWallBcs( flags=flags, vel=vel )
+    #setWallBcs( flags=flags, vel=vel )
     #setWallBcs( flags=flags, vel=vel, fractions=fractions )
     #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcsFrac, which doesn't work?
-    #setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcs
+    #obsVel.printGrid()
+    #vel.printGrid()
+    setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcs
     #setWallBcs( flags=flags, vel=vel, phiObs=phiObs ) # clear velocity from solid
     #vel.printGrid()
     #flags.printGrid()
@@ -420,16 +423,17 @@ while 1:
         solvePressure( flags=flags, vel=vel, pressure=pressure, phi=phi )
         print( '  (pressure) ', end='' )
         toc()
+
+        #setWallBcs( flags=flags, vel=vel )
+        #setWallBcs( flags=flags, vel=vel, fractions=fractions )
+        #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel )
+        setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel )
+        #setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
         #vel.printGrid()
 
     dist = min( int(maxVel*1.25 + 2), 8 ) # res
     print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
-    extrapolateMACSimple( flags=flags, vel=vel, distance=dist, intoObs=True )
-    setWallBcs( flags=flags, vel=vel )
-    #setWallBcs( flags=flags, vel=vel, fractions=fractions )
-    #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel )
-    #setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel )
-    #setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
+    extrapolateMACSimple( flags=flags, vel=vel, distance=dist, intoObs=False )
     #flags.printGrid()
     #vel.printGrid()
 
