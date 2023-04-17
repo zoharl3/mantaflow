@@ -227,8 +227,6 @@ KERNEL() void KnSetWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* o
 		if (vel.is3D() && ((k>0 && flags.isStick(i,j,k-1)) || (k<flags.getSizeZ()-1 && flags.isStick(i,j,k+1))))
 			vel(i,j,k).x = vel(i,j,k).y = 0;
 	}
-
-bcsVel = ( *obvel )( i, j, k );
 }
 
 //! set wall BCs for fill fraction mode, note - only needs obstacle SDF

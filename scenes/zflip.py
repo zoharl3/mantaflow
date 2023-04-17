@@ -207,7 +207,7 @@ elif 0: # basin
         phiObs.join( meshObs )
         phi.subtract( phiObs )
 
-else: # low, full box
+else: # a low, full box with an obstacle
     # water
     h = 0.25 # 0.3, 0.9
     fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0., 0) ), p1=gs*( Vec3(1, h, 1) ) )
