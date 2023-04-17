@@ -190,13 +190,15 @@ KERNEL() void KnSetWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* o
 	bool curObs   = flags.isObstacle(i,j,k);
 	Vec3 bcsVel(0.,0.,0.);
 
-	if (!curFluid && !curObs) return;
+    if ( !curFluid && !curObs )
+        return;
 
-	if (obvel) {
-		bcsVel.x = (*obvel)(i,j,k).x;
-		bcsVel.y = (*obvel)(i,j,k).y;
-		if((*obvel).is3D()) bcsVel.z = (*obvel)(i,j,k).z;
-	}
+    if ( obvel ) {
+        bcsVel.x = ( *obvel )( i, j, k ).x;
+        bcsVel.y = ( *obvel )( i, j, k ).y;
+        if ( ( *obvel ).is3D() )
+            bcsVel.z = ( *obvel )( i, j, k ).z;
+    }
 
 // if ( curObs && !flags.is_boundary( Vec3i(i, j, k) ) ) { 
 // 	printf( "(%d, %d, %d) %d; ", i, j, k, flags( i, j, k ) );
@@ -209,122 +211,127 @@ KERNEL() void KnSetWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* o
     if ( i > 0 && curObs && flags.isFluid( i - 1, j, k ) )
         vel( i, j, k ).x = bcsVel.x;
     if ( j > 0 && flags.isObstacle( i, j - 1, k ) ) {
-//printf( "setting to zero vel(%d, %d)=%g since near obstacle\n", i, j, vel( i, j, k ).y );
+//printf( "setting to bcsVel vel(%d, %d)=%g since near obstacle\n", i, j, vel( i, j, k ).y );
         vel( i, j, k ).y = bcsVel.y;
 	}
     if ( j > 0 && curObs && flags.isFluid( i, j - 1, k ) )
         vel( i, j, k ).y = bcsVel.y;
 
-	if(!vel.is3D()) {                            				vel(i,j,k).z = 0; } else {
-	if (k>0 && flags.isObstacle(i,j,k-1))		 				vel(i,j,k).z = bcsVel.z;
-	if (k>0 && curObs && flags.isFluid(i,j,k-1)) 				vel(i,j,k).z = bcsVel.z; }
-	
-	if (curFluid) {
-		if ((i>0 && flags.isStick(i-1,j,k)) || (i<flags.getSizeX()-1 && flags.isStick(i+1,j,k)))
-			vel(i,j,k).y = vel(i,j,k).z = 0;
-		if ((j>0 && flags.isStick(i,j-1,k)) || (j<flags.getSizeY()-1 && flags.isStick(i,j+1,k)))
-			vel(i,j,k).x = vel(i,j,k).z = 0;
-		if (vel.is3D() && ((k>0 && flags.isStick(i,j,k-1)) || (k<flags.getSizeZ()-1 && flags.isStick(i,j,k+1))))
-			vel(i,j,k).x = vel(i,j,k).y = 0;
-	}
+    if ( !vel.is3D() ) {
+        vel( i, j, k ).z = 0;
+    } else {
+        if ( k > 0 && flags.isObstacle( i, j, k - 1 ) )
+            vel( i, j, k ).z = bcsVel.z;
+        if ( k > 0 && curObs && flags.isFluid( i, j, k - 1 ) )
+            vel( i, j, k ).z = bcsVel.z;
+    }
+
+    if ( curFluid ) {
+        if ( ( i > 0 && flags.isStick( i - 1, j, k ) ) || ( i < flags.getSizeX() - 1 && flags.isStick( i + 1, j, k ) ) )
+            vel( i, j, k ).y = vel( i, j, k ).z = 0;
+        if ( ( j > 0 && flags.isStick( i, j - 1, k ) ) || ( j < flags.getSizeY() - 1 && flags.isStick( i, j + 1, k ) ) )
+            vel( i, j, k ).x = vel( i, j, k ).z = 0;
+        if ( vel.is3D() && ( ( k > 0 && flags.isStick( i, j, k - 1 ) ) || ( k < flags.getSizeZ() - 1 && flags.isStick( i, j, k + 1 ) ) ) )
+            vel( i, j, k ).x = vel( i, j, k ).y = 0;
+    }
 }
 
 //! set wall BCs for fill fraction mode, note - only needs obstacle SDF
-KERNEL() void KnSetWallBcsFrac(const FlagGrid& flags, const MACGrid& vel, MACGrid& velTarget, const MACGrid* obvel,
-							const Grid<Real>* phiObs, const int &boundaryWidth=0) 
-{ 
-	bool curFluid = flags.isFluid(i,j,k);
-	bool curObs   = flags.isObstacle(i,j,k);
-	velTarget(i,j,k) = vel(i,j,k);
-	if (!curFluid && !curObs) return;
+KERNEL() void KnSetWallBcsFrac(const FlagGrid& flags, const MACGrid& vel, MACGrid& velTarget, const MACGrid* obvel, const Grid<Real>* phiObs, const int &boundaryWidth=0) 
+{
+    bool curFluid = flags.isFluid( i, j, k );
+    bool curObs = flags.isObstacle( i, j, k );
+    velTarget( i, j, k ) = vel( i, j, k );
+    if ( !curFluid && !curObs )
+        return;
 
-	// zero normal component in all obstacle regions
-	if(flags.isInBounds(Vec3i(i,j,k),1)) {
+    // zero normal component in all obstacle regions
+    if ( flags.isInBounds( Vec3i( i, j, k ), 1 ) ) {
 
-	if( curObs | flags.isObstacle(i-1,j,k) )  { 
-		Vec3 dphi(0.,0.,0.);
-		const Real tmp1 = (phiObs->get(i,j,k)+phiObs->get(i-1,j,k))*.5;
-		Real tmp2 = (phiObs->get(i,j+1,k)+phiObs->get(i-1,j+1,k))*.5;
-		Real phi1 = (tmp1+tmp2)*.5;
-		tmp2 = (phiObs->get(i,j-1,k)+phiObs->get(i-1,j-1,k))*.5;
-		Real phi2 = (tmp1+tmp2)*.5;
-		
-		dphi.x = phiObs->get(i,j,k)-phiObs->get(i-1,j,k);
-		dphi.y = phi1-phi2;
+        if ( curObs | flags.isObstacle( i - 1, j, k ) ) {
+            Vec3 dphi( 0., 0., 0. );
+            const Real tmp1 = ( phiObs->get( i, j, k ) + phiObs->get( i - 1, j, k ) ) * .5;
+            Real tmp2 = ( phiObs->get( i, j + 1, k ) + phiObs->get( i - 1, j + 1, k ) ) * .5;
+            Real phi1 = ( tmp1 + tmp2 ) * .5;
+            tmp2 = ( phiObs->get( i, j - 1, k ) + phiObs->get( i - 1, j - 1, k ) ) * .5;
+            Real phi2 = ( tmp1 + tmp2 ) * .5;
 
-		if(phiObs->is3D()) {
-			tmp2 = (phiObs->get(i,j,k+1)+phiObs->get(i-1,j,k+1))*.5;
-			phi1 = (tmp1+tmp2)*.5;
-			tmp2 = (phiObs->get(i,j,k-1)+phiObs->get(i-1,j,k-1))*.5;
-			phi2 = (tmp1+tmp2)*.5;
-			dphi.z = phi1-phi2;
-		}
+            dphi.x = phiObs->get( i, j, k ) - phiObs->get( i - 1, j, k );
+            dphi.y = phi1 - phi2;
 
-		normalize(dphi); 
-		Vec3 velMAC = vel.getAtMACX(i,j,k);
-		velTarget(i,j,k).x = velMAC.x - dot(dphi, velMAC) * dphi.x;
-	}
+            if ( phiObs->is3D() ) {
+                tmp2 = ( phiObs->get( i, j, k + 1 ) + phiObs->get( i - 1, j, k + 1 ) ) * .5;
+                phi1 = ( tmp1 + tmp2 ) * .5;
+                tmp2 = ( phiObs->get( i, j, k - 1 ) + phiObs->get( i - 1, j, k - 1 ) ) * .5;
+                phi2 = ( tmp1 + tmp2 ) * .5;
+                dphi.z = phi1 - phi2;
+            }
 
-	if( curObs | flags.isObstacle(i,j-1,k) )  { 
-		Vec3 dphi(0.,0.,0.);
-		const Real tmp1 = (phiObs->get(i,j,k)+phiObs->get(i,j-1,k))*.5;
-		Real tmp2 = (phiObs->get(i+1,j,k)+phiObs->get(i+1,j-1,k))*.5;
-		Real phi1 = (tmp1+tmp2)*.5;
-		tmp2 = (phiObs->get(i-1,j,k)+phiObs->get(i-1,j-1,k))*.5;
-		Real phi2 = (tmp1+tmp2)*.5;
+            normalize( dphi );
+            Vec3 velMAC = vel.getAtMACX( i, j, k );
+            velTarget( i, j, k ).x = velMAC.x - dot( dphi, velMAC ) * dphi.x;
+        }
 
-		dphi.x = phi1-phi2;
-		dphi.y = phiObs->get(i,j,k)-phiObs->get(i,j-1,k);
-		if(phiObs->is3D()) {
-			tmp2 = (phiObs->get(i,j,k+1)+phiObs->get(i,j-1,k+1))*.5;
-			phi1 = (tmp1+tmp2)*.5;
-			tmp2 = (phiObs->get(i,j,k-1)+phiObs->get(i,j-1,k-1))*.5;
-			phi2 = (tmp1+tmp2)*.5;
-			dphi.z = phi1-phi2;
-		}
+        if ( curObs | flags.isObstacle( i, j - 1, k ) ) {
+            Vec3 dphi( 0., 0., 0. );
+            const Real tmp1 = ( phiObs->get( i, j, k ) + phiObs->get( i, j - 1, k ) ) * .5;
+            Real tmp2 = ( phiObs->get( i + 1, j, k ) + phiObs->get( i + 1, j - 1, k ) ) * .5;
+            Real phi1 = ( tmp1 + tmp2 ) * .5;
+            tmp2 = ( phiObs->get( i - 1, j, k ) + phiObs->get( i - 1, j - 1, k ) ) * .5;
+            Real phi2 = ( tmp1 + tmp2 ) * .5;
 
-		normalize(dphi); 
-		Vec3 velMAC = vel.getAtMACY(i,j,k);
-		velTarget(i,j,k).y = velMAC.y - dot(dphi, velMAC) * dphi.y;
-	}
+            dphi.x = phi1 - phi2;
+            dphi.y = phiObs->get( i, j, k ) - phiObs->get( i, j - 1, k );
+            if ( phiObs->is3D() ) {
+                tmp2 = ( phiObs->get( i, j, k + 1 ) + phiObs->get( i, j - 1, k + 1 ) ) * .5;
+                phi1 = ( tmp1 + tmp2 ) * .5;
+                tmp2 = ( phiObs->get( i, j, k - 1 ) + phiObs->get( i, j - 1, k - 1 ) ) * .5;
+                phi2 = ( tmp1 + tmp2 ) * .5;
+                dphi.z = phi1 - phi2;
+            }
 
-	if( phiObs->is3D() && (curObs | flags.isObstacle(i,j,k-1)) )  {
-		Vec3 dphi(0.,0.,0.); 
-		const Real tmp1 = (phiObs->get(i,j,k)+phiObs->get(i,j,k-1))*.5;
+            normalize( dphi );
+            Vec3 velMAC = vel.getAtMACY( i, j, k );
+            velTarget( i, j, k ).y = velMAC.y - dot( dphi, velMAC ) * dphi.y;
+        }
 
-		Real tmp2;
-		tmp2      = (phiObs->get(i+1,j,k)+phiObs->get(i+1,j,k-1))*.5;
-		Real phi1 = (tmp1+tmp2)*.5;
-		tmp2      = (phiObs->get(i-1,j,k)+phiObs->get(i-1,j,k-1))*.5;
-		Real phi2 = (tmp1+tmp2)*.5; 
-		dphi.x    = phi1-phi2;
+        if ( phiObs->is3D() && ( curObs | flags.isObstacle( i, j, k - 1 ) ) ) {
+            Vec3 dphi( 0., 0., 0. );
+            const Real tmp1 = ( phiObs->get( i, j, k ) + phiObs->get( i, j, k - 1 ) ) * .5;
 
-		tmp2      = (phiObs->get(i,j+1,k)+phiObs->get(i,j+1,k-1))*.5;
-		phi1      = (tmp1+tmp2)*.5;
-		tmp2      = (phiObs->get(i,j-1,k)+phiObs->get(i,j-1,k-1))*.5;
-		phi2      = (tmp1+tmp2)*.5; 
-		dphi.y    = phi1-phi2;
+            Real tmp2;
+            tmp2 = ( phiObs->get( i + 1, j, k ) + phiObs->get( i + 1, j, k - 1 ) ) * .5;
+            Real phi1 = ( tmp1 + tmp2 ) * .5;
+            tmp2 = ( phiObs->get( i - 1, j, k ) + phiObs->get( i - 1, j, k - 1 ) ) * .5;
+            Real phi2 = ( tmp1 + tmp2 ) * .5;
+            dphi.x = phi1 - phi2;
 
-		dphi.z = phiObs->get(i,j,k) - phiObs->get(i,j,k-1);
+            tmp2 = ( phiObs->get( i, j + 1, k ) + phiObs->get( i, j + 1, k - 1 ) ) * .5;
+            phi1 = ( tmp1 + tmp2 ) * .5;
+            tmp2 = ( phiObs->get( i, j - 1, k ) + phiObs->get( i, j - 1, k - 1 ) ) * .5;
+            phi2 = ( tmp1 + tmp2 ) * .5;
+            dphi.y = phi1 - phi2;
 
-		normalize(dphi); 
-		Vec3 velMAC = vel.getAtMACZ(i,j,k);
-		velTarget(i,j,k).z = velMAC.z - dot(dphi, velMAC) * dphi.z;
-	}
-	} // not at boundary
+            dphi.z = phiObs->get( i, j, k ) - phiObs->get( i, j, k - 1 );
+
+            normalize( dphi );
+            Vec3 velMAC = vel.getAtMACZ( i, j, k );
+            velTarget( i, j, k ).z = velMAC.z - dot( dphi, velMAC ) * dphi.z;
+        }
+    } // not at boundary
 
 }
 
 //! set zero normal velocity boundary condition on walls
 // (optionally with second order accuracy using the obstacle SDF , fractions grid currently not needed)
 PYTHON() void setWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* obvel = 0, const MACGrid* fractions = 0, const Grid<Real>* phiObs = 0, int boundaryWidth=0) {
-	if(!phiObs || !fractions) {
-		KnSetWallBcs(flags, vel, obvel);
-	} else {
-		MACGrid tmpvel(vel.getParent());
-		KnSetWallBcsFrac(flags, vel, tmpvel, obvel, phiObs, boundaryWidth);
-		vel.swap(tmpvel);
-	}
+    if ( !phiObs || !fractions ) {
+        KnSetWallBcs( flags, vel, obvel );
+    } else {
+        MACGrid tmpvel( vel.getParent() );
+        KnSetWallBcsFrac( flags, vel, tmpvel, obvel, phiObs, boundaryWidth );
+        vel.swap( tmpvel );
+    }
 }
 
 //! add Forces between fl/fl and fl/em cells (interpolate cell centered forces to MAC grid)

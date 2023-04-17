@@ -45,10 +45,10 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1400
-res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
-b_correct21 = 1
+b_correct21 = 0
 
 narrowBand = bool( 0 )
 narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
@@ -139,9 +139,7 @@ pMass = pp.create(PdataReal)
 mass = 1.0 / part_per_cell_1d**3
 if dim == 2:
     mass = 1.0 / part_per_cell_1d**2
-
 resampleParticles = False # must be a boolean type
-
 if resampleParticles:
     gCnt = s.create(IntGrid)
     
@@ -260,13 +258,13 @@ V0 = float(pp.pySize()) / ppc
 if 1 and GUI:
     gui = Gui()
     for i in range( 2 ):
-        gui.nextMeshDisplay() # 0:full, 1:invisible, 2:x-ray
+        gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
     if 1 and dim == 3: # camera
         gui.setCamPos( 0, 0, -2.2 ) # drop
         gui.setCamRot( 35, -30, 0 )
-    if bMesh:
+    if 0 and bMesh:
         gui.toggleHideGrids()
     gui.show()
     #gui.pause()
@@ -374,10 +372,10 @@ while 1:
             setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
         #flags.printGrid()
 
-    # update flags
-    if bObs:
+    # update flags; there's also flags.updateFromLevelset
+    if 1:
         print( '- markFluidCells (update flags)' )
-        markFluidCells( parts=pp, flags=flags ) # needed for a moving obstacle
+        markFluidCells( parts=pp, flags=flags ) # better for a moving obstacle?
         #markFluidCells( parts=pp, flags=flags, phiObs=phiObs )
         if narrowBand and ( not b_fixed_vol or it == 0 ):
             update_fluid_from_phi( flags=flags, phi=phi, band_width=narrowBandWidth )
@@ -404,15 +402,14 @@ while 1:
             mapPartsToMAC( vel=vel2, flags=flags, velOld=vel2, parts=pp, partVel=pVel2 )
             vel.add( vel2 )
 
-    # set solid (walls)
+    # set velocity for obstacles
     print( '- setWallBcs' )
     #setWallBcs( flags=flags, vel=vel )
     #setWallBcs( flags=flags, vel=vel, fractions=fractions )
     #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcsFrac, which doesn't work?
     #obsVel.printGrid()
     #vel.printGrid()
-    setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcs
-    #setWallBcs( flags=flags, vel=vel, phiObs=phiObs ) # clear velocity from solid
+    setWallBcs( flags=flags, vel=vel, obvel=obsVel ) # calls KnSetWallBcs
     #vel.printGrid()
     #flags.printGrid()
 
@@ -427,11 +424,10 @@ while 1:
         #setWallBcs( flags=flags, vel=vel )
         #setWallBcs( flags=flags, vel=vel, fractions=fractions )
         #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel )
-        setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel )
-        #setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
+        setWallBcs( flags=flags, vel=vel, obvel=obsVel )
         #vel.printGrid()
 
-    dist = min( int(maxVel*1.25 + 2), 8 ) # res
+    dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
     print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
     extrapolateMACSimple( flags=flags, vel=vel, distance=dist, intoObs=False )
     #flags.printGrid()
@@ -452,9 +448,10 @@ while 1:
     pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
     #pushOutofObs( parts=pp, flags=flags, phiObs=phiObs ) # creates issues for correct21 and fixedVol
     # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5; it makes it worse for fixed_vol
-    if not b_fixed_vol:
+    if 1 and not b_fixed_vol:
         advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
-        flags.updateFromLevelset( phi ) 
+        if 0:
+            flags.updateFromLevelset( phi ) # creates in 3D an extra layer of fluid without particles
     # advect grid velocity
     if narrowBand:
         advectSemiLagrange( flags=flags, vel=vel, grid=vel, order=2 )
@@ -492,7 +489,7 @@ while 1:
         b_move_obstacle = 1
         
         # test obstacle position
-        if 0:
+        if 1:
             obs_center2 = obs_center + s.timestep * obs_vel_vec
             p0 = obs_center2 - Vec3( obs_rad )
             p1 = obs_center2 + Vec3( obs_rad )

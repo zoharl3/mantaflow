@@ -518,7 +518,6 @@ template<> void GridPainter<Real>::paint() {
 }
 
 // Paint velocity vectors
-// zl The velocity is a MAC; it probably draws the interpolated center.
 template<> void GridPainter<Vec3>::paint() {
 	if (!mObject || mHide || mHideLocal || mPlane <0 || mPlane >= mLocalGrid->getSize()[mDim])
 		return;

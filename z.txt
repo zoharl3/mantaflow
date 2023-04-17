@@ -16,6 +16,7 @@ if(!bp->isActive(i) ) {
             - GridPainter<T>::setDispMode(int dm)
             - Gui::nextRealGrid()
         - enum VecDisplayModes  { VecDispOff=0, VecDispCentered, VecDispStaggered, VecDispUv, NumVecDispModes };
+            - GridPainter<Vec3>::paint(), paint velocity vectors
         - A vector of painters is created in MainWnd::MainWnd().
             - The paintEvent signal is connected to them.
         - I added the event EventSetRealGridDisplay and method Gui::setRealGridDisplay()
