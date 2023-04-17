@@ -45,7 +45,7 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1400
-res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 b_correct21 = 0
@@ -260,8 +260,8 @@ if 1 and GUI:
     for i in range( 2 ):
         gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
     gui.setRealGridDisplay( 0 )
-    gui.setVec3GridDisplay( 0 )
-    if 1 and dim == 3: # camera
+    gui.setVec3GridDisplay( 1 )
+    if 0 and dim == 3: # camera
         gui.setCamPos( 0, 0, -2.2 ) # drop
         gui.setCamRot( 35, -30, 0 )
     if 0 and bMesh:
@@ -459,6 +459,7 @@ while 1:
     # fixed volume (my scheme)
     #flags.printGrid()
     include_walls = false
+    obs_vel_vec2 = obs_vel_vec
     if b_fixed_vol:
         phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
         #phi.printGrid()
@@ -486,10 +487,8 @@ while 1:
 
     # update obstacle
     if bObs:
-        b_move_obstacle = 1
-        
         # test obstacle position
-        if 1:
+        if 1 and not b_fixed_vol:
             obs_center2 = obs_center + s.timestep * obs_vel_vec
             p0 = obs_center2 - Vec3( obs_rad )
             p1 = obs_center2 + Vec3( obs_rad )
@@ -499,11 +498,10 @@ while 1:
             if not mark_obstacle_box( flags=flags2, p0=p0, p1=p1 ):
                 emphasize( '  - obstacle position is invalid; resetting obs_vel_vec' )
                 obs_vel_vec = Vec3( 0 )
-                #b_move_obstacle = 0
 
         print( f'  - obs_vel_vec={obs_vel_vec}, dt={dt}, obs_center={obs_center}' )
-        if b_move_obstacle:
-            obs_center += s.timestep * obs_vel_vec
+        obs_center += s.timestep * obs_vel_vec
+        #obs_vel_vec = obs_vel_vec2 # restore velocity if it was reset
 
     # correct21 (position solver, Thuerey21)
     # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
