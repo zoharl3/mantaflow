@@ -45,7 +45,7 @@ bScreenShot = 1
 dim = 2 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1400
-res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 b_correct21 = 1
@@ -118,6 +118,9 @@ phiObs   = s.create(LevelsetGrid)
 phiObsInit = s.create(LevelsetGrid)
 obsVel  = s.create(MACGrid)
 bObs = 0
+obs_center = Vec3( 0 )
+obs_rad = 0
+obs_vel_vec = Vec3( 0 )
 fractions = s.create(MACGrid) # Sticks to walls and becomes slow without this? Not anymore. Shrinks an obstacle box and draws it inaccurately.
 mesh     = s.create(Mesh)
 bfs      = s.create(IntGrid) # discrete distance from surface
@@ -145,7 +148,7 @@ if resampleParticles:
 # scene setup
 flags.initDomain( boundaryWidth=boundary_width, phiWalls=phiObs ) 
 
-if 0: # dam
+if 1: # dam
     # my dam
     #fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0, 0.3) ), p1=gs*( Vec3(0.4, 0.8, .7) ) )
     fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0, 0.35) ), p1=gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -213,7 +216,7 @@ else: # low, full box
     # moving obstacle
     bObs = 1
     if bObs:
-        obs_rad = .05*res # .05, .1, 3
+        obs_rad = .05*res # .05, .1, .3
         obs_center = gs*Vec3( 0.5, 0.9 - obs_rad/res, 0.5 ) # y:0.5, 0.9
         shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
         #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
@@ -230,11 +233,12 @@ else: # low, full box
 sampleLevelsetWithParticles( phi=phi, flags=flags, parts=pp, discretization=part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
 
 # also sets boundary flags for phiObs (and shrinks it)
-if 1:
-    setObstacleFlags( flags=flags, phiObs=phiObs )
-else:
-    updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
-    setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
+if bObs:
+    if 1:
+        setObstacleFlags( flags=flags, phiObs=phiObs )
+    else:
+        updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
+        setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
 
 # phi is influenced by the walls for some reason
 # create a level set from particles
@@ -254,7 +258,7 @@ V0 = float(pp.pySize()) / ppc
 
 if 1 and GUI:
     gui = Gui()
-    for i in range( 0 ):
+    for i in range( 2 ):
         gui.nextMeshDisplay() # 0:full, 1:invisible, 2:x-ray
     gui.setRealGridDisplay( 0 )
     gui.setVec3GridDisplay( 0 )
@@ -341,12 +345,14 @@ while 1:
             print( '- obstacle stopped' )
             obs_vel_vec = Vec3( 0. )
 
+        # obsVel
         if 1:
-            obs_vel_vec2 = obs_vel_vec + dv # add some velocity in case it stopped to remove remaining particles from the bottom
+            obs_vel_vec2 = obs_vel_vec + dv # add some velocity in case it stopped--to remove remaining particles from the bottom
             obsVel.setConst( obs_vel_vec2 )
-            obsVel.setBound( value=Vec3( 0. ), boundaryWidth=boundary_width+1 )
+            obsVel.setBound( value=Vec3( 0. ), boundaryWidth=boundary_width + 1 )
             #obsVel.printGrid()
 
+        # phiObs
         print( f'  - obs_center={obs_center}, obs_rad={obs_rad}' )
         p0 = obs_center - Vec3( obs_rad )
         p1 = obs_center + Vec3( obs_rad )
@@ -358,11 +364,11 @@ while 1:
         phiObs.join( shape.computeLevelset() )
         #phiObs.printGrid()
 
-        if 1:
+        if 0:
             mark_obstacle_box( flags=flags, p0=p0, p1=p1 )
-        elif 0:
+        elif 1:
             setObstacleFlags( flags=flags, phiObs=phiObs )
-        else:
+        else: # more precise
             updateFractions( flags=flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
             setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
         #flags.printGrid()
@@ -399,8 +405,10 @@ while 1:
 
     # set solid (walls)
     print( '- setWallBcs' )
+    setWallBcs( flags=flags, vel=vel )
+    #setWallBcs( flags=flags, vel=vel, fractions=fractions )
     #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcsFrac, which doesn't work?
-    setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcs
+    #setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcs
     #setWallBcs( flags=flags, vel=vel, phiObs=phiObs ) # clear velocity from solid
     #vel.printGrid()
     #flags.printGrid()
@@ -417,8 +425,10 @@ while 1:
     dist = min( int(maxVel*1.25 + 2), 8 ) # res
     print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
     extrapolateMACSimple( flags=flags, vel=vel, distance=dist, intoObs=True )
+    setWallBcs( flags=flags, vel=vel )
+    #setWallBcs( flags=flags, vel=vel, fractions=fractions )
     #setWallBcs( flags=flags, vel=vel, fractions=fractions, phiObs=phiObs, obvel=obsVel )
-    setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel )
+    #setWallBcs( flags=flags, vel=vel, phiObs=phiObs, obvel=obsVel )
     #setWallBcs( flags=flags, vel=vel, phiObs=phiObs )
     #flags.printGrid()
     #vel.printGrid()
@@ -475,8 +485,10 @@ while 1:
 
     # update obstacle
     if bObs:
+        b_move_obstacle = 1
+        
         # test obstacle position
-        if 1:
+        if 0:
             obs_center2 = obs_center + s.timestep * obs_vel_vec
             p0 = obs_center2 - Vec3( obs_rad )
             p1 = obs_center2 + Vec3( obs_rad )
@@ -486,9 +498,11 @@ while 1:
             if not mark_obstacle_box( flags=flags2, p0=p0, p1=p1 ):
                 emphasize( '  - obstacle position is invalid; resetting obs_vel_vec' )
                 obs_vel_vec = Vec3( 0 )
+                #b_move_obstacle = 0
 
         print( f'  - obs_vel_vec={obs_vel_vec}, dt={dt}, obs_center={obs_center}' )
-        obs_center += s.timestep * obs_vel_vec
+        if b_move_obstacle:
+            obs_center += s.timestep * obs_vel_vec
 
     # correct21 (position solver, Thuerey21)
     # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
