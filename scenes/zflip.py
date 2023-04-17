@@ -42,10 +42,10 @@ if bSaveParts or bSaveUni:
 bScreenShot = 1
 
 # solver params
-dim = 2 # 2, 3
+dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1400
-res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 b_correct21 = 1
@@ -365,7 +365,7 @@ while 1:
         phiObs.join( shape.computeLevelset() )
         #phiObs.printGrid()
 
-        if 0:
+        if 1:
             mark_obstacle_box( flags=flags, p0=p0, p1=p1 )
         elif 1:
             setObstacleFlags( flags=flags, phiObs=phiObs )
