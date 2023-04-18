@@ -195,7 +195,7 @@ public:
 	//! test if nans are present
 	bool isValid() const; 
 
-	//! actual values
+	//! the data
 	union {
 		S value[3];
 		struct {
@@ -209,6 +209,8 @@ public:
 			S Z;
 		};
 	};
+
+	static bool b_print_2D;
 
 	//! zero element
 	static const Vector3D<S> Zero, Invalid;
@@ -519,8 +521,10 @@ inline Vector3D<S> refractVector ( const Vector3D<S> &t, const Vector3D<S> &norm
 template<class S> std::string Vector3D<S>::toString() const {
 	char buf[256];
 	
-    snprintf( buf, 256, "[%+4.2f,%+4.2f]", (double)( *this )[0], (double)( *this )[1] ); // short 2D
-    //snprintf( buf, 256, "[%+4.2f,%+4.2f,%+4.2f]", (double)( *this )[0], (double)( *this )[1], (double)( *this )[2] ); // short 3D
+	if ( b_print_2D )
+        snprintf( buf, 256, "[%+4.2f,%+4.2f]", (double)( *this )[0], (double)( *this )[1] ); // short 2D
+    else
+        snprintf( buf, 256, "[%+4.2f,%+4.2f,%+4.2f]", (double)( *this )[0], (double)( *this )[1], (double)( *this )[2] ); // short 3D
 
 	// default
 	//snprintf ( buf,256,"[%+4.6f,%+4.6f,%+4.6f]", ( double ) ( *this ) [0], ( double ) ( *this ) [1], ( double ) ( *this ) [2] );

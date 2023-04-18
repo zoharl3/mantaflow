@@ -62,12 +62,13 @@ if b_correct21:
 combineBandWidth = narrowBandWidth - 1
 
 dt = .2 # .2(default), .5, 1(flip5, easier to debug)
-gs = Vec3( res, res, 7 ) # debug thin 3D
-#gs = Vec3( res, res, res )
+#gs = Vec3( res, res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
+gs = Vec3( res, res, res )
 if dim == 2:
     gs.z = 1
     bMesh = 0
     bSaveParts = 0
+    set_print_2D( True )
 if 0: # sample 1D; requires changing sampleLevelsetWithParticles()
     ppc = part_per_cell_1d
 else:
