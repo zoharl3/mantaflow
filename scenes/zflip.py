@@ -45,7 +45,7 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1400
-res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 48 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 b_correct21 = 0
@@ -62,7 +62,8 @@ if b_correct21:
 combineBandWidth = narrowBandWidth - 1
 
 dt = .2 # .2(default), .5, 1(flip5, easier to debug)
-gs = Vec3( res, res, res )
+gs = Vec3( res, res, 7 ) # debug thin 3D
+#gs = Vec3( res, res, res )
 if dim == 2:
     gs.z = 1
     bMesh = 0
@@ -372,7 +373,7 @@ while 1:
             setObstacleFlags( flags=flags, phiObs=phiObs, fractions=fractions )
         #flags.printGrid()
 
-    # update flags; there's also flags.updateFromLevelset
+    # update flags; there's also flags.updateFromLevelset()
     if 1:
         print( '- markFluidCells (update flags)' )
         markFluidCells( parts=pp, flags=flags ) # better for a moving obstacle?
@@ -446,7 +447,8 @@ while 1:
     print( '- advect' )
     # advect particles
     pp.advectInGrid( flags=flags, vel=vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
-    #pushOutofObs( parts=pp, flags=flags, phiObs=phiObs ) # creates issues for correct21 and fixedVol
+    if not b_fixed_vol and not b_correct21:
+        pushOutofObs( parts=pp, flags=flags, phiObs=phiObs ) # creates issues for correct21 and fixedVol
     # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5; it makes it worse for fixed_vol
     if 1 and not b_fixed_vol:
         advectSemiLagrange( flags=flags, vel=vel, grid=phi, order=1 )
@@ -488,7 +490,7 @@ while 1:
     # update obstacle
     if bObs:
         # test obstacle position
-        if 1 and not b_fixed_vol:
+        if 1:
             obs_center2 = obs_center + s.timestep * obs_vel_vec
             p0 = obs_center2 - Vec3( obs_rad )
             p1 = obs_center2 + Vec3( obs_rad )
@@ -497,6 +499,7 @@ while 1:
             flags2.copyFrom( flags )
             if not mark_obstacle_box( flags=flags2, p0=p0, p1=p1 ):
                 emphasize( '  - obstacle position is invalid; resetting obs_vel_vec' )
+                assert( not b_fixed_vol )
                 obs_vel_vec = Vec3( 0 )
 
         print( f'  - obs_vel_vec={obs_vel_vec}, dt={dt}, obs_center={obs_center}' )

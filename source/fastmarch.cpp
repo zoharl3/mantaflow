@@ -330,7 +330,7 @@ void knUnprojectNormalComp (FlagGrid& flags, MACGrid& vel, Grid<Real>& phi, Real
 		vel(i,j,k) -= n*l;
 	}
 }
-// a simple extrapolation step , used for cases where there's no levelset
+// a simple extrapolation step, used for cases where there's no levelset
 // (note, less accurate than fast marching extrapolation.)
 // into obstacle is a special mode for second order obstacle boundaries (extrapolating
 // only fluid velocities, not those at obstacles)
