@@ -499,6 +499,7 @@ while 1:
     # update obstacle
     if bObs:
         # test obstacle position
+        print( '  - obs_stop=%d' % obs_stop )
         if 1 and not obs_stop:
             obs_center2 = obs_center + s.timestep * obs_vel_vec
             p0 = obs_center2 - Vec3( obs_rad )
@@ -514,7 +515,7 @@ while 1:
         print( f'  - obs_vel_vec={obs_vel_vec}, dt={dt}, obs_center={obs_center}' )
         obs_center2 = obs_center + s.timestep * obs_vel_vec
         # slow down by skipping grid progress 
-        if int( obs_center2.y ) == int( obs_center.y ):
+        if int( obs_center2.y - obs_rad ) == int( obs_center.y - obs_rad ):
             obs_center = obs_center2
         else:
             n_obs_skip += 1
