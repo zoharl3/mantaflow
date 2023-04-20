@@ -45,7 +45,7 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1400
-res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 64 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 b_correct21 = 0
@@ -55,15 +55,15 @@ narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
 
 ###
 
+#gs = Vec3( res, res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
+gs = Vec3( res, res, res )
+
 if b_correct21:
     b_fixed_vol = 1
     narrowBand = bool( 0 )
 
 combineBandWidth = narrowBandWidth - 1
-
 dt = .2 # .2(default), .5, 1(flip5, easier to debug)
-#gs = Vec3( res, res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
-gs = Vec3( res, res, res )
 if dim == 2:
     gs.z = 1
     bMesh = 0
@@ -519,7 +519,7 @@ while 1:
         else:
             if not obs_stop:
                 n_obs_skip += 1
-                if n_obs_skip > 3: # 0, 3; how many steps to skip
+                if n_obs_skip > 1: # 0, 2; how many steps to skip
                     n_obs_skip = 0
                     obs_center = obs_center2
             else:
