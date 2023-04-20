@@ -33,7 +33,7 @@ if 0:
     limit_to_one_core()
 
 # flags
-bMesh       = 1
+bMesh       = 0
 bSaveParts  = 0 # .vdb
 bSaveUni    = 0 # .uni
 if bSaveParts or bSaveUni:
@@ -45,7 +45,7 @@ bScreenShot = 1
 dim = 3 # 2, 3
 part_per_cell_1d = 2 # 3, 2(default), 1
 it_max = 1400 # 300, 500, 1200, 1400
-res = 48 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
 b_fixed_vol = 1
 b_correct21 = 0
@@ -56,14 +56,14 @@ narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
 ###
 
 if b_correct21:
-    b_fixed_vol = 0
+    b_fixed_vol = 1
     narrowBand = bool( 0 )
 
 combineBandWidth = narrowBandWidth - 1
 
 dt = .2 # .2(default), .5, 1(flip5, easier to debug)
-#gs = Vec3( res, res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
-gs = Vec3( res, res, res )
+gs = Vec3( res, res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
+#gs = Vec3( res, res, res )
 if dim == 2:
     gs.z = 1
     bMesh = 0
@@ -295,6 +295,7 @@ f_measure = open( out + '_measure.txt', 'w' )
 
 # loop
 ret = 0
+n_obs_skip = 0
 while 1:
     emphasize( '\n-----------------\n- time: %g(/%d; it2=%d)' % ( it, it_max, it2 ) )
     print( '- n=%d' % pp.pySize() )
@@ -338,7 +339,7 @@ while 1:
     # moving obstacle
     if bObs:
         #flags.printGrid()
-        dv = s.timestep * Vec3( 0, gravity, 0 )
+        dv = s.timestep * Vec3( 0, 1*gravity, 0 )
         if obs_center.y - obs_rad > 2: # move
             print( '- move obstacle' )
             obs_vel_vec += dv
@@ -463,6 +464,8 @@ while 1:
     #flags.printGrid()
     include_walls = false
     obs_vel_vec2 = obs_vel_vec
+    obs_naive = 0
+    obs_stop = 0
     if b_fixed_vol:
         phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
         #phi.printGrid()
@@ -474,14 +477,19 @@ while 1:
         #dt_bound = s.timestep/4
         #dt_bound = max( dt_bound, dt/4 )
 
-        # obs_vel: modifies it to either one cell distance or zero, staying in place and losing velocity (unlike particles)
-        ret2 = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs, obs_center=obs_center, obs_rad=obs_rad, obs_vel=obs_vel_vec )
+        # obs_vel: it modifies it to either one cell distance or zero, staying in place and losing velocity (unlike particles)
+        obs_vel_vec3 = obs_vel_vec
+        if obs_naive:
+            obs_vel_vec3 = Vec3(0)
+        ret2 = fixed_volume_advection( pp=pp, pVel=pVel, flags=flags, dt=s.timestep, dt_bound=dt_bound, dim=dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=narrowBandWidth, bfs=bfs, obs_center=obs_center, obs_rad=obs_rad, obs_vel=obs_vel_vec3 )
         if not ret2:
             ret = -1
             s.timestep *= -1
         else:
             s.timestep = ret2[0]
-            obs_vel_vec = Vec3( ret2[1], ret2[2], ret2[3] )
+            if not obs_naive:
+                #obs_vel_vec = Vec3( ret2[1], ret2[2], ret2[3] )
+                obs_stop = ret2[1]
 
         # if using band
         if 0 and narrowBand:
@@ -491,7 +499,7 @@ while 1:
     # update obstacle
     if bObs:
         # test obstacle position
-        if 1:
+        if 1 and not obs_stop:
             obs_center2 = obs_center + s.timestep * obs_vel_vec
             p0 = obs_center2 - Vec3( obs_rad )
             p1 = obs_center2 + Vec3( obs_rad )
@@ -499,12 +507,20 @@ while 1:
                 p0.z = p1.z = 0.5
             flags2.copyFrom( flags )
             if not mark_obstacle_box( flags=flags2, p0=p0, p1=p1 ):
-                emphasize( '  - obstacle position is invalid; resetting obs_vel_vec' )
-                assert( not b_fixed_vol )
-                obs_vel_vec = Vec3( 0 )
+                emphasize( '  - obstacle position is invalid; stopping the obstacle' )
+                assert( not b_fixed_vol or obs_naive )
+                obs_stop = 1
 
         print( f'  - obs_vel_vec={obs_vel_vec}, dt={dt}, obs_center={obs_center}' )
-        obs_center += s.timestep * obs_vel_vec
+        obs_center2 = obs_center + s.timestep * obs_vel_vec
+        # slow down by skipping grid progress 
+        if int( obs_center2.y ) == int( obs_center.y ):
+            obs_center = obs_center2
+        else:
+            n_obs_skip += 1
+            if not obs_stop and n_obs_skip > 3: # how many steps to skip
+                n_obs_skip = 0
+                obs_center = obs_center2
         #obs_vel_vec = obs_vel_vec2 # restore velocity if it was reset
 
     # correct21 (position solver, Thuerey21)
