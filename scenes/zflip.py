@@ -33,7 +33,7 @@ if 0:
     limit_to_one_core()
 
 # flags
-bMesh       = 0
+bMesh       = 1
 bSaveParts  = 0 # .vdb
 bSaveUni    = 0 # .uni
 if bSaveParts or bSaveUni:
@@ -62,8 +62,8 @@ if b_correct21:
 combineBandWidth = narrowBandWidth - 1
 
 dt = .2 # .2(default), .5, 1(flip5, easier to debug)
-gs = Vec3( res, res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
-#gs = Vec3( res, res, res )
+#gs = Vec3( res, res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
+gs = Vec3( res, res, res )
 if dim == 2:
     gs.z = 1
     bMesh = 0
@@ -218,7 +218,7 @@ else: # a low, full box with an obstacle
     bObs = 1
     if bObs:
         obs_rad = .05*res # .05, .1, .3
-        obs_center = gs*Vec3( 0.5, 0.9 - obs_rad/res, 0.5 ) # y:0.5, 0.9
+        obs_center = gs*Vec3( 0.5, 0.95 - obs_rad/res, 0.5 ) # y:0.5, 0.9
         shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
         #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
         phiObsInit.copyFrom( phiObs )
@@ -463,7 +463,6 @@ while 1:
     # fixed volume (my scheme)
     #flags.printGrid()
     include_walls = false
-    obs_vel_vec2 = obs_vel_vec
     obs_naive = 0
     obs_stop = 0
     if b_fixed_vol:
@@ -518,11 +517,13 @@ while 1:
         if int( obs_center2.y - obs_rad ) == int( obs_center.y - obs_rad ):
             obs_center = obs_center2
         else:
-            n_obs_skip += 1
-            if not obs_stop and n_obs_skip > 3: # how many steps to skip
-                n_obs_skip = 0
-                obs_center = obs_center2
-        #obs_vel_vec = obs_vel_vec2 # restore velocity if it was reset
+            if not obs_stop:
+                n_obs_skip += 1
+                if n_obs_skip > 3: # 0, 3; how many steps to skip
+                    n_obs_skip = 0
+                    obs_center = obs_center2
+            else:
+                obs_vel_vec = Vec3(0)
 
     # correct21 (position solver, Thuerey21)
     # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
