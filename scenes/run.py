@@ -26,7 +26,7 @@ os.system( "copy_log.bat" )
 print( 'run.py is done' )
 
 # pause
-if 0:
+if 1:
     print( '\nPress esc, space, or enter...' )
     while 1:
         ch = keyboard.read_key()
