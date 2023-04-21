@@ -519,7 +519,7 @@ while 1:
         else:
             if not obs_stop:
                 n_obs_skip += 1
-                if n_obs_skip > 1: # 0, 2; how many steps to skip
+                if n_obs_skip > 2: # 0, 2; how many steps to skip
                     n_obs_skip = 0
                     obs_center = obs_center2
             else:
