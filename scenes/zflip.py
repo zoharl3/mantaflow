@@ -30,42 +30,43 @@ class Correct21:
         self.mass = 1.0 / part_per_cell_1d**dim
         self.resampleParticles = False # must be a boolean type since passing to cpp later
         if self.resampleParticles:
-            gCnt = s.create(IntGrid)
+            self.gCnt = s.create(IntGrid)
 
-    def main( self ):
+    def main( self, sol, flags, pp, vel, pindex, gpi, phiObs ):
         print( '- position solver' )
-        copyFlagsToFlags(flags, flagsPos)
-        mapMassToGrid(flags=flagsPos, density=density, parts=pp, source=pMass, deltaX=deltaX, phiObs=phiObs, dt=s.timestep, particleMass=mass, noDensityClamping=resampleParticles)
+        copyFlagsToFlags(flags, self.flagsPos)
+        mapMassToGrid(flags=self.flagsPos, density=self.density, parts=pp, source=self.pMass, deltaX=self.deltaX, phiObs=phiObs, dt=sol.timestep, particleMass=self.mass, noDensityClamping=self.resampleParticles)
         #gui.pause()
         
         # resample particles
-        if resampleParticles:
+        if self.resampleParticles:
             print( '    - resample particles' )
-            gridParticleIndex(parts=pp, indexSys=pindex, flags=flags, index=gpi, counter=gCnt)
+            gridParticleIndex(parts=pp, indexSys=pindex, flags=flags, index=gpi, counter=self.gCnt)
             #apicMapPartsToMAC(flags=flags, vel=vel, parts=pp, partVel=pVel, cpx=apic_pCx, cpy=apic_pCy, cpz=apic_pCz, mass=apic_mass)
-            resampeOverfullCells(vel=vel, density=density, index=gpi, indexSys=pindex, part=pp, pVel=pVel, dt=s.timestep)
+            resampeOverfullCells(vel=vel, density=self.density, index=gpi, indexSys=pindex, part=pp, pVel=pVel, dt=s.timestep)
     
         # position solver
         print( '    - solve pressure due to density' )
-        solvePressureSystem(rhs=density, vel=vel, pressure=Lambda, flags=flagsPos, cgAccuracy = 1e-3)
-        computeDeltaX(deltaX=deltaX, Lambda=Lambda, flags=flagsPos)
-        mapMACToPartPositions(flags=flagsPos, deltaX=deltaX, parts=pp, dt=s.timestep)
+        solvePressureSystem(rhs=self.density, vel=vel, pressure=self.Lambda, flags=self.flagsPos, cgAccuracy=1e-3)
+        computeDeltaX(deltaX=self.deltaX, Lambda=self.Lambda, flags=self.flagsPos)
+        mapMACToPartPositions(flags=self.flagsPos, deltaX=self.deltaX, parts=pp, dt=sol.timestep)
         
         # print
         if 0:
             #flags.printGrid()
-            #flagsPos.printGrid()
-            density.printGrid()
-            Lambda.printGrid()
-            deltaX.printGrid()
-            #gui.pause()
+            #self.flagsPos.printGrid()
+            self.density.printGrid()
+            self.Lambda.printGrid()
+            self.deltaX.printGrid()
 
 class moving_obstacle:
     def __init__( self, sol ):
-        vel  = sol.create(MACGrid)
-        center = Vec3( 0 )
-        rad = 0
-        vel_vec = Vec3( 0 )
+        self.exists = 0
+        self.vel = sol.create(MACGrid)
+        self.center = Vec3( 0 )
+        self.rad = 0
+        self.vel_vec = Vec3( 0 )
+        self.phi_init = sol.create(LevelsetGrid)
 
 class Simulation:
     # flags
@@ -86,7 +87,7 @@ class Simulation:
     b_fixed_vol = 1
     b_correct21 = 0
 
-    narrowBand = bool( 0 )
+    narrowBand = bool( 1 )
     narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
 
     ###
@@ -101,28 +102,33 @@ class Simulation:
 
     dt = .2 # .2(default), .5, 1(flip5, easier to debug)
 
-    sol = Solver( name='main', gridSize=gs, dim=dim )
     gravity = -0.1 # -0.1
     gravity *= math.sqrt( res )
     #gravity = -0.003 # flip5
 
-    flags    = sol.create(FlagGrid)
-    vel      = sol.create(MACGrid)
-    pp       = sol.create(BasicParticleSystem)
+    sol = Solver( name='main', gridSize=gs, dim=dim )
 
-    obs = None
+    flags = sol.create(FlagGrid)
+    vel = sol.create(MACGrid)
+    pp = sol.create(BasicParticleSystem)
+    phiObs = sol.create(LevelsetGrid)
+    phi = []
+
+    obs = moving_obstacle( sol )
+
+    boundary_width = 0
 
     def setup_scene( self ):
-        #self.flags.initDomain( boundaryWidth=boundary_width ) 
-        self.flags.initDomain( boundaryWidth=boundary_width, phiWalls=phiObs ) 
+        #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
+        self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 0: # dam
+        if 1: # dam
             # my dam
-            #fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0, 0.3) ), p1=gs*( Vec3(0.4, 0.8, .7) ) )
-            fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0, 0.35) ), p1=gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
+            #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
+            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
 
             # flip05_nbflip.py
-            #fluidbox = Box( parent=s, p0=gs*Vec3(0, 0.15, 0), p1=gs*Vec3(0.4, 0.5, 0.8) )
+            #fluidbox = Box( parent=self.sol, p0=self.gs*Vec3(0, 0.15, 0), p1=self.gs*Vec3(0.4, 0.5, 0.8) )
 
             # square
             if 0:
@@ -130,31 +136,31 @@ class Simulation:
                 sz1 = .1 # .2, .4
                 t = Vec3(t1, t1, 0)
                 sz = Vec3(sz1, sz1, 1)
-                fluidbox = Box( parent=s, p0=gs*( t + Vec3(0,0,0) ), p1=gs*( t + sz ) )
+                fluidbox = Box( parent=self.sol, p0=self.gs*( t + Vec3(0,0,0) ), p1=self.gs*( t + sz ) )
 
             # manta dam
-            #fluidbox = Box( parent=s, p0=gs*Vec3(0,0,0), p1=gs*Vec3(0.4,0.6,1)) 
+            #fluidbox = Box( parent=self.sol, p0=self.gs*Vec3(0,0,0), p1=self.gs*Vec3(0.4,0.6,1)) 
 
             # phi
-            phi = fluidbox.computeLevelset()
-            self.flags.updateFromLevelset( phi )
+            self.phi = fluidbox.computeLevelset()
+            self.flags.updateFromLevelset( self.phi )
 
         elif 0: # falling drop
-            fluidBasin = Box( parent=s, p0=gs*Vec3(0,0,0), p1=gs*Vec3(1.0,0.1,1.0)) # basin
+            fluidBasin = Box( parent=self.sol, p0=self.gs*Vec3(0,0,0), p1=self.gs*Vec3(1.0,0.1,1.0)) # basin
             dropCenter = Vec3(0.5,0.3,0.5)
             dropRadius = 0.1
-            fluidDrop  = Sphere( parent=s , center=gs*dropCenter, radius=res*dropRadius)
-            fluidVel   = Sphere( parent=s , center=gs*dropCenter, radius=res*(dropRadius+0.05) )
+            fluidDrop  = Sphere( parent=self.sol , center=self.gs*dropCenter, radius=res*dropRadius)
+            fluidVel   = Sphere( parent=self.sol , center=self.gs*dropCenter, radius=res*(dropRadius+0.05) )
             fluidSetVel= Vec3(0,-1,0)
-            phi = fluidBasin.computeLevelset()
-            phi.join( fluidDrop.computeLevelset() ) # add drop
-            self.flags.updateFromLevelset( phi )
+            self.phi = fluidBasin.computeLevelset()
+            self.phi.join( fluidDrop.computeLevelset() ) # add drop
+            self.flags.updateFromLevelset( self.phi )
 
         elif 0: # basin
             # water
-            fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0.5, 0) ), p1=gs*( Vec3(1, 0.9, 1) ) )
-            phi = fluidbox.computeLevelset()
-            self.flags.updateFromLevelset( phi )
+            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0.5, 0) ), p1=self.gs*( Vec3(1, 0.9, 1) ) )
+            self.phi = fluidbox.computeLevelset()
+            self.flags.updateFromLevelset( self.phi )
 
             # obstacle
             if 1:
@@ -164,64 +170,53 @@ class Simulation:
                 #mesh.scale( Vec3(1) )
 
                 mesh.load( r'c:\prj\mantaflow_mod\resources\funnel.obj' )
-                mesh.scale( Vec3(res) ) # the scale needs to be in all axes (i.e. can't use gs)
+                mesh.scale( Vec3(res) ) # the scale needs to be in all axes
 
-                mesh.offset( gs * Vec3(0.5, 0.3, 0.5) )
+                mesh.offset( self.gs * Vec3(0.5, 0.3, 0.5) )
                 meshObs = self.sol.create( LevelsetGrid )
                 mesh.computeLevelset( meshObs, 2 ) # uses normals, thus a smooth mesh is better
                 #meshObs.printGrid()
-                #phiObs.printGrid()
-                phiObs.join( meshObs )
-                phi.subtract( phiObs )
+                #self.phiObs.printGrid()
+                self.phiObs.join( meshObs )
+                self.phi.subtract( self.phiObs )
 
         else: # a low, full box with an obstacle
             # water
             h = 0.25 # 0.3, 0.9
-            fluidbox = Box( parent=s, p0=gs*( Vec3(0, 0., 0) ), p1=gs*( Vec3(1, h, 1) ) )
-            phi = fluidbox.computeLevelset()
-            self.flags.updateFromLevelset( phi )
+            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, h, 1) ) )
+            self.phi = fluidbox.computeLevelset()
+            self.flags.updateFromLevelset( self.phi )
 
             # moving obstacle
-            self.obs = moving_obstacle( self.sol )
-            if self.obs:
-                obs_rad = .05*res # .05, .1, .3
-                obs_center = gs*Vec3( 0.5, 0.95 - obs_rad/res, 0.5 ) # y:0.5, 0.9
-                shape = Box( parent=s, p0=obs_center - Vec3(obs_rad), p1=obs_center + Vec3(obs_rad) )
-                #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
-                phiObsInit.copyFrom( phiObs )
-                phiObs.join( shape.computeLevelset() )
+            self.obs.exists = 1
+            if self.obs.exists:
+                self.obs.rad = .05*self.res # .05, .1, .3
+                self.obs.center = self.gs*Vec3( 0.5, 0.95 - self.obs.rad/self.res, 0.5 ) # y:0.5, 0.9
+                shape = Box( parent=self.sol, p0=self.obs.center - Vec3(self.obs.rad), p1=self.obs.center + Vec3(self.obs.rad) )
+                #shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
+                self.obs.phi_init.copyFrom( self.phiObs )
+                self.phiObs.join( shape.computeLevelset() )
 
-                obs_vel_vec = Vec3( 0, -0, 0 )
-                obsVel.setConst( obs_vel_vec )
-                obsVel.setBound( value=Vec3(0.), boundaryWidth=boundary_width+1 )
+                self.obs.vel_vec = Vec3( 0, -0, 0 )
+                self.obs.vel.setConst( self.obs.vel_vec )
+                self.obs.vel.setBound( value=Vec3(0.), boundaryWidth=self.boundary_width+1 )
 
-        #phi.printGrid()
-        #phiObs.printGrid()
+        #self.phi.printGrid()
+        #self.phiObs.printGrid()
 
-        sampleLevelsetWithParticles( phi=phi, flags=self.flags, parts=self.pp, discretization=self.part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
+        sampleLevelsetWithParticles( phi=self.phi, flags=self.flags, parts=self.pp, discretization=self.part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
 
         # also sets boundary flags for phiObs (and shrinks it)
-        if self.obs:
+        if self.obs.exists:
             if 1:
-                setObstacleFlags( flags=self.flags, phiObs=phiObs )
+                setObstacleFlags( flags=self.flags, phiObs=self.phiObs )
             else:
-                updateFractions( flags=self.flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
-                setObstacleFlags( flags=self.flags, phiObs=phiObs, fractions=fractions )
-
-        # phi is influenced by the walls for some reason
-        # create a level set from particles
-        gridParticleIndex( parts=self.pp, flags=self.flags, indexSys=pindex, index=gpi )
-        unionParticleLevelset( self.pp, pindex, self.flags, gpi, phiParts, radiusFactor )
-        phi.copyFrom( phiParts )
-        if self.narrowBand:
-            extrapolateLsSimple( phi=phi, distance=self.narrowBandWidth+2, inside=True )
-        else:
-            extrapolateLsSimple( phi=phi, distance=4, inside=True ) # 4
-        #phi.printGrid()
+                updateFractions( flags=self.flags, phiObs=self.phiObs, fractions=fractions, boundaryWidth=self.boundary_width )
+                setObstacleFlags( flags=self.flags, phiObs=self.phiObs, fractions=fractions )
 
     def main( self ):
         if self.b_correct21:
-            self.b_fixed_vol = 1
+            self.b_fixed_vol = 0
             self.narrowBand = bool( 0 )
 
         combineBandWidth = self.narrowBandWidth - 1
@@ -233,8 +228,6 @@ class Simulation:
             ppc = self.part_per_cell_1d
         else:
             ppc = self.part_per_cell_1d**self.dim
-
-        boundary_width = 0
 
         flags2   = self.sol.create(FlagGrid)
         vel2     = self.sol.create(MACGrid)
@@ -248,8 +241,6 @@ class Simulation:
         pVel2     = self.pp.create(PdataVec3)
         phiParts = self.sol.create(LevelsetGrid)
         phiMesh  = self.sol.create(LevelsetGrid)
-        phiObs   = self.sol.create(LevelsetGrid)
-        phiObsInit = self.sol.create(LevelsetGrid)
         fractions = self.sol.create(MACGrid) # Sticks to walls and becomes slow without this? Not anymore. Shrinks an obstacle box and draws it inaccurately.
         mesh     = self.sol.create(Mesh)
         bfs      = self.sol.create(IntGrid) # discrete distance from surface
@@ -276,11 +267,25 @@ class Simulation:
             self.sol.timestepMax = 1.0
             self.sol.cfl         = 5.0   # maximal velocity per cell, 0 to use fixed timesteps
 
+        # setup scene
+        self.setup_scene()
+
         # size of particles 
         radiusFactor = 1.0
 
         print( '# particles:', self.pp.pySize() )
         V0 = float( self.pp.pySize() ) / ppc
+
+        # phi is influenced by the walls for some reason
+        # create a level set from particles
+        gridParticleIndex( parts=self.pp, flags=self.flags, indexSys=pindex, index=gpi )
+        unionParticleLevelset( self.pp, pindex, self.flags, gpi, phiParts, radiusFactor )
+        self.phi.copyFrom( phiParts )
+        if self.narrowBand:
+            extrapolateLsSimple( phi=self.phi, distance=self.narrowBandWidth+2, inside=True )
+        else:
+            extrapolateLsSimple( phi=self.phi, distance=4, inside=True ) # 4
+        #self.phi.printGrid()
 
         if 1 and GUI:
             gui = Gui()
@@ -309,7 +314,7 @@ class Simulation:
                 self.pressure.save( out + 'ref_parts_0000.uni' )
                 self.pp.save( out + 'parts_%04d.uni' % it )
 
-            objects = [ self.flags, phi, self.pp ] # need the 3 of them for volumetric .vdb
+            objects = [ self.flags, self.phi, self.pp ] # need the 3 of them for volumetric .vdb
             #objects = [ self.pp ]
             fname = out + 'fluid_data_%04d.vdb' % it
             print( fname )
@@ -346,9 +351,9 @@ class Simulation:
             print( '- mapPartsToMAC' )
             if 1 and self.narrowBand:
                 # combine particles velocities with advected grid velocities; stores mapWeights; saves velOld
-                mapPartsToMAC( vel=velParts, flags=self.flags, velOld=velOld, parts=self.pp, partVel=self.pVel, weight=mapWeights )
+                mapPartsToMAC( vel=velParts, flags=self.flags, velOld=velOld, parts=self.pp, partVel=pVel, weight=mapWeights )
                 # extrapolate velocities throughout the liquid region
-                extrapolateMACFromWeight( vel=self.velParts , distance=2, weight=self.mapWeights )
+                extrapolateMACFromWeight( vel=velParts , distance=2, weight=mapWeights )
                 #vel.printGrid()
                 #velParts.printGrid()
                 combineGridVel( vel=velParts, weight=mapWeights, combineVel=self.vel, phi=self.phi, narrowBand=combineBandWidth, thresh=0 )
@@ -362,54 +367,54 @@ class Simulation:
                 extrapolateMACFromWeight( vel=self.vel , distance=2, weight=mapWeights )
 
             # moving obstacle
-            if self.obs:
+            if self.obs.exists:
                 #self.flags.printGrid()
                 dv = self.sol.timestep * Vec3( 0, 1*self.gravity, 0 )
-                if obs_center.y - obs_rad > 2: # move
+                if self.obs.center.y - self.obs.rad > 2: # move
                     print( '- move obstacle' )
-                    obs_vel_vec += dv
+                    self.obs.vel_vec += dv
                 else: # stay
                     print( '- obstacle stopped' )
-                    obs_vel_vec = Vec3( 0. )
+                    self.obs.vel_vec = Vec3( 0. )
 
                 # obsVel
                 if 1:
-                    obs_vel_vec2 = obs_vel_vec + dv # add some velocity in case it stopped--to remove remaining particles from the bottom
-                    obsVel.setConst( obs_vel_vec2 )
-                    obsVel.setBound( value=Vec3( 0. ), boundaryWidth=boundary_width + 1 )
-                    #obsVel.printGrid()
+                    obs_vel_vec2 = self.obs.vel_vec + dv # add some velocity in case it stopped--to remove remaining particles from the bottom
+                    self.obs.vel.setConst( obs_vel_vec2 )
+                    self.obs.vel.setBound( value=Vec3( 0. ), boundaryWidth=self.boundary_width + 1 )
+                    #self.obs.vel.printGrid()
 
                 # phiObs
-                print( f'  - obs_center={obs_center}, obs_rad={obs_rad}' )
-                p0 = obs_center - Vec3( obs_rad )
-                p1 = obs_center + Vec3( obs_rad )
+                print( f'  - obs_center={self.obs.center}, obs_rad={self.obs.rad}' )
+                p0 = self.obs.center - Vec3( self.obs.rad )
+                p1 = self.obs.center + Vec3( self.obs.rad )
                 if self.dim == 2:
                     p0.z = p1.z = 0.5
-                shape = Box( parent=s, p0=p0, p1=p1 )
-                #shape = Sphere( parent=s, center=obs_center, radius=obs_rad )
-                phiObs.copyFrom( phiObsInit )
-                phiObs.join( shape.computeLevelset() )
-                #phiObs.printGrid()
+                shape = Box( parent=self.sol, p0=p0, p1=p1 )
+                #shape = Sphere( parent=s, center=self.obs.center, radius=self.obs.rad )
+                self.phiObs.copyFrom( self.obs.phi_init )
+                self.phiObs.join( shape.computeLevelset() )
+                #self.phiObs.printGrid()
 
                 if 1:
                     mark_obstacle_box( flags=self.flags, p0=p0, p1=p1 )
                 elif 1:
-                    setObstacleFlags( flags=self.flags, phiObs=phiObs )
+                    setObstacleFlags( flags=self.flags, phiObs=self.phiObs )
                 else: # more precise
-                    updateFractions( flags=self.flags, phiObs=phiObs, fractions=fractions, boundaryWidth=boundary_width )
-                    setObstacleFlags( flags=self.flags, phiObs=phiObs, fractions=fractions )
+                    updateFractions( flags=self.flags, phiObs=self.phiObs, fractions=fractions, boundaryWidth=self.boundary_width )
+                    setObstacleFlags( flags=self.flags, phiObs=self.phiObs, fractions=fractions )
                 #self.flags.printGrid()
 
             # update flags; there's also flags.updateFromLevelset()
             if 1:
                 print( '- markFluidCells (update flags)' )
                 markFluidCells( parts=self.pp, flags=self.flags ) # better for a moving obstacle?
-                #markFluidCells( parts=self.pp, flags=self.flags, phiObs=phiObs )
+                #markFluidCells( parts=self.pp, flags=self.flags, phiObs=self.phiObs )
                 if self.narrowBand and ( not self.b_fixed_vol or it == 0 ):
-                    update_fluid_from_phi( flags=self.flags, phi=phi, band_width=self.narrowBandWidth )
+                    update_fluid_from_phi( flags=self.flags, phi=self.phi, band_width=self.narrowBandWidth )
                 #self.flags.printGrid()
 
-            #vel.printGrid()
+            #self.vel.printGrid()
             #self.flags.printGrid()
             # forces
             if 1:
@@ -434,10 +439,10 @@ class Simulation:
             print( '- setWallBcs' )
             #setWallBcs( flags=self.flags, vel=self.vel )
             #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions )
-            #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions, phiObs=phiObs, obvel=obsVel ) # calls KnSetWallBcsFrac, which doesn't work?
-            #obsVel.printGrid()
+            #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions, phiObs=self.phiObs, obvel=self.obs.vel ) # calls KnSetWallBcsFrac, which doesn't work?
+            #self.obs.vel.printGrid()
             #self.vel.printGrid()
-            setWallBcs( flags=self.flags, vel=self.vel, obvel=obsVel ) # calls KnSetWallBcs
+            setWallBcs( flags=self.flags, vel=self.vel, obvel=self.obs.vel ) # calls KnSetWallBcs
             #self.vel.printGrid()
             #self.flags.printGrid()
 
@@ -445,14 +450,14 @@ class Simulation:
             if 1:
                 print( '- pressure' )
                 tic()
-                solvePressure( flags=self.flags, vel=self.vel, pressure=pressure, phi=phi )
+                solvePressure( flags=self.flags, vel=self.vel, pressure=pressure, phi=self.phi )
                 print( '  (pressure) ', end='' )
                 toc()
 
                 #setWallBcs( flags=self.flags, vel=self.vel )
                 #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions )
-                #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions, phiObs=phiObs, obvel=obsVel )
-                setWallBcs( flags=self.flags, vel=self.vel, obvel=obsVel )
+                #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions, phiObs=self.phiObs, obvel=self.obs.vel )
+                setWallBcs( flags=self.flags, vel=self.vel, obvel=self.obs.vel )
                 #self.vel.printGrid()
 
             dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
@@ -475,12 +480,12 @@ class Simulation:
             # advect particles
             self.pp.advectInGrid( flags=self.flags, vel=self.vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
             if not self.b_fixed_vol and not self.b_correct21:
-                pushOutofObs( parts=self.pp, flags=self.flags, phiObs=phiObs ) # creates issues for correct21 and fixedVol
+                pushOutofObs( parts=self.pp, flags=self.flags, phiObs=self.phiObs ) # creates issues for correct21 and fixedVol
             # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5; it makes it worse for fixed_vol
             if 1 and not self.b_fixed_vol:
-                advectSemiLagrange( flags=self.flags, vel=self.vel, grid=phi, order=1 )
+                advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.phi, order=1 )
                 if 0:
-                    self.flags.updateFromLevelset( phi ) # creates in 3D an extra layer of fluid without particles
+                    self.flags.updateFromLevelset( self.phi ) # creates in 3D an extra layer of fluid without particles
             # advect grid velocity
             if self.narrowBand:
                 advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.vel, order=2 )
@@ -491,8 +496,8 @@ class Simulation:
             obs_naive = 0
             obs_stop = 0
             if self.b_fixed_vol:
-                phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
-                #phi.printGrid()
+                self.phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
+                #self.phi.printGrid()
 
                 pVel.setSource( self.vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()
 
@@ -502,17 +507,17 @@ class Simulation:
                 #dt_bound = max( dt_bound, dt/4 )
 
                 # obs_vel: it modifies it to either one cell distance or zero, staying in place and losing velocity (unlike particles)
-                obs_vel_vec3 = obs_vel_vec
+                obs_vel_vec3 = self.obs.vel_vec
                 if obs_naive:
                     obs_vel_vec3 = Vec3(0)
-                ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=s.timestep, dt_bound=dt_bound, dim=self.dim, ppc=ppc, phi=phi, it=it2, use_band=narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs_center=obs_center, obs_rad=obs_rad, obs_vel=obs_vel_vec3 )
+                ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs_center=self.obs.center, obs_rad=self.obs.rad, obs_vel=obs_vel_vec3 )
                 if not ret2:
                     ret = -1
                     self.sol.timestep *= -1
                 else:
                     self.sol.timestep = ret2[0]
                     if not obs_naive:
-                        #obs_vel_vec = Vec3( ret2[1], ret2[2], ret2[3] )
+                        #self.obs.vel_vec = Vec3( ret2[1], ret2[2], ret2[3] )
                         obs_stop = ret2[1]
 
                 # if using band
@@ -521,38 +526,38 @@ class Simulation:
             #self.flags.printGrid()
 
             # update obstacle
-            if self.obs:
+            if self.obs.exists:
                 # test obstacle position
                 print( '  - obs_stop=%d' % obs_stop )
                 if 1 and not obs_stop:
-                    obs_center2 = obs_center + self.sol.timestep * obs_vel_vec
-                    p0 = obs_center2 - Vec3( obs_rad )
-                    p1 = obs_center2 + Vec3( obs_rad )
+                    obs_center2 = self.obs.center + self.sol.timestep * self.obs.vel_vec
+                    p0 = obs_center2 - Vec3( self.obs.rad )
+                    p1 = obs_center2 + Vec3( self.obs.rad )
                     if self.dim == 2:
                         p0.z = p1.z = 0.5
-                    self.flags2.copyFrom( self.flags )
-                    if not mark_obstacle_box( flags=self.flags2, p0=p0, p1=p1 ):
+                    flags2.copyFrom( self.flags )
+                    if not mark_obstacle_box( flags=flags2, p0=p0, p1=p1 ):
                         emphasize( '  - obstacle position is invalid; stopping the obstacle' )
                         assert( not self.b_fixed_vol or obs_naive )
                         obs_stop = 1
 
-                print( f'  - obs_vel_vec={obs_vel_vec}, dt={dt}, obs_center={obs_center}' )
-                obs_center2 = obs_center + self.sol.timestep * obs_vel_vec
+                print( f'  - obs_vel_vec={self.obs.vel_vec}, dt={self.dt}, obs_center={self.obs.center}' )
+                obs_center2 = self.obs.center + self.sol.timestep * self.obs.vel_vec
                 # slow down by skipping grid progress 
-                if int( obs_center2.y - obs_rad ) == int( obs_center.y - obs_rad ):
-                    obs_center = obs_center2
+                if int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ):
+                    self.obs.center = obs_center2
                 else:
                     if not obs_stop:
                         n_obs_skip += 1
                         if n_obs_skip > 0: # 0, 2; how many steps to skip
                             n_obs_skip = 0
-                            obs_center = obs_center2
+                            self.obs.center = obs_center2
                     else:
-                        obs_vel_vec = Vec3(0)
+                        self.obs.vel_vec = Vec3(0)
 
             # correct21
             if self.b_correct21:
-                correct21.main( self.flags, phiObs )
+                correct21.main( self.sol, self.flags, self.pp, self.vel, pindex, gpi, self.phiObs )
             
             # create level set from particles
             if 1:
@@ -560,13 +565,13 @@ class Simulation:
                 unionParticleLevelset( self.pp, pindex, self.flags, gpi, phiParts, radiusFactor ) 
                 if self.narrowBand:
                     # combine level set of particles with grid level set
-                    phi.addConst( 1. ); # shrink slightly
-                    phi.join( phiParts )
-                    extrapolateLsSimple( phi=phi, distance=self.narrowBandWidth+2, inside=True, include_walls=include_walls, intoObs=True )
+                    self.phi.addConst( 1. ); # shrink slightly
+                    self.phi.join( phiParts )
+                    extrapolateLsSimple( phi=self.phi, distance=self.narrowBandWidth+2, inside=True, include_walls=include_walls )
                 else:
                     # overwrite grid level set with level set of particles
-                    phi.copyFrom( phiParts )
-                    extrapolateLsSimple( phi=phi, distance=4, inside=True, include_walls=include_walls ) # 4
+                    self.phi.copyFrom( phiParts )
+                    extrapolateLsSimple( phi=self.phi, distance=4, inside=True, include_walls=include_walls ) # 4
 
             # resample particles
             if not self.b_fixed_vol:
@@ -574,12 +579,12 @@ class Simulation:
                 minParticles = ppc
                 maxParticles = 2*minParticles # 2, 1(exacerbates artifact in flip5 dam 128?)
                 if self.narrowBand:
-                    phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
-                    #phi.printGrid()
+                    self.phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
+                    #self.phi.printGrid()
                     # vel is used only to get the parent
-                    adjustNumber( parts=self.pp, vel=self.vel, flags=self.flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, narrowBand=self.narrowBandWidth, exclude=phiObs ) 
+                    adjustNumber( parts=self.pp, vel=self.vel, flags=self.flags, minParticles=minParticles, maxParticles=maxParticles, phi=self.phi, narrowBand=self.narrowBandWidth, exclude=self.phiObs ) 
                 elif 0:
-                    adjustNumber( parts=self.pp, vel=self.vel, flags=self.flags, minParticles=minParticles, maxParticles=maxParticles, phi=phi, exclude=phiObs ) 
+                    adjustNumber( parts=self.pp, vel=self.vel, flags=self.flags, minParticles=minParticles, maxParticles=maxParticles, phi=self.phi, exclude=self.phiObs ) 
 
             # mark int for measure
             if not self.b_fixed_vol:
@@ -592,8 +597,8 @@ class Simulation:
                 f_measure.flush()
 
             # mesh
-            if bMesh:
-                phiMesh.copyFrom( phi )
+            if self.bMesh:
+                phiMesh.copyFrom( self.phi )
                 improvedParticleLevelset( self.pp, pindex, self.flags, gpi, phiMesh, radiusFactor, 1, 1 , 0.4, 3.5 ) # creates artifacts in dam flip05 128
 
                 # mesh
@@ -616,23 +621,23 @@ class Simulation:
             self.sol.step()
             #print( 'after step' )
 
-            it += self.sol.timestep / dt
+            it += self.sol.timestep / self.dt
             it2 += 1
             if 0 or abs( it - round(it) ) < 1e-7:
                 it = round( it )
 
                 # screenshot
-                if bScreenShot:
+                if self.bScreenShot:
                     gui.screenshot( out + 'frame_%04d.png' % it ) # slow
 
                 # save particle data
-                if bSaveParts:
-                    if bSaveUni:
+                if self.bSaveParts:
+                    if self.bSaveUni:
                         # save particle data for flip03_gen.py surface generation scene
                         self.pp.save( out + 'parts_%04d.uni' % it )
 
                     # pdata fields must be before pp
-                    objects = [ self.flags, phi, self.pp ]
+                    objects = [ self.flags, self.phi, self.pp ]
                     #objects = [ self.pp ]
                     save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
                 
@@ -660,9 +665,8 @@ if __name__ == '__main__':
     os.system( 'cp %s../video.bat %s' % (out, out) )
 
     # (debug) for consistent result; for large res, the step() hangs?
-    if 0:
+    if 1:
         limit_to_one_core()
 
     sim = Simulation()
-    sim.setup_scene()
     sim.main()

@@ -2,7 +2,7 @@
 import os, sys, keyboard
 
 cmd = r'..\build\debug\manta zflip.py'
-if 1: # release
+if 0: # release
     cmd = r'..\build\RelWithDebInfo\manta zflip.py'
 
 # for cygwin
@@ -26,7 +26,7 @@ os.system( "copy_log.bat" )
 print( 'run.py is done' )
 
 # pause
-if 1:
+if 0:
     print( '\nPress esc, space, or enter...' )
     while 1:
         ch = keyboard.read_key()
