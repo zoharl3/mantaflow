@@ -80,15 +80,15 @@ class Simulation:
 
         # params
         self.dim = 2 # 2, 3
-        self.part_per_cell_1d = 1 # 3, 2(default), 1
+        self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 1400 # 300, 500, 1200, 1400
-        self.res = 12 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+        self.res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
         self.b_fixed_vol = 1
         self.b_correct21 = 0
 
-        self.narrowBand = bool( 1 )
-        self.narrowBandWidth = 2 # 32:5, 64:6, 96:6, 128:8
+        self.narrowBand = bool( 0 )
+        self.narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
 
         ###
 
@@ -123,7 +123,7 @@ class Simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -407,11 +407,12 @@ class Simulation:
                 #self.flags.printGrid()
 
             # update flags; there's also flags.updateFromLevelset()
-            if 1:
+            if not self.b_fixed_vol or it == 0:
+                #self.flags.printGrid()
                 print( '- markFluidCells (update flags)' )
-                markFluidCells( parts=self.pp, flags=self.flags ) # better for a moving obstacle?
+                markFluidCells( parts=self.pp, flags=self.flags ) # marks deep in narrowBand as empty; better for a moving obstacle?
                 #markFluidCells( parts=self.pp, flags=self.flags, phiObs=self.phiObs )
-                if self.narrowBand and ( not self.b_fixed_vol or it == 0 ):
+                if self.narrowBand:
                     update_fluid_from_phi( flags=self.flags, phi=self.phi, band_width=self.narrowBandWidth )
                 #self.flags.printGrid()
 
