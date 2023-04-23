@@ -142,7 +142,6 @@ void PbClass::registerObject(PyObject* obj, PbArgs* args) {
 	
 	if (args) {
 		string _name = args->getOpt<std::string>("name",-1,""); 
-		cout << _name << endl;
 		if (!_name.empty()) setName(_name); 
 	}
 }

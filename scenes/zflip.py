@@ -61,7 +61,7 @@ class Correct21:
 class moving_obstacle:
     def __init__( self, sol ):
         self.exists = 0
-        self.vel = sol.create(MACGrid)
+        self.vel = sol.create(MACGrid, name='obs.vel')
         self.center = Vec3( 0 )
         self.rad = 0
         self.vel_vec = Vec3( 0 )
@@ -80,15 +80,15 @@ class Simulation:
 
         # params
         self.dim = 2 # 2, 3
-        self.part_per_cell_1d = 2 # 3, 2(default), 1
+        self.part_per_cell_1d = 1 # 3, 2(default), 1
         self.it_max = 1400 # 300, 500, 1200, 1400
-        self.res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+        self.res = 12 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
         self.b_fixed_vol = 1
         self.b_correct21 = 0
 
         self.narrowBand = bool( 1 )
-        self.narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
+        self.narrowBandWidth = 2 # 32:5, 64:6, 96:6, 128:8
 
         ###
 
@@ -378,11 +378,11 @@ class Simulation:
                     print( '- obstacle stopped' )
                     self.obs.vel_vec = Vec3( 0. )
 
-                # obsVel
+                # obs.vel
                 if 1:
                     obs_vel_vec2 = self.obs.vel_vec + dv # add some velocity in case it stopped--to remove remaining particles from the bottom
                     self.obs.vel.setConst( obs_vel_vec2 )
-                    self.obs.vel.setBound( value=Vec3( 0. ), boundaryWidth=self.boundary_width + 1 )
+                    self.obs.vel.setBound( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
                     #self.obs.vel.printGrid()
 
                 # phiObs
@@ -666,7 +666,7 @@ if __name__ == '__main__':
     os.system( 'cp %s../video.bat %s' % (out, out) )
 
     # (debug) for consistent result; for large res, the step() hangs?
-    if 1:
+    if 0:
         limit_to_one_core()
 
     sim = Simulation()
