@@ -36,7 +36,6 @@ class Correct21:
         print( '- position solver' )
         copyFlagsToFlags(flags, self.flagsPos)
         mapMassToGrid(flags=self.flagsPos, density=self.density, parts=pp, source=self.pMass, deltaX=self.deltaX, phiObs=phiObs, dt=sol.timestep, particleMass=self.mass, noDensityClamping=self.resampleParticles)
-        #gui.pause()
         
         # resample particles
         if self.resampleParticles:
@@ -69,54 +68,56 @@ class moving_obstacle:
         self.phi_init = sol.create(LevelsetGrid)
 
 class Simulation:
-    # flags
-    bMesh       = 1
-    bSaveParts  = 0 # .vdb
-    bSaveUni    = 0 # .uni
-    if bSaveParts or bSaveUni:
-        bMesh = 1
+    def __init__( self ):
+        # flags
+        self.bMesh       = 1
+        self.bSaveParts  = 0 # .vdb
+        self.bSaveUni    = 0 # .uni
+        if self.bSaveParts or self.bSaveUni:
+            self.bMesh = 1
 
-    bScreenShot = 1
+        self.bScreenShot = 1
 
-    # params
-    dim = 2 # 2, 3
-    part_per_cell_1d = 2 # 3, 2(default), 1
-    it_max = 1400 # 300, 500, 1200, 1400
-    res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+        # params
+        self.dim = 2 # 2, 3
+        self.part_per_cell_1d = 2 # 3, 2(default), 1
+        self.it_max = 1400 # 300, 500, 1200, 1400
+        self.res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
-    b_fixed_vol = 1
-    b_correct21 = 0
+        self.b_fixed_vol = 1
+        self.b_correct21 = 0
 
-    narrowBand = bool( 1 )
-    narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
+        self.narrowBand = bool( 1 )
+        self.narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
 
-    ###
+        ###
 
-    #gs = Vec3( res, res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
-    gs = Vec3( res, res, res )
+        #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
+        self.gs = Vec3( self.res, self.res, self.res )
 
-    if dim == 2:
-        gs.z = 1
-        bMesh = 0
-        bSaveParts = 0
+        if self.dim == 2:
+            self.gs.z = 1
+            self.bMesh = 0
+            self.bSaveParts = 0
 
-    dt = .2 # .2(default), .5, 1(flip5, easier to debug)
+        self.dt = .2 # .2(default), .5, 1(flip5, easier to debug)
 
-    gravity = -0.1 # -0.1
-    gravity *= math.sqrt( res )
-    #gravity = -0.003 # flip5
+        self.gravity = -0.1 # -0.1
+        self.gravity *= math.sqrt( self.res )
+        #self.gravity = -0.003 # flip5
 
-    sol = Solver( name='main', gridSize=gs, dim=dim )
+        self.sol = Solver( name='main', gridSize=self.gs, dim=self.dim )
 
-    flags = sol.create(FlagGrid)
-    vel = sol.create(MACGrid)
-    pp = sol.create(BasicParticleSystem)
-    phiObs = sol.create(LevelsetGrid)
-    phi = []
+        # automatic names are given only if the create is called from global context
+        self.flags = self.sol.create(FlagGrid, name='flags')
+        self.vel = self.sol.create(MACGrid, name='vel')
+        self.pp = self.sol.create(BasicParticleSystem, name='pp')
+        self.phiObs = self.sol.create(LevelsetGrid, name='phiObs')
+        self.phi = []
 
-    obs = moving_obstacle( sol )
+        self.obs = moving_obstacle( self.sol )
 
-    boundary_width = 0
+        self.boundary_width = 0
 
     def setup_scene( self ):
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
