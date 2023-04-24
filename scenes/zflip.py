@@ -71,6 +71,7 @@ class moving_obstacle:
         self.skip = 0
         self.state = 0
         self.force = Vec3( 0 )
+        self.increase_vel = 1
 
 class Simulation:
     def __init__( self ):
@@ -87,7 +88,7 @@ class Simulation:
         self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 1400 # 300, 500, 1200, 1400
-        self.res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+        self.res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
         self.b_fixed_vol = 1
         self.b_correct21 = 0
@@ -301,11 +302,11 @@ class Simulation:
 
         if 1 and GUI:
             gui = Gui()
-            for i in range( 2 ):
+            for i in range( 0 ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
             gui.setRealGridDisplay( 0 )
             gui.setVec3GridDisplay( 1 )
-            if 0 and self.dim == 3: # camera
+            if 1 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 ) # drop
                 gui.setCamRot( 35, -30, 0 )
             if 0 and bMesh:
@@ -382,10 +383,11 @@ class Simulation:
                 #self.flags.printGrid()
                 dv = self.sol.timestep * self.obs.force
                 if self.obs.center.y - self.obs.rad > 2: # move
-                    print( '- move obstacle' )
-                    self.obs.vel_vec += dv
+                    print( '- obstacle still moves' )
+                    if self.obs.increase_vel:
+                        self.obs.vel_vec += dv
                 else: # stay
-                    print( '- obstacle stopped' )
+                    print( '- obstacle reached the bottom' )
                     self.obs.vel_vec = Vec3( 0. )
 
                 # obs.vel
@@ -396,7 +398,7 @@ class Simulation:
                     #self.obs.vel.printGrid()
 
                 # phiObs
-                print( f'  - obs_center={self.obs.center}, obs_rad={self.obs.rad}' )
+                print( f'  - obs: center={self.obs.center}, rad={self.obs.rad}, vel_vec={self.obs.vel_vec}' )
                 p0 = self.obs.center - Vec3( self.obs.rad )
                 p1 = self.obs.center + Vec3( self.obs.rad )
                 if self.dim == 2:
@@ -556,6 +558,7 @@ class Simulation:
 
                 print( f'  - obs.vel_vec={self.obs.vel_vec}, dt={self.dt}, obs.center={self.obs.center}, obs.state={self.obs.state}, obs.force={self.obs.force}, self.obs.skip={self.obs.skip}' )
                 obs_center2 = self.obs.center + self.sol.timestep * self.obs.vel_vec
+                self.obs.increase_vel = 1
                 if int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ): # no grid movement
                     self.obs.center = obs_center2
                 else:
@@ -565,7 +568,7 @@ class Simulation:
                                 self.obs.state = 1
                             self.obs.skip += 1
                             # slow down by skipping grid progress 
-                            if self.obs.skip > 5: # 0, 2; how many steps to skip
+                            if self.obs.skip > 5: # 0, 2, 5; how many steps to skip
                                 self.obs.skip = 0
                                 self.obs.center = obs_center2
                         else:
@@ -577,7 +580,7 @@ class Simulation:
                                 self.obs.force /= 4
                             self.obs.center = obs_center2
                     else:
-                        self.obs.vel_vec = Vec3(0)
+                        self.obs.increase_vel = 0
 
             # correct21
             if self.b_correct21:
