@@ -85,12 +85,12 @@ class Simulation:
         self.bScreenShot = 1
 
         # params
-        self.dim = 3 # 2, 3
+        self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 1400 # 300, 500, 1200, 1400
-        self.res = 96 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+        self.res = 48 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
-        self.b_fixed_vol = 1
+        self.b_fixed_vol = 0
         self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
@@ -302,11 +302,11 @@ class Simulation:
 
         if 1 and GUI:
             gui = Gui()
-            for i in range( 0 ):
+            for i in range( 2 ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
             gui.setRealGridDisplay( 0 )
             gui.setVec3GridDisplay( 1 )
-            if 1 and self.dim == 3: # camera
+            if 0 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 ) # drop
                 gui.setCamRot( 35, -30, 0 )
             if 0 and bMesh:
@@ -544,8 +544,8 @@ class Simulation:
             if self.obs.exists:
                 # test obstacle position
                 print( '  - obs_stop=%d' % obs_stop )
+                obs_center2 = self.obs.center + self.sol.timestep * self.obs.vel_vec
                 if 1 and not obs_stop:
-                    obs_center2 = self.obs.center + self.sol.timestep * self.obs.vel_vec
                     p0 = obs_center2 - Vec3( self.obs.rad )
                     p1 = obs_center2 + Vec3( self.obs.rad )
                     if self.dim == 2:
@@ -556,9 +556,8 @@ class Simulation:
                         assert( not self.b_fixed_vol or obs_naive )
                         obs_stop = 1
 
-                print( f'  - obs.vel_vec={self.obs.vel_vec}, dt={self.dt}, obs.center={self.obs.center}, obs.state={self.obs.state}, obs.force={self.obs.force}, self.obs.skip={self.obs.skip}' )
-                obs_center2 = self.obs.center + self.sol.timestep * self.obs.vel_vec
                 self.obs.increase_vel = 1
+                print( f'  - obs: .vel_vec={self.obs.vel_vec}, dt={self.dt}, .center={self.obs.center}, .state={self.obs.state}, .force={self.obs.force}, .skip={self.obs.skip}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}' )
                 if int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ): # no grid movement
                     self.obs.center = obs_center2
                 else:
