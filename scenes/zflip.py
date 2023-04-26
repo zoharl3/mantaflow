@@ -201,9 +201,9 @@ class Simulation:
                 self.obs.rad = .05*self.res # .05, .1, .3
                 self.obs.center = self.gs*Vec3( 0.5, 0.95 - self.obs.rad/self.res, 0.5 ) # y:0.5, 0.9
 
-                h2 = 0.3
+                h2 = h + 0.05
                 self.obs.hstart = h2*self.res
-                self.obs.hstop = (h2 - 0.1)*self.res
+                self.obs.hstop = (h2 - 0.05)*self.res
 
                 shape = Box( parent=self.sol, p0=self.obs.center - Vec3(self.obs.rad), p1=self.obs.center + Vec3(self.obs.rad) )
                 #shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
@@ -235,7 +235,7 @@ class Simulation:
 
         combineBandWidth = self.narrowBandWidth - 1
 
-        if self.dim == 2:
+        if 1 or self.dim == 2:
             set_print_2D( True )
 
         if 0: # sample 1D; requires changing sampleLevelsetWithParticles()
@@ -356,9 +356,12 @@ class Simulation:
             maxVel = self.vel.getMaxAbs()
             if not b_adaptive_time_step:
                 self.sol.frameLength = self.dt
-                self.sol.timestep = ( 1 - it % 1 ) * self.dt
+                frac = ( 1 - it % 1 )
+                if 1 - frac < 1e-5:
+                    frac = 1
+                self.sol.timestep = frac * self.dt
             else: # adaptive for flip5
-                self.sol.adaptTimestep( maxVel ) # enable init above
+                self.sol.adaptTimestep( maxVel )
 
             # map particle velocities to grid
             print( '- mapPartsToMAC' )
@@ -529,9 +532,11 @@ class Simulation:
 
                 if not ret2:
                     ret = -1
-                    self.sol.timestep *= -1
                 else:
                     self.sol.timestep = ret2[0]
+                    if self.sol.timestep < 0:
+                        ret = -1
+                        self.sol.timestep = abs( self.sol.timestep )
                     if not obs_naive:
                         #self.obs.vel_vec = Vec3( ret2[1], ret2[2], ret2[3] )
                         obs_stop = ret2[1]
@@ -549,11 +554,11 @@ class Simulation:
                     if int( self.obs.center.y - self.obs.rad ) - int( obs_center2.y - self.obs.rad ) <= 1:
                         break
                     self.sol.timestep /= 2
-                    print( f'  - halving time step: {self.sol.timestep}' )
+                    print( f'  - halving the time step: {self.sol.timestep}' )
 
                 # test obstacle position
                 print( '  - obs_stop=%d' % obs_stop )
-                if 0 and not obs_stop:
+                if 1 and not obs_stop:
                     p0 = obs_center2 - Vec3( self.obs.rad )
                     p1 = obs_center2 + Vec3( self.obs.rad )
                     if self.dim == 2:
@@ -567,7 +572,7 @@ class Simulation:
                 self.obs.increase_vel = 1
                 print( f'  - obs: .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .skip={self.obs.skip}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}' )
                 if self.obs.state != 3:
-                    if int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ) and pyNorm( self.obs.vel_vec ) > 0: # no grid movement
+                    if self.obs.state == 0 and int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ) and pyNorm( self.obs.vel_vec ) > 0: # no grid movement
                         self.obs.center = obs_center2
                     else:
                         if not obs_stop:
@@ -584,13 +589,13 @@ class Simulation:
                                     self.obs.state = 2
                                     self.obs.vel_vec /= 4
                                     #self.obs.vel_vec = Vec3(0)
-                                    #self.obs.force = Vec3(0)
-                                    self.obs.force /= 4
+                                    self.obs.force = Vec3(0)
+                                    #self.obs.force /= 4
                                 self.obs.center = obs_center2
                         else:
                             self.obs.increase_vel = 0
                             self.obs.count += 1
-                            if self.obs.count > 20:
+                            if self.obs.count > 30:
                                 print( '  - no obstacle progress; stopping it' )
                                 self.obs.vel_vec = Vec3(0)
                                 self.obs.state = 3
@@ -656,19 +661,24 @@ class Simulation:
             print( '(iteration) ', end='' )
             toc()
 
-            # step
+            # step; updates gui and when pause takes place
             print( '- step (%d)' % it )
             self.sol.step()
             #print( 'after step' )
 
+            # it
             it += self.sol.timestep / self.dt
             it2 += 1
+
+            # save
             if 0 or abs( it - round(it) ) < 1e-7:
                 it = round( it )
 
                 # screenshot
                 if self.bScreenShot:
-                    gui.screenshot( out + 'frame_%04d.png' % it ) # slow
+                    fname = out + 'frame_%04d.png' % int(it)
+                    print( f'- saving: {fname}' )
+                    gui.screenshot( fname ) # slow
 
                 # save particle data
                 if self.bSaveParts:
