@@ -91,7 +91,7 @@ class Simulation:
         self.it_max = 1400 # 300, 500, 1200, 1400
         self.res = 48 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
-        self.b_fixed_vol = 0
+        self.b_fixed_vol = 1
         self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
@@ -386,17 +386,19 @@ class Simulation:
             if self.obs.exists:
                 #self.flags.printGrid()
                 dv = self.sol.timestep * self.obs.force
-                if self.obs.center.y - self.obs.rad > 2: # move
+                if int( self.obs.center.y - self.obs.rad ) > 1: # move
                     print( '- obstacle still moves' )
                     if self.obs.increase_vel:
                         self.obs.vel_vec += dv
                 else: # stay
                     print( '- obstacle reached the bottom' )
                     self.obs.vel_vec = Vec3( 0. )
+                    self.obs.state = 3
 
                 # obs.vel
                 if 1:
-                    obs_vel_vec2 = self.obs.vel_vec + dv # add some velocity in case it stopped--to remove remaining particles from the bottom
+                    #obs_vel_vec2 = self.obs.vel_vec + dv # add some velocity in case it stopped--to remove remaining particles from the bottom
+                    obs_vel_vec2 = self.obs.vel_vec
                     self.obs.vel.setConst( obs_vel_vec2 )
                     self.obs.vel.setBound( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
                     #self.obs.vel.printGrid()
@@ -572,30 +574,32 @@ class Simulation:
                 self.obs.increase_vel = 1
                 print( f'  - obs: .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .skip={self.obs.skip}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}' )
                 if self.obs.state != 3:
-                    if self.obs.state == 0 and int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ) and pyNorm( self.obs.vel_vec ) > 0: # no grid movement
+                    if self.obs.state == 0 and int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ) and pyNorm( self.obs.vel_vec ) > 0: # state 0 and no grid movement
                         self.obs.center = obs_center2
                     else:
                         if not obs_stop:
-                            if self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart:
+                            if self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart: # state 1
                                 if self.obs.state == 0:
                                     self.obs.state = 1
                                 self.obs.skip += 1
                                 # slow down by skipping grid progress 
-                                if self.obs.skip > 5: # 0, 2, 5; how many steps to skip
+                                if self.dim == 2 or self.obs.skip > 1: # 0, 1, 2, 5; how many steps to skip
                                     self.obs.skip = 0
                                     self.obs.center = obs_center2
                             else:
                                 if self.obs.state == 1:
                                     self.obs.state = 2
-                                    self.obs.vel_vec /= 4
-                                    #self.obs.vel_vec = Vec3(0)
+                                    if 1 and self.dim == 2:
+                                        self.obs.vel_vec.y = 3*self.gravity
+                                        #self.obs.vel_vec /= 4
+                                        #self.obs.vel_vec = Vec3(0)
                                     self.obs.force = Vec3(0)
                                     #self.obs.force /= 4
                                 self.obs.center = obs_center2
                         else:
                             self.obs.increase_vel = 0
                             self.obs.count += 1
-                            if self.obs.count > 30:
+                            if 0 and self.obs.count > 30:
                                 print( '  - no obstacle progress; stopping it' )
                                 self.obs.vel_vec = Vec3(0)
                                 self.obs.state = 3
