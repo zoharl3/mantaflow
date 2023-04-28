@@ -303,14 +303,14 @@ class Simulation:
 
         if 1 and GUI:
             gui = Gui()
-            for i in range( 2 ):
+            for i in range( 0 ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
             gui.setRealGridDisplay( 0 )
-            gui.setVec3GridDisplay( 1 )
-            if 0 and self.dim == 3: # camera
+            gui.setVec3GridDisplay( 0 )
+            if 1 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 ) # drop
                 gui.setCamRot( 35, -30, 0 )
-            if 0 and bMesh:
+            if 1 and self.bMesh:
                 gui.toggleHideGrids()
             gui.show()
             #gui.pause()
@@ -423,6 +423,11 @@ class Simulation:
                     updateFractions( flags=self.flags, phiObs=self.phiObs, fractions=fractions, boundaryWidth=self.boundary_width )
                     setObstacleFlags( flags=self.flags, phiObs=self.phiObs, fractions=fractions )
                 #self.flags.printGrid()
+
+            # emit
+            if 0:
+                xi = self.gs * Vec3( 0.5, 0.9, 0.5 )
+                emit_particles( self.pp, pVel, self.flags, ppc, xi )
 
             # update flags; there's also flags.updateFromLevelset()
             if not self.b_fixed_vol or it == 0:
@@ -583,14 +588,14 @@ class Simulation:
                                     self.obs.state = 1
                                 self.obs.skip += 1
                                 # slow down by skipping grid progress 
-                                if self.dim == 2 or self.obs.skip > 1: # 0, 1, 2, 5; how many steps to skip
+                                if self.dim == 2 or self.obs.skip > 2: # 0, 1, 2, 5; how many steps to skip
                                     self.obs.skip = 0
                                     self.obs.center = obs_center2
                             else:
                                 if self.obs.state == 1:
                                     self.obs.state = 2
                                     if 1 and self.dim == 2:
-                                        self.obs.vel_vec.y = 3*self.gravity
+                                        self.obs.vel_vec.y = 1*self.gravity
                                         #self.obs.vel_vec /= 4
                                         #self.obs.vel_vec = Vec3(0)
                                     self.obs.force = Vec3(0)
