@@ -22,7 +22,7 @@ logging.basicConfig(
 # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
 class Correct21:
     def __init__( self, dim, s, part_per_cell_1d, pp ):
-        self.density = s.create(RealGrid)
+        self.density = s.create(RealGrid, name='density')
         self.Lambda = s.create(RealGrid)
         self.deltaX = s.create(MACGrid)
         self.flagsPos = s.create(FlagGrid)
@@ -39,13 +39,13 @@ class Correct21:
         
         # resample particles
         if self.resampleParticles:
-            print( '    - resample particles' )
+            print( '  - resample particles' )
             gridParticleIndex(parts=pp, indexSys=pindex, flags=flags, index=gpi, counter=self.gCnt)
             #apicMapPartsToMAC(flags=flags, vel=vel, parts=pp, partVel=pVel, cpx=apic_pCx, cpy=apic_pCy, cpz=apic_pCz, mass=apic_mass)
             resampeOverfullCells(vel=vel, density=self.density, index=gpi, indexSys=pindex, part=pp, pVel=pVel, dt=s.timestep)
     
         # position solver
-        print( '    - solve pressure due to density' )
+        print( '  - solve pressure due to density' )
         solvePressureSystem(rhs=self.density, vel=vel, pressure=self.Lambda, flags=self.flagsPos, cgAccuracy=1e-3)
         computeDeltaX(deltaX=self.deltaX, Lambda=self.Lambda, flags=self.flagsPos)
         mapMACToPartPositions(flags=self.flagsPos, deltaX=self.deltaX, parts=pp, dt=sol.timestep)
@@ -86,10 +86,10 @@ class Simulation:
         self.bScreenShot = 1
 
         # params
-        self.dim = 3 # 2, 3
+        self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.it_max = 1400 # 300, 500, 1200, 1400
-        self.res = 48 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+        self.it_max = 2400 # 300, 500, 1200, 1400
+        self.res = 24 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
         self.b_fixed_vol = 1
         self.b_correct21 = 0
@@ -130,7 +130,7 @@ class Simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 0: # dam
+        if 1: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -196,7 +196,7 @@ class Simulation:
             self.flags.updateFromLevelset( self.phi )
 
             # moving obstacle
-            self.obs.exists = 1
+            self.obs.exists = 0
             if self.obs.exists:
                 self.obs.rad = .05*self.res # .05, .1, .3
                 self.obs.center = self.gs*Vec3( 0.5, 0.95 - self.obs.rad/self.res, 0.5 ) # y:0.5, 0.9
@@ -287,8 +287,11 @@ class Simulation:
         # size of particles 
         radiusFactor = 1.0
 
-        print( '# particles:', self.pp.pySize() )
-        V0 = float( self.pp.pySize() ) / ppc
+        np = self.pp.pySize()
+        V0 = float( np ) / ppc
+        #np_max = 2*np
+        np_max = ppc * (self.res-2)**self.dim * 0.5
+        print( f'# particles: {np}, np_max={np_max}' )
 
         # phi is influenced by the walls for some reason
         # create a level set from particles
@@ -303,7 +306,7 @@ class Simulation:
 
         if 1 and GUI:
             gui = Gui()
-            for i in range( 0 ):
+            for i in range( 2 ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
             gui.setRealGridDisplay( 0 )
             gui.setVec3GridDisplay( 0 )
@@ -341,7 +344,7 @@ class Simulation:
         ret = 0
         while 1:
             emphasize( '\n-----------------\n- time: %g(/%d; it2=%d)' % ( it, self.it_max, it2 ) )
-            print( '- n=%d' % self.pp.pySize() )
+            print( '- np=%d, np_max=%d' % ( self.pp.pySize(), np_max ) )
 
             if 1 and ret != 0:
                 error( f'Error: ret={ret}' )
@@ -425,9 +428,19 @@ class Simulation:
                 #self.flags.printGrid()
 
             # emit
-            if 0:
+            if 0 and self.pp.pySize() < np_max:
                 xi = self.gs * Vec3( 0.5, 0.9, 0.5 )
-                emit_particles( self.pp, pVel, self.flags, ppc, xi )
+                v = Vec3( 0, -3.0, 0 ) # -3
+                for i in range(-1, 2):
+                    for j in range(-1, 2):
+                        if self.pp.pySize() >= np_max:
+                            break
+                        if self.dim == 2:
+                            j = 0
+                        emit_particles( self.pp, pVel, self.flags, self.part_per_cell_1d, xi + Vec3(i, 0, j), v )
+                        if self.dim == 2:
+                            break
+                V0 = float( self.pp.pySize() ) / ppc # update volume
 
             # update flags; there's also flags.updateFromLevelset()
             if not self.b_fixed_vol or it == 0:
@@ -496,7 +509,7 @@ class Simulation:
 
             # FLIP velocity update
             print( '- FLIP velocity update' )
-            alpha = .1 # 0
+            alpha = .1 # 0, .1
             flipVelocityUpdate( vel=self.vel, velOld=velOld, flags=self.flags, parts=self.pp, partVel=pVel, flipRatio=1 - alpha )
             #self.vel.printGrid()
             
@@ -646,7 +659,7 @@ class Simulation:
 
             # measure
             if 1:
-                m = measure( self.pp, pVel, self.flags,  self.gravity, ppc, V0 )
+                m = measure( self.pp, pVel, self.flags, self.gravity, ppc, V0 )
                 f_measure.write( f'{m[0]}\n' )
                 f_measure.flush()
 

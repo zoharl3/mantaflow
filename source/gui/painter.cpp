@@ -74,6 +74,9 @@ void LockedObjPainter::nextObject() {
 		
 		PbClass* obj = PbClass::getInstance(mObjIndex);
 		if (obj->canConvertTo(getID()) && !obj->isHidden()) {
+			// zl view only named objects
+			if ( obj->getName().empty() )
+				continue;
 			mObject = obj;
 			doEvent(UpdateRequest);
 			return;
