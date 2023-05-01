@@ -481,7 +481,8 @@ template<> void GridPainter<Real>::paint() {
 					glColor3f(0.5, 1.0+v, 0.);
 			} else { // RealDispStd
 				if (v>0)
-					glColor3f(v,v,v);
+                    glColor3f( 0, v, 0 ); // zl
+					//glColor3f(v,v,v);
 				else
 					glColor3f(-v,0,0);
 			}
