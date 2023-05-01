@@ -22,7 +22,7 @@ logging.basicConfig(
 # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
 class Correct21:
     def __init__( self, dim, s, part_per_cell_1d, pp ):
-        self.density = s.create(RealGrid, name='density')
+        self.density = s.create(RealGrid, name='')
         self.Lambda = s.create(RealGrid)
         self.deltaX = s.create(MACGrid)
         self.flagsPos = s.create(FlagGrid)
@@ -89,10 +89,10 @@ class Simulation:
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400
-        self.res = 24 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+        self.res = 12 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
 
         self.b_fixed_vol = 1
-        self.b_correct21 = 0
+        self.b_correct21 = 1
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
@@ -119,7 +119,7 @@ class Simulation:
         self.flags = self.sol.create(FlagGrid, name='flags')
         self.vel = self.sol.create(MACGrid, name='vel')
         self.pp = self.sol.create(BasicParticleSystem, name='pp')
-        self.phiObs = self.sol.create(LevelsetGrid, name='phiObs')
+        self.phiObs = self.sol.create(LevelsetGrid, name='')
         self.phi = []
 
         self.obs = moving_obstacle( self.sol )
@@ -250,6 +250,8 @@ class Simulation:
         pressure = self.sol.create(RealGrid)
         mapWeights = self.sol.create(MACGrid)
 
+        volume = self.sol.create(RealGrid, name='volume') # volume measure illustration
+
         # add velocity data to particles
         pVel     = self.pp.create(PdataVec3)
         pVel2     = self.pp.create(PdataVec3)
@@ -308,7 +310,7 @@ class Simulation:
             gui = Gui()
             for i in range( 2 ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
-            gui.setRealGridDisplay( 0 )
+            gui.setRealGridDisplay( 1 )
             gui.setVec3GridDisplay( 0 )
             if 1 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 ) # drop
@@ -659,9 +661,11 @@ class Simulation:
 
             # measure
             if 1:
-                m = measure( self.pp, pVel, self.flags, self.gravity, ppc, V0 )
+                m = measure( self.pp, pVel, self.flags, self.gravity, ppc, V0, volume )
                 f_measure.write( f'{m[0]}\n' )
                 f_measure.flush()
+                self.flags.printGrid()
+                volume.printGrid()
 
             # mesh
             if self.bMesh:
@@ -740,5 +744,10 @@ if __name__ == '__main__':
     if 0:
         limit_to_one_core()
 
+    # init matlab
+    cmd = "%%close all;\n clear classes; clear java; dbclear all; clear all; pack; jheapcl(0); set(0, 'DefaultFigureWindowState', 'minimized');" + " cd c:/prj/test_data/relative/_tmp;" + " addpath( 'c:/prj/mantaflow_mod' );"
+    matlab_eval( cmd )
+            
+    # simulation
     sim = Simulation()
     sim.main()

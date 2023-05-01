@@ -1,5 +1,9 @@
 
 - Code
+    - python
+        - explicit typedef is needed for python
+PYTHON() alias Grid<Real> RealGrid
+        - I wanted to return vector<double>, but it was tricky, so I returned vector<float> which was already supported.
     - mesh transparency level is set in isoAlpha in meshpainter.cpp
     - print_cam(): print camera
     - I excluded build/pp from resharper
