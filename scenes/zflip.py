@@ -61,7 +61,7 @@ class Correct21:
 class moving_obstacle:
     def __init__( self, sol ):
         self.exists = 0
-        self.vel = sol.create(MACGrid, name='obs.vel')
+        self.vel = sol.create(MACGrid, name='')
         self.center = Vec3( 0 )
         self.rad = 0
         self.vel_vec = Vec3( 0 )
@@ -69,10 +69,12 @@ class moving_obstacle:
         self.hstart = 0
         self.hstop = 0
         self.skip = 0
+        self.skip_last_it = 0 # the iteration where the last skip was made
         self.state = 0
         self.force = Vec3( 0 )
         self.increase_vel = 1
-        self.count = 0
+        self.stay = 0
+        self.stay_last_it = 0
 
 class Simulation:
     def __init__( self ):
@@ -86,16 +88,16 @@ class Simulation:
         self.bScreenShot = 1
 
         # params
-        self.dim = 2 # 2, 3
+        self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.it_max = 2400 # 300, 500, 1200, 1400
-        self.res = 32 # 32, 48, 64(default), 96, 128(large), 256(, 512 is too large)
+        self.it_max = 2400 # 300, 500, 1200, 1400, 2400
+        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 1
         self.b_correct21 = 0
 
-        self.narrowBand = bool( 0 )
-        self.narrowBandWidth = 5 # 32:5, 64:6, 96:6, 128:8
+        self.narrowBand = bool( 1 )
+        self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
         ###
 
@@ -113,7 +115,7 @@ class Simulation:
         self.gravity *= math.sqrt( self.res )
         #self.gravity = -0.003 # flip5
 
-        self.sol = Solver( name='main', gridSize=self.gs, dim=self.dim )
+        self.sol = Solver( name='sol', gridSize=self.gs, dim=self.dim )
 
         # automatic names are given only if the create is called from global context
         self.flags = self.sol.create(FlagGrid, name='flags')
@@ -312,7 +314,7 @@ class Simulation:
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
             gui.setRealGridDisplay( 0 ) # 0:none, 1:volume
             gui.setVec3GridDisplay( 0 ) # 0:none, 1:vel
-            if 1 and self.dim == 3: # camera
+            if 0 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 ) # drop
                 gui.setCamRot( 35, -30, 0 )
             if 0 and self.bMesh:
@@ -395,6 +397,9 @@ class Simulation:
                     print( '- obstacle still moves' )
                     if self.obs.increase_vel:
                         self.obs.vel_vec += dv
+                        max_y_speed = 7*self.gravity
+                        if self.obs.vel_vec.y < max_y_speed:
+                            self.obs.vel_vec.y = max_y_speed
                 else: # stay
                     print( '- obstacle reached the bottom' )
                     self.obs.vel_vec = Vec3( 0. )
@@ -535,6 +540,7 @@ class Simulation:
             include_walls = false
             obs_naive = 0
             obs_stop = 0
+            print( f'  - obs_naive={obs_naive}' )
             if self.b_fixed_vol:
                 self.phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
                 #self.phi.printGrid()
@@ -592,7 +598,7 @@ class Simulation:
                         obs_stop = 1
 
                 self.obs.increase_vel = 1
-                print( f'  - obs: .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .skip={self.obs.skip}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}' )
+                print( f'  - obs: .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .skip={self.obs.skip}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, stay={self.obs.stay}' )
                 if self.obs.state != 3:
                     if self.obs.state == 0 and int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ) and pyNorm( self.obs.vel_vec ) > 0: # state 0 and no grid movement
                         self.obs.center = obs_center2
@@ -601,14 +607,24 @@ class Simulation:
                             if self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart: # state 1
                                 if self.obs.state == 0:
                                     self.obs.state = 1
-                                self.obs.skip += 1
-                                # slow down by skipping grid progress 
-                                if self.dim == 2 or self.obs.skip > 2: # 0, 1, 2, 5; how many steps to skip
+                                    print( f'  - new obs.state: {self.obs.state}' )
+                                # slow down by skipping grid progress
+                                # count progress by int(it) rather than it2
+                                if int(it) > self.obs.skip_last_it:
+                                    self.obs.skip_last_it = int(it)
+                                    self.obs.skip += 1
+                                n_skips = 2 # 0, 1, 2, 5; how many steps to skip
+                                if 0 and self.dim == 2:
+                                    n_skips = min( n_skips, 1 )
+                                if self.obs.skip >= n_skips: 
                                     self.obs.skip = 0
                                     self.obs.center = obs_center2
+                                else:
+                                    print( f'  - skip {self.obs.skip}/{n_skips}' )
                             else:
                                 if self.obs.state == 1:
                                     self.obs.state = 2
+                                    print( f'  - new obs.state: {self.obs.state}' )
                                     if 1 and self.dim == 2:
                                         self.obs.vel_vec.y = 1*self.gravity
                                         #self.obs.vel_vec /= 4
@@ -618,11 +634,14 @@ class Simulation:
                                 self.obs.center = obs_center2
                         else:
                             self.obs.increase_vel = 0
-                            self.obs.count += 1
-                            if 0 and self.obs.count > 30:
-                                print( '  - no obstacle progress; stopping it' )
+                            if int(it) > self.obs.stay_last_it:
+                                self.obs.stay_last_it = int(it)
+                                self.obs.stay += 1
+                            if 1 and self.obs.stay > 5:
+                                print( f'  - no obstacle progress (stay={self.obs.stay}); stopping it' )
                                 self.obs.vel_vec = Vec3(0)
                                 self.obs.state = 3
+                                print( f'  - new obs.state: {self.obs.state}' )
 
             # correct21
             if self.b_correct21:
@@ -690,8 +709,8 @@ class Simulation:
             toc()
 
             # step; updates gui and when pause takes place
-            print( '- step (%d)' % it )
-            self.sol.step()
+            print( '- step (%g)' % it )
+            self.sol.step( int(it) )
             #print( 'after step' )
 
             # it

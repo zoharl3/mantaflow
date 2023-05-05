@@ -43,7 +43,7 @@ public:
 	PYTHON() void printMemInfo();
 	
 	//! Advance the solver one timestep, update GUI if present
-	PYTHON() void step();
+	PYTHON() void step( int frame = -1 );
 	
 	//! Update the timestep size based on given maximal velocity magnitude 
 	PYTHON() void adaptTimestep(Real maxVel);

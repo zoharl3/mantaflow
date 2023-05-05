@@ -139,7 +139,8 @@ PbClass* FluidSolver::create(PbType t, PbTypeVec T, const string& name) {
 	return ret;
 }
 
-void FluidSolver::step() {
+// zl added frame due to a discrepency with my count
+void FluidSolver::step( int frame ) {
 	// update simulation time with adaptive time stepping 
 	// (use eps value to prevent roundoff errors)
 	mTimePerFrame += mDt;
@@ -154,6 +155,9 @@ void FluidSolver::step() {
         mTimePerFrame = 0.;
         mLockDt = false;
 	}
+
+	if ( frame >= 0 )
+		mFrame = frame;
 
 //cout << "before updateQTGui" << endl;
 	//updateQtGui(true, mFrame, mTimeTotal, "FluidSolver::step");

@@ -910,7 +910,9 @@ void FlagGrid::mark_surface()
 					break;
 
                 // to be consistent with the level set
-                if ( 1&& mData[index( idx2 )] & TypeObstacle )
+                if ( 0&& mData[index( idx2 )] & TypeObstacle )
+					continue;
+				if ( is_boundary( idx2 ) ) // to distinguish from a moving obstacle
 					continue;
 
                 if ( !( mData[ index(idx2) ] & TypeFluid ) )
