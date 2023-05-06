@@ -397,8 +397,9 @@ class Simulation:
                     print( '- obstacle still moves' )
                     if self.obs.increase_vel:
                         self.obs.vel_vec += dv
-                        max_y_speed = 7*self.gravity
-                        if self.obs.vel_vec.y < max_y_speed:
+                        max_y_speed = 10*self.gravity # 7, 10
+                        if self.b_fixed_vol and self.obs.vel_vec.y < max_y_speed:
+                            print( f'  - limiting speed to {max_y_speed}' )
                             self.obs.vel_vec.y = max_y_speed
                 else: # stay
                     print( '- obstacle reached the bottom' )
@@ -613,7 +614,7 @@ class Simulation:
                                 if int(it) > self.obs.skip_last_it:
                                     self.obs.skip_last_it = int(it)
                                     self.obs.skip += 1
-                                n_skips = 2 # 0, 1, 2, 5; how many steps to skip
+                                n_skips = 5 # 0, 1, 2, 5; how many steps to skip
                                 if 0 and self.dim == 2:
                                     n_skips = min( n_skips, 1 )
                                 if self.obs.skip >= n_skips: 
