@@ -91,7 +91,7 @@ class Simulation:
         self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 150 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 1
         self.b_correct21 = 0
@@ -201,7 +201,7 @@ class Simulation:
             self.obs.exists = 1
             if self.obs.exists:
                 self.obs.rad = .05*self.res # .05, .1, .3
-                self.obs.center = self.gs*Vec3( 0.5, 0.95 - self.obs.rad/self.res, 0.5 ) # y:0.5, 0.9
+                self.obs.center = self.gs*Vec3( 0.5, 0.5 - self.obs.rad/self.res, 0.5 ) # y:0.4, 0.5, 0.95
 
                 h2 = h + 0.05
                 self.obs.hstart = h2*self.res
@@ -237,7 +237,7 @@ class Simulation:
 
         combineBandWidth = self.narrowBandWidth - 1
 
-        if 1 or self.dim == 2:
+        if 0 or self.dim == 2:
             set_print_2D( True )
 
         if 0: # sample 1D; requires changing sampleLevelsetWithParticles()
@@ -397,7 +397,7 @@ class Simulation:
                     print( '- obstacle still moves' )
                     if self.obs.increase_vel:
                         self.obs.vel_vec += dv
-                        max_y_speed = 10*self.gravity # 7, 10
+                        max_y_speed = 7*self.gravity # 7, 10
                         if self.b_fixed_vol and self.obs.vel_vec.y < max_y_speed:
                             print( f'  - limiting speed to {max_y_speed}' )
                             self.obs.vel_vec.y = max_y_speed
@@ -605,6 +605,7 @@ class Simulation:
                         self.obs.center = obs_center2
                     else:
                         if not obs_stop:
+                            self.obs.stay = 0
                             if self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart: # state 1
                                 if self.obs.state == 0:
                                     self.obs.state = 1
@@ -614,7 +615,7 @@ class Simulation:
                                 if int(it) > self.obs.skip_last_it:
                                     self.obs.skip_last_it = int(it)
                                     self.obs.skip += 1
-                                n_skips = 5 # 0, 1, 2, 5; how many steps to skip
+                                n_skips = 2 # 0, 1, 2(default), 5; how many steps to skip
                                 if 0 and self.dim == 2:
                                     n_skips = min( n_skips, 1 )
                                 if self.obs.skip >= n_skips: 
@@ -627,7 +628,7 @@ class Simulation:
                                     self.obs.state = 2
                                     print( f'  - new obs.state: {self.obs.state}' )
                                     if 1 and self.dim == 2:
-                                        self.obs.vel_vec.y = 1*self.gravity
+                                        self.obs.vel_vec.y = self.gravity/1 # 1, 6
                                         #self.obs.vel_vec /= 4
                                         #self.obs.vel_vec = Vec3(0)
                                     self.obs.force = Vec3(0)
@@ -638,7 +639,7 @@ class Simulation:
                             if int(it) > self.obs.stay_last_it:
                                 self.obs.stay_last_it = int(it)
                                 self.obs.stay += 1
-                            if 1 and self.obs.stay > 5:
+                            if 1 and self.obs.stay > 50: # 50
                                 print( f'  - no obstacle progress (stay={self.obs.stay}); stopping it' )
                                 self.obs.vel_vec = Vec3(0)
                                 self.obs.state = 3
