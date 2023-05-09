@@ -353,7 +353,7 @@ void ParticlePainter::paintBasicSys() {
 	// draw basic part sys done
 
     // zl trail
-    if ( 1 && bp->getParent()->is2D() ) {
+    if ( 0 && bp->getParent()->is2D() ) {
         glBegin( GL_LINES );
         for ( int i = 0; i < (int)bp->size(); i++ ) {
             if ( !bp->isActive( i ) )

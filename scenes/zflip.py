@@ -91,7 +91,7 @@ class Simulation:
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 200 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 34 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 0
         self.b_correct21 = 1
@@ -312,7 +312,7 @@ class Simulation:
             gui = Gui()
             for i in range( 2 ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
-            gui.setRealGridDisplay( 0 ) # 0:none, 1:volume
+            gui.setRealGridDisplay( 1 ) # 0:none, 1:volume
             gui.setVec3GridDisplay( 0 ) # 0:none, 1:vel
             if 0 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 ) # drop
