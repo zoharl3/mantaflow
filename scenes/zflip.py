@@ -91,10 +91,10 @@ class Simulation:
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 34 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 64 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 0
-        self.b_correct21 = 1
+        self.b_fixed_vol = 1
+        self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -132,7 +132,7 @@ class Simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -192,7 +192,7 @@ class Simulation:
 
         else: # a low, full box with an obstacle
             # water
-            h = 0.25 # 0.3, 0.9
+            h = 0.55 # 0.25, 0.9
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, h, 1) ) )
             self.phi = fluidbox.computeLevelset()
             self.flags.updateFromLevelset( self.phi )
@@ -201,7 +201,7 @@ class Simulation:
             self.obs.exists = 1
             if self.obs.exists:
                 self.obs.rad = .05*self.res # .05, .1, .3
-                self.obs.center = self.gs*Vec3( 0.5, 0.5 - self.obs.rad/self.res, 0.5 ) # y:0.4, 0.5, 0.95
+                self.obs.center = self.gs*Vec3( 0.5, 0.9 - self.obs.rad/self.res, 0.5 ) # y:0.4, 0.5, 0.95
 
                 h2 = h + 0.05
                 self.obs.hstart = h2*self.res
@@ -312,7 +312,7 @@ class Simulation:
             gui = Gui()
             for i in range( 2 ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
-            gui.setRealGridDisplay( 1 ) # 0:none, 1:volume
+            gui.setRealGridDisplay( 0 ) # 0:none, 1:volume
             gui.setVec3GridDisplay( 0 ) # 0:none, 1:vel
             if 0 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 ) # drop
@@ -406,13 +406,15 @@ class Simulation:
                     self.obs.vel_vec = Vec3( 0. )
                     self.obs.state = 3
 
-                # obs.vel
-                if 1:
+                # obs.vel for boundary conditions
+                if 0:
                     #obs_vel_vec2 = self.obs.vel_vec + dv # add some velocity in case it stopped--to remove remaining particles from the bottom
                     obs_vel_vec2 = self.obs.vel_vec
                     self.obs.vel.setConst( obs_vel_vec2 )
                     self.obs.vel.setBound( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
                     #self.obs.vel.printGrid()
+                elif self.obs.state < 2:
+                        self.obs.state = 2
 
                 # phiObs
                 print( f'  - obs: center={self.obs.center}, rad={self.obs.rad}, vel_vec={self.obs.vel_vec}' )
@@ -606,7 +608,7 @@ class Simulation:
                     else:
                         if not obs_stop:
                             self.obs.stay = 0
-                            if self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart: # state 1
+                            if self.obs.state < 2 and self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart: # state 1
                                 if self.obs.state == 0:
                                     self.obs.state = 1
                                     print( f'  - new obs.state: {self.obs.state}' )
