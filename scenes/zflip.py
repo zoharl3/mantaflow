@@ -89,12 +89,12 @@ class Simulation:
         self.bScreenShot = 1
 
         # params
-        self.dim = 3 # 2, 3
+        self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 32 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 64 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 0
+        self.b_fixed_vol = 1
         self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
@@ -217,6 +217,7 @@ class Simulation:
                 #shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
                 self.obs.mesh.fromShape( shape )
                 self.obs.mesh.save_pos()
+                self.obs.mesh.set_color( Vec3( 0.8, 0.2, 0.2 ) )
                 self.obs.phi_init.copyFrom( self.phiObs )
                 self.phiObs.join( shape.computeLevelset() )
 

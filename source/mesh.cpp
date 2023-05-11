@@ -314,6 +314,8 @@ void Mesh::advectInGrid(FlagGrid& flags, MACGrid& vel, int integrationMode) {
 	integratePointSet( kernel, integrationMode);    
 }
 
+Vec3 Mesh::m_color = Vec3( -1, -1, -1 );
+
 void Mesh::save_pos() {
     m_saved_pos.resize( mNodes.size() );
     for ( size_t i = 0; i < mNodes.size(); i++ )

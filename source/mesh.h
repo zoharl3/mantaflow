@@ -152,6 +152,10 @@ public:
 	PYTHON() void rotate(Vec3 thetas);
     PYTHON() void computeVelocity(Mesh& oldMesh, MACGrid& vel);
 
+    static Vec3 m_color; // zl
+
+    static PYTHON() void set_color( Vec3 c ) { m_color = c; };
+
     PYTHON() void save_pos();
     PYTHON() void load_pos();
 

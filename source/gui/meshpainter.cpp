@@ -169,11 +169,11 @@ void MeshPainter::paint() {
 		if (mBackgroundMode != BModeTrans) {
 			glDisable(GL_BLEND);
 			glEnable(GL_DEPTH_TEST);
-			glColor3f(0.3,0.3,0.5);        
+			glColor3f(0.3,0.3,0.5);
 		} else {
 			glEnable(GL_BLEND);
 			glDisable(GL_DEPTH_TEST);
-			glColor4f(0.6,0.6,0.8,0.5);        
+			glColor4f(0.6,0.6,0.8,0.5);
 		}        
 		glEnable(GL_CULL_FACE);
 		glPolygonOffset(1.0, 0.5);
@@ -225,8 +225,10 @@ void MeshPainter::paint() {
 				glColor3f(0,1,0);
 			else if (mLocalMesh->tris(tri).flags & Mesh::FfMarked)
 				glColor3f(1,0,0);
-			else
-				glColor4f(0.5,0.7,1.0, isoAlpha); // blue-ish
+			else if ( Mesh::m_color[0] < 0 )
+				glColor4f(0.5, 0.7, 1.0, isoAlpha); // blue-ish
+            else
+                glColor4f( Mesh::m_color[0], Mesh::m_color[1], Mesh::m_color[2], isoAlpha );
 				
 			for (int c=0; c<3; c++) {
 				if (nodeColor) {
