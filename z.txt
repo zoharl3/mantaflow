@@ -1,5 +1,7 @@
 
 - Code
+    - LockedObjPainter::nextObject()
+        - I patched it to view only named objects
     - python
         - explicit typedef is needed for python
 PYTHON() alias Grid<Real> RealGrid
@@ -14,6 +16,7 @@ PyRun_SimpleString(buf);
 glColor3f( 0, 0.3, 1 ); // light blue
         - GridPainter<Real>::paint()
         - GridPainter<Vec3>::paint()
+        - MeshPainter::paint()
     - particle color: in particlepainter.cpp, ParticlePainter::paintBasicSys()
 if(!bp->isActive(i) ) {
     glColor3f(1.0, 0., 0.); // deleted, red

@@ -143,14 +143,17 @@ public:
     
     // plugins
     PYTHON() void clear();
-    PYTHON() void load (std::string name, bool append = false);
-    PYTHON() void fromShape (Shape& shape, bool append = false);
-    PYTHON() void save (std::string name);
+    PYTHON() void load(std::string name, bool append = false);
+    PYTHON() void fromShape(Shape& shape, bool append = false);
+    PYTHON() void save(std::string name);
     PYTHON() void advectInGrid(FlagGrid& flags, MACGrid& vel, int integrationMode);
     PYTHON() void scale(Vec3 s);
     PYTHON() void offset(Vec3 o);
 	PYTHON() void rotate(Vec3 thetas);
     PYTHON() void computeVelocity(Mesh& oldMesh, MACGrid& vel);
+
+    PYTHON() void save_pos();
+    PYTHON() void load_pos();
 
 	PYTHON() void computeLevelset(LevelsetGrid& levelset, Real sigma, Real cutoff=-1.);
 	PYTHON() LevelsetGrid getLevelset(Real sigma, Real cutoff = -1.);
@@ -243,6 +246,7 @@ public:
 protected:    
     void rebuildChannels();
     
+    std::vector<Vec3> m_saved_pos; // zl
     std::vector<Node> mNodes;
     std::vector<Triangle> mTris;
     std::vector<Corner> mCorners;

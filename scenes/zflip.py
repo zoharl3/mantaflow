@@ -62,7 +62,7 @@ class moving_obstacle:
     def __init__( self, sol ):
         self.exists = 0
         self.vel = sol.create(MACGrid, name='')
-        self.center = Vec3( 0 )
+        self.center0 = self.center = Vec3( 0 )
         self.rad = 0
         self.vel_vec = Vec3( 0 )
         self.phi_init = sol.create(LevelsetGrid)
@@ -75,6 +75,7 @@ class moving_obstacle:
         self.increase_vel = 1
         self.stay = 0
         self.stay_last_it = 0
+        self.mesh = sol.create( Mesh, name='mo_mesh' )
 
 class Simulation:
     def __init__( self ):
@@ -88,12 +89,12 @@ class Simulation:
         self.bScreenShot = 1
 
         # params
-        self.dim = 2 # 2, 3
+        self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 64 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 32 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 1
+        self.b_fixed_vol = 0
         self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
@@ -174,7 +175,7 @@ class Simulation:
 
             # obstacle
             if 1:
-                #mesh2 = self.sol.create(Mesh) # it renders only one mesh (mLocalMesh)?
+                mesh = self.sol.create( Mesh, name='omesh' ) # need to switch to it in the gui to view
 
                 #mesh.load( r'c:\prj\mantaflow_mod\resources\cube1.obj' )
                 #mesh.scale( Vec3(1) )
@@ -192,8 +193,9 @@ class Simulation:
 
         else: # a low, full box with an obstacle
             # water
-            h = 0.55 # 0.25, 0.9
+            h = 0.25 # 0.25, 0.55, 0.9
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, h, 1) ) )
+            print( f'- water level h={h}' )
             self.phi = fluidbox.computeLevelset()
             self.flags.updateFromLevelset( self.phi )
 
@@ -201,14 +203,20 @@ class Simulation:
             self.obs.exists = 1
             if self.obs.exists:
                 self.obs.rad = .05*self.res # .05, .1, .3
-                self.obs.center = self.gs*Vec3( 0.5, 0.9 - self.obs.rad/self.res, 0.5 ) # y:0.4, 0.5, 0.95
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.5 - self.obs.rad/self.res, 0.5 ) # y:0.5, 0.9
 
                 h2 = h + 0.05
                 self.obs.hstart = h2*self.res
                 self.obs.hstop = (h2 - 0.05)*self.res
 
-                shape = Box( parent=self.sol, p0=self.obs.center - Vec3(self.obs.rad), p1=self.obs.center + Vec3(self.obs.rad) )
+                p0 = self.obs.center - Vec3(self.obs.rad)
+                p1 = self.obs.center + Vec3(self.obs.rad)
+                if self.dim == 2:
+                    p0.z = p1.z = 0.5
+                shape = Box( parent=self.sol, p0=p0, p1=p1 )
                 #shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
+                self.obs.mesh.fromShape( shape )
+                self.obs.mesh.save_pos()
                 self.obs.phi_init.copyFrom( self.phiObs )
                 self.phiObs.join( shape.computeLevelset() )
 
@@ -393,7 +401,7 @@ class Simulation:
             if self.obs.exists:
                 #self.flags.printGrid()
                 dv = self.sol.timestep * self.obs.force
-                if int( self.obs.center.y - self.obs.rad ) > 1: # move
+                if int( self.obs.center.y - self.obs.rad ) > .2: # move
                     print( '- obstacle still moves' )
                     if self.obs.increase_vel:
                         self.obs.vel_vec += dv
@@ -407,7 +415,7 @@ class Simulation:
                     self.obs.state = 3
 
                 # obs.vel for boundary conditions
-                if 0:
+                if 1:
                     #obs_vel_vec2 = self.obs.vel_vec + dv # add some velocity in case it stopped--to remove remaining particles from the bottom
                     obs_vel_vec2 = self.obs.vel_vec
                     self.obs.vel.setConst( obs_vel_vec2 )
@@ -428,6 +436,12 @@ class Simulation:
                 self.phiObs.join( shape.computeLevelset() )
                 #self.phiObs.printGrid()
 
+                # mesh
+                self.obs.mesh.load_pos()
+                d = self.obs.center - self.obs.center0
+                self.obs.mesh.offset( d )
+
+                # flags
                 if 1:
                     mark_obstacle_box( flags=self.flags, p0=p0, p1=p1 )
                 elif 1:

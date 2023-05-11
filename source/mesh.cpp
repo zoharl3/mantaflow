@@ -314,6 +314,18 @@ void Mesh::advectInGrid(FlagGrid& flags, MACGrid& vel, int integrationMode) {
 	integratePointSet( kernel, integrationMode);    
 }
 
+void Mesh::save_pos() {
+    m_saved_pos.resize( mNodes.size() );
+    for ( size_t i = 0; i < mNodes.size(); i++ )
+        m_saved_pos[i] = mNodes[i].pos;
+}
+
+void Mesh::load_pos() {
+    assertMsg( m_saved_pos.size() == mNodes.size(), "# of mesh nodes has changed" );
+    for ( size_t i = 0; i < mNodes.size(); i++ )
+        mNodes[i].pos = m_saved_pos[i];
+}
+
 void Mesh::scale(Vec3 s) {
 	for (size_t i=0; i<mNodes.size(); i++)
 		mNodes[i].pos *= s;
