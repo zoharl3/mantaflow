@@ -217,7 +217,7 @@ class Simulation:
                 #shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
                 self.obs.mesh.fromShape( shape )
                 self.obs.mesh.save_pos()
-                self.obs.mesh.set_color( Vec3( 0.8, 0.2, 0.2 ) )
+                self.obs.mesh.set_color( Vec3( 0.6, 0.2, 0.2 ) )
                 self.obs.phi_init.copyFrom( self.phiObs )
                 self.phiObs.join( shape.computeLevelset() )
 
@@ -326,8 +326,7 @@ class Simulation:
             if 0 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 ) # drop
                 gui.setCamRot( 35, -30, 0 )
-            if 0 and self.bMesh:
-                gui.toggleHideGrids()
+            gui.toggleHideGrids()
             gui.show()
             #gui.pause()
         else:

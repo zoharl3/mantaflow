@@ -393,7 +393,8 @@ void glBox(const Vec3& p0, const Vec3& p1, const float dx) {
 
 // Paint gridlines
 template<> void GridPainter<int>::paint() {
-	 if (!mObject || mHide || mPlane <0 || mPlane >= mLocalGrid->getSize()[mDim])
+	// zl moved mHide below to always draw a box
+	 if (!mObject || mPlane <0 || mPlane >= mLocalGrid->getSize()[mDim])
 		return;
 	float dx = mLocalGrid->getDx();
 	Vec3 box[4];
@@ -401,7 +402,7 @@ template<> void GridPainter<int>::paint() {
 	
 	bool rbox = true;
 	bool skipFluid = mLocalGrid->getSize().max() >= 64; 
-	bool drawLines = mLocalGrid->getSize().max() <= 80; 
+	bool drawLines = !mHide && mLocalGrid->getSize().max() <= 80; 
 	if (drawLines) {
 		//glDepthFunc(GL_LESS);
 		glBegin(GL_LINES);
