@@ -3,6 +3,7 @@
 
 import os, sys, math
 import keyboard
+from pathlib import Path
 
 from manta import *
 
@@ -10,7 +11,7 @@ sys.path.append( r'c:\prj\python\\' )
 from text_color import *
 from tictoc import *
 
-# prints line number
+# print line number
 import logging
 logging.basicConfig(
     format="%(pathname)s line%(lineno)s: %(message)s",
@@ -76,6 +77,7 @@ class moving_obstacle:
         self.stay = 0
         self.stay_last_it = 0
         self.mesh = sol.create( Mesh, name='mo_mesh' )
+        self.file = None
 
 class Simulation:
     def __init__( self ):
@@ -205,6 +207,10 @@ class Simulation:
                 self.obs.rad = .05*self.res # .05, .1, .3
                 self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.5 - self.obs.rad/self.res, 0.5 ) # y:0.5, 0.9
 
+                self.obs.file = open( out + '_obstacle.txt', 'w' )
+                self.obs.file.write( f'{self.obs.rad}\n' )
+                self.obs.file.flush()
+
                 h2 = h + 0.05
                 self.obs.hstart = h2*self.res
                 self.obs.hstop = (h2 - 0.05)*self.res
@@ -217,7 +223,7 @@ class Simulation:
                 #shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
                 self.obs.mesh.fromShape( shape )
                 self.obs.mesh.save_pos()
-                self.obs.mesh.set_color( Vec3( 0.6, 0.2, 0.2 ) )
+                self.obs.mesh.set_color( Vec3( 0.5, 0.2, 0.2 ) )
                 self.obs.phi_init.copyFrom( self.phiObs )
                 self.phiObs.join( shape.computeLevelset() )
 
@@ -284,6 +290,21 @@ class Simulation:
         print( 'b_fixed_vol:', self.b_fixed_vol )
         print( 'gravity: %0.02f' % self.gravity )
         print( 'timestep:', self.dt )
+
+        # create dir
+        name = f'{self.res}^{self.dim}'
+
+        if self.b_correct21:
+            name += ' cor21'
+        elif self.b_fixed_vol:
+            name += ' full'
+        else:
+            name += ' flip'
+        
+        if self.narrowBand:
+            name += f' band{self.narrowBandWidth}'
+
+        os.mkdir( out + name )
 
         # adaptive time stepping; from flip5
         b_adaptive_time_step = 0
@@ -450,6 +471,11 @@ class Simulation:
                     updateFractions( flags=self.flags, phiObs=self.phiObs, fractions=fractions, boundaryWidth=self.boundary_width )
                     setObstacleFlags( flags=self.flags, phiObs=self.phiObs, fractions=fractions )
                 #self.flags.printGrid()
+
+                # save pos
+                c = self.obs.center
+                self.obs.file.write( '%g %g %g\n' % ( c.x, c.y, c.z ) )
+                self.obs.file.flush()
 
             # emit
             if 0 and self.pp.pySize() < np_max:
@@ -776,7 +802,14 @@ if __name__ == '__main__':
 
     out = r'c:/prj-external-libs/mantaflow/out/'
 
-    os.system( 'rm %s*.*' % out )
+    # del
+    for path in Path( out ).glob("*"):
+        if path.is_file():
+            path.unlink()
+        elif path.is_dir():
+            path.rmdir()
+
+    # copy
     os.system( 'cp %s../video.bat %s' % (out, out) )
 
     # (debug) for consistent result; for large res, the step() hangs?
