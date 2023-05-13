@@ -77,7 +77,7 @@ class moving_obstacle:
         self.stay = 0
         self.stay_last_it = 0
         self.mesh = sol.create( Mesh, name='mo_mesh' )
-        self.file = None
+        self.file = None # loaded into maya by load_obstacle.py
 
 class Simulation:
     def __init__( self ):
