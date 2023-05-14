@@ -82,21 +82,20 @@ class moving_obstacle:
 class Simulation:
     def __init__( self ):
         # flags
+        self.bScreenShot = 1
         self.bMesh       = 1
-        self.bSaveParts  = 0 # .vdb
+        self.bSaveParts  = 1 # .vdb
         self.bSaveUni    = 0 # .uni
         if self.bSaveParts or self.bSaveUni:
             self.bMesh = 1
 
-        self.bScreenShot = 1
-
         # params
-        self.dim = 2 # 2, 3
+        self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 64 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 150 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 1
+        self.b_fixed_vol = 0
         self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
@@ -208,7 +207,7 @@ class Simulation:
                 self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.5 - self.obs.rad/self.res, 0.5 ) # y:0.5, 0.9
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
-                self.obs.file.write( f'{self.obs.rad}\n' )
+                self.obs.file.write( f'{2*self.obs.rad/self.res}\n' )
                 self.obs.file.flush()
 
                 h2 = h + 0.05
@@ -364,7 +363,8 @@ class Simulation:
                 self.pressure.save( out + 'ref_parts_0000.uni' )
                 self.pp.save( out + 'parts_%04d.uni' % it )
 
-            objects = [ self.flags, self.phi, self.pp ] # need the 3 of them for volumetric .vdb
+            self.phi.set_name( 'phi' )
+            objects = [ self.flags, self.phi, self.pp ] # need the 3 of them for volumetric .vdb and they need to be named (bifrost looks for a channel by name)
             #objects = [ self.pp ]
             fname = out + 'fluid_data_%04d.vdb' % it
             print( fname )
@@ -472,8 +472,9 @@ class Simulation:
                     setObstacleFlags( flags=self.flags, phiObs=self.phiObs, fractions=fractions )
                 #self.flags.printGrid()
 
-                # save pos
+                # write pos
                 c = self.obs.center
+                c /= self.res
                 self.obs.file.write( '%g %g %g\n' % ( c.x, c.y, c.z ) )
                 self.obs.file.flush()
 

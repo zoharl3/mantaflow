@@ -30,6 +30,10 @@ public:
 		
 	PYTHON() GridBase(FluidSolver* parent);
 	
+	// zl
+	PYTHON() std::string get_name() { return getName(); }
+	PYTHON() void set_name( std::string s ) { setName( s ); }
+
 	//! Get the grids X dimension
 	PYTHON() inline int getSizeX() const { return mSize.x; }
 	//! Get the grids Y dimension
