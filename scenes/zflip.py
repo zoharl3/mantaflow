@@ -78,6 +78,7 @@ class moving_obstacle:
         self.stay_last_it = 0
         self.mesh = sol.create( Mesh, name='mo_mesh' )
         self.file = None # loaded into maya by load_obstacle.py
+        self.shape = 0 # 0:box, 1:sphere
 
 class Simulation:
     def __init__( self ):
@@ -93,9 +94,9 @@ class Simulation:
         self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 150 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 0
+        self.b_fixed_vol = 1
         self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
@@ -196,7 +197,7 @@ class Simulation:
             # water
             h = 0.25 # 0.25, 0.55, 0.9
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, h, 1) ) )
-            print( f'- water level h={h}' )
+            print( f'- water level h={h}*res={h*self.res}' )
             self.phi = fluidbox.computeLevelset()
             self.flags.updateFromLevelset( self.phi )
 
@@ -210,16 +211,19 @@ class Simulation:
                 self.obs.file.write( f'{2*self.obs.rad/self.res}\n' )
                 self.obs.file.flush()
 
-                h2 = h + 0.05
+                span = 0.05 # 0, .01, .05
+                h2 = h
                 self.obs.hstart = h2*self.res
-                self.obs.hstop = (h2 - 0.05)*self.res
+                self.obs.hstop = (h2 - span)*self.res
 
                 p0 = self.obs.center - Vec3(self.obs.rad)
                 p1 = self.obs.center + Vec3(self.obs.rad)
                 if self.dim == 2:
                     p0.z = p1.z = 0.5
-                shape = Box( parent=self.sol, p0=p0, p1=p1 )
-                #shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
+                if self.obs.shape == 0:
+                    shape = Box( parent=self.sol, p0=p0, p1=p1 )
+                else:
+                    shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
                 self.obs.mesh.fromShape( shape )
                 self.obs.mesh.save_pos()
                 self.obs.mesh.set_color( Vec3( 0.5, 0.2, 0.2 ) )
@@ -346,7 +350,7 @@ class Simulation:
             if 0 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 ) # drop
                 gui.setCamRot( 35, -30, 0 )
-            gui.toggleHideGrids()
+            #gui.toggleHideGrids()
             gui.show()
             #gui.pause()
         else:
@@ -451,8 +455,10 @@ class Simulation:
                 p1 = self.obs.center + Vec3( self.obs.rad )
                 if self.dim == 2:
                     p0.z = p1.z = 0.5
-                shape = Box( parent=self.sol, p0=p0, p1=p1 )
-                #shape = Sphere( parent=s, center=self.obs.center, radius=self.obs.rad )
+                if self.obs.shape == 0:
+                    shape = Box( parent=self.sol, p0=p0, p1=p1 )
+                else:
+                    shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
                 self.phiObs.copyFrom( self.obs.phi_init )
                 self.phiObs.join( shape.computeLevelset() )
                 #self.phiObs.printGrid()
@@ -642,34 +648,41 @@ class Simulation:
                         obs_stop = 1
 
                 self.obs.increase_vel = 1
-                print( f'  - obs: .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .skip={self.obs.skip}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, stay={self.obs.stay}' )
+                print( f'  - obs: .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .skip={self.obs.skip}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, stay={self.obs.stay}, hstart={self.obs.hstart}, hstop={self.obs.hstop}' )
                 if self.obs.state != 3:
                     if self.obs.state == 0 and int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ) and pyNorm( self.obs.vel_vec ) > 0: # state 0 and no grid movement
                         self.obs.center = obs_center2
                     else:
                         if not obs_stop:
                             self.obs.stay = 0
-                            if self.obs.state < 2 and self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart: # state 1
+                            if self.obs.state < 1.5 and self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart: # state 1
                                 if self.obs.state == 0:
                                     self.obs.state = 1
-                                    print( f'  - new obs.state: {self.obs.state}' )
-                                # slow down by skipping grid progress
+                                    emphasize2( f'  - new obs.state: {self.obs.state}' )
+                                # wait by skipping grid progress
                                 # count progress by int(it) rather than it2
                                 if int(it) > self.obs.skip_last_it:
                                     self.obs.skip_last_it = int(it)
                                     self.obs.skip += 1
-                                n_skips = 2 # 0, 1, 2(default), 5; how many steps to skip
+                                n_skips = 2 # 0, 1, 2(default), 3, 5; how many steps to skip
                                 if 0 and self.dim == 2:
                                     n_skips = min( n_skips, 1 )
                                 if self.obs.skip >= n_skips: 
                                     self.obs.skip = 0
-                                    self.obs.center = obs_center2
+                                    if 0:
+                                        self.obs.center = obs_center2
+                                    else:
+                                        self.obs.state = 2
+                                        emphasize2( f'  - new obs.state: {self.obs.state}' )
+                                        if 1 and self.dim == 2:
+                                            self.obs.vel_vec.y = self.gravity/1 # 1, 6
+                                        self.obs.force = Vec3(0)
                                 else:
-                                    print( f'  - skip {self.obs.skip}/{n_skips}' )
+                                    emphasize2( f'  - skip {self.obs.skip}/{n_skips}' )
                             else:
-                                if self.obs.state == 1:
+                                if 0 and self.obs.state == 1:
                                     self.obs.state = 2
-                                    print( f'  - new obs.state: {self.obs.state}' )
+                                    emphasize2( f'  - new obs.state: {self.obs.state}' )
                                     if 1 and self.dim == 2:
                                         self.obs.vel_vec.y = self.gravity/1 # 1, 6
                                         #self.obs.vel_vec /= 4
@@ -686,7 +699,7 @@ class Simulation:
                                 print( f'  - no obstacle progress (stay={self.obs.stay}); stopping it' )
                                 self.obs.vel_vec = Vec3(0)
                                 self.obs.state = 3
-                                print( f'  - new obs.state: {self.obs.state}' )
+                                emphasize2( f'  - new obs.state: {self.obs.state}' )
 
             # correct21
             if self.b_correct21:
