@@ -94,12 +94,12 @@ class Simulation:
         self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 1
         self.b_correct21 = 0
 
-        self.narrowBand = bool( 0 )
+        self.narrowBand = bool( 1 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
         ###
@@ -442,7 +442,10 @@ class Simulation:
                 # obs.vel for boundary conditions
                 if 1:
                     #obs_vel_vec2 = self.obs.vel_vec + dv # add some velocity in case it stopped--to remove remaining particles from the bottom
-                    obs_vel_vec2 = self.obs.vel_vec
+                    obs_vel_vec2 = self.obs.vel_vec + Vec3(0) # force copy
+                    if self.obs.state == 1:
+                        obs_vel_vec2.y = max_y_speed
+                        print( '  - set obs.vel to max speed due to state 1' )
                     self.obs.vel.setConst( obs_vel_vec2 )
                     self.obs.vel.setBound( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
                     #self.obs.vel.printGrid()
@@ -537,7 +540,7 @@ class Simulation:
             #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions, phiObs=self.phiObs, obvel=self.obs.vel ) # calls KnSetWallBcsFrac, which doesn't work?
             #self.obs.vel.printGrid()
             #self.vel.printGrid()
-            setWallBcs( flags=self.flags, vel=self.vel, obvel=self.obs.vel ) # calls KnSetWallBcs
+            setWallBcs( flags=self.flags, vel=self.vel, obvel=self.obs.vel ) # calls KnSetWallBcs; default
             #self.vel.printGrid()
             #self.flags.printGrid()
 
@@ -655,7 +658,7 @@ class Simulation:
                     else:
                         if not obs_stop:
                             self.obs.stay = 0
-                            if self.obs.state < 1.5 and self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart: # state 1
+                            if self.obs.state < 2 and self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart:
                                 if self.obs.state == 0:
                                     self.obs.state = 1
                                     emphasize2( f'  - new obs.state: {self.obs.state}' )
@@ -664,26 +667,27 @@ class Simulation:
                                 if int(it) > self.obs.skip_last_it:
                                     self.obs.skip_last_it = int(it)
                                     self.obs.skip += 1
-                                n_skips = 2 # 0, 1, 2(default), 3, 5; how many steps to skip
+                                n_skips = 0 # 0, 1, 2(default), 3, 5; how many steps to skip
                                 if 0 and self.dim == 2:
                                     n_skips = min( n_skips, 1 )
                                 if self.obs.skip >= n_skips: 
                                     self.obs.skip = 0
-                                    if 0:
-                                        self.obs.center = obs_center2
-                                    else:
-                                        self.obs.state = 2
-                                        emphasize2( f'  - new obs.state: {self.obs.state}' )
-                                        if 1 and self.dim == 2:
+                                    if 1:
+                                        if 0:
+                                            self.obs.state = 2
+                                            emphasize2( f'  - new obs.state: {self.obs.state}' )
+                                        if 1:
                                             self.obs.vel_vec.y = self.gravity/1 # 1, 6
                                         self.obs.force = Vec3(0)
+                                    if 1:
+                                        self.obs.center = obs_center2
                                 else:
                                     emphasize2( f'  - skip {self.obs.skip}/{n_skips}' )
                             else:
-                                if 0 and self.obs.state == 1:
+                                if 1 and self.obs.state == 1:
                                     self.obs.state = 2
                                     emphasize2( f'  - new obs.state: {self.obs.state}' )
-                                    if 1 and self.dim == 2:
+                                    if 0:
                                         self.obs.vel_vec.y = self.gravity/1 # 1, 6
                                         #self.obs.vel_vec /= 4
                                         #self.obs.vel_vec = Vec3(0)
