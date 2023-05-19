@@ -84,28 +84,39 @@ class moving_obstacle:
 
 class mesh_generator:
     def __init__( self, dim, gs, sol_main ):
-        upres = 1 # 1, 2; scale resolution; I don't notice any difference
+        upres = 2 # 1, 2; scale resolution; I don't notice any difference
+
+        self.gs0 = gs
 
         if 1 and upres != 1:
             self.gs = upres*gs
-            sol = Solver( name='gen_sol', gridSize=self.gs, dim=dim )
+            self.sol = Solver( name='gen_sol', gridSize=self.gs, dim=dim )
         else:
-            sol = sol_main
+            self.sol = sol_main
 
-        self.flags = sol.create(FlagGrid)
-        self.phi = sol.create(LevelsetGrid)
-        self.pindex = sol.create(ParticleIndexSystem) 
-        self.gpi = sol.create(IntGrid)
-        self.mesh = sol_main.create( Mesh, name='mesh' )
+        self.flags = self.sol.create(FlagGrid)
+        self.phi = self.sol.create(LevelsetGrid)
+        self.pindex = self.sol.create(ParticleIndexSystem) 
+        self.gpi = self.sol.create(IntGrid)
+        self.mesh = self.sol.create( Mesh, name='mesh' if self.sol == sol_main else '' ) # viewing a mesh from a different solver leads to a crash
 
         self.flags.initDomain( boundaryWidth=0 )
 
     def generate( self, pp ):
-        radiusFactor = 1
+        radiusFactor = 2.5 # 1, 2, 2.5
+
+        if self.gs != self.gs0:
+            pp.transformPositions( self.gs0, self.gs )
 
         self.phi.setBound( value=0., boundaryWidth=1 )
         gridParticleIndex( parts=pp , flags=self.flags, indexSys=self.pindex, index=self.gpi )
-        improvedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phi, radiusFactor, 1, 1 , 0.4, 3.5 ) # (creates artifacts in dam flip05 128)
+
+        #unionParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phi, radiusFactor )
+        #averagedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phi, radiusFactor , 1, 1 )
+        improvedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phi, radiusFactor, 1, 1, 0.4, 3.5 )
+
+        if self.gs != self.gs0:
+            pp.transformPositions( self.gs, self.gs0 )
 
         self.phi.setBound( value=0., boundaryWidth=1 )
         self.phi.createMesh( self.mesh )
@@ -120,7 +131,7 @@ class simulation:
         self.bScreenShot = 1
         self.bMesh       = 1
         self.bSaveMesh   = 1 # .bobj.gz
-        self.bSaveVDB    = 1 # .vdb
+        self.bSaveVDB    = 0 # .vdb
         self.bSaveUni    = 0 # .uni
         if not self.bMesh:
             self.bSaveMesh = 0
@@ -407,7 +418,7 @@ class simulation:
             gui.screenshot( out + 'frame_%04d.png' % it ); # slow
 
         if self.bSaveUni:
-            self.pressure.save( out + 'ref_parts_0000.uni' )
+            pressure.save( out + 'ref_parts_0000.uni' )
             self.pp.save( out + 'parts_%04d.uni' % it )
 
         if self.bSaveVDB:

@@ -135,7 +135,7 @@ public:
 	PYTHON() void getPosPdata(ParticleDataImpl<Vec3>& target) const;
 	PYTHON() void setPosPdata(const ParticleDataImpl<Vec3>& source);
 	//! transform coordinate system from one grid size to another (usually upon load)
-	void transformPositions( Vec3i dimOld, Vec3i dimNew );
+	PYTHON() void transformPositions( Vec3i dimOld, Vec3i dimNew );
 
 	//! explicitly trigger compression from outside
 	// zl I added bForce; I don't understand the mDeleteChunk condition
