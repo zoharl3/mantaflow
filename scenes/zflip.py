@@ -80,15 +80,45 @@ class moving_obstacle:
         self.file = None # loaded into maya by load_obstacle.py
         self.shape = 0 # 0:box, 1:sphere
 
-class Simulation:
+class mesh_generator:
+    def __init__( self, dim, gs ):
+        upres = 2.0 # scale resolution
+
+        self.gs = upres*gs
+        sol = Solver( name='gen_sol', gridSize=self.gs, dim=dim )
+
+        self.flags = sol.create(FlagGrid)
+        self.phi = sol.create(LevelsetGrid)
+        self.pindex = sol.create(ParticleIndexSystem) 
+        self.gpi = sol.create(IntGrid)
+        self.mesh = sol.create( Mesh, name='mesh' )
+
+        self.flags.initDomain( boundaryWidth=0 )
+
+    def generate( self, pp ):
+        radiusFactor = 2.5
+
+        self.phi.setBound( value=0., boundaryWidth=1 )
+        gridParticleIndex( parts=pp , flags=self.flags, indexSys=self.pindex, index=self.gpi )
+        improvedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phi, radiusFactor, 1, 1 , 0.4, 3.5 ) # (creates artifacts in dam flip05 128)
+
+        self.phi.setBound( value=0., boundaryWidth=1 )
+        self.phi.createMesh( self.mesh )
+
+    def save( self, it ):
+        fname = out + 'fluid_surface_%04d.bobj.gz' % it
+        self.mesh.save( fname )
+
+class simulation:
     def __init__( self ):
         # flags
         self.bScreenShot = 1
         self.bMesh       = 1
-        self.bSaveParts  = 1 # .vdb
+        self.bSaveMesh   = 1 # .bobj.gz
+        self.bSaveVDB    = 1 # .vdb
         self.bSaveUni    = 0 # .uni
-        if self.bSaveParts or self.bSaveUni:
-            self.bMesh = 1
+        if not self.bMesh:
+            self.bSaveMesh = 0
 
         # params
         self.dim = 3 # 2, 3
@@ -96,7 +126,7 @@ class Simulation:
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 1
+        self.b_fixed_vol = 0
         self.b_correct21 = 0
 
         self.narrowBand = bool( 1 )
@@ -110,7 +140,8 @@ class Simulation:
         if self.dim == 2:
             self.gs.z = 1
             self.bMesh = 0
-            self.bSaveParts = 0
+            self.bSaveVDB = 0
+            self.bSaveMesh = 0
 
         self.dt = .2 # .2(default), .5, 1(flip5, easier to debug)
 
@@ -263,30 +294,33 @@ class Simulation:
         else:
             ppc = self.part_per_cell_1d**self.dim
 
-        flags2   = self.sol.create(FlagGrid)
-        vel2     = self.sol.create(MACGrid)
-        velOld   = self.sol.create(MACGrid)
+        flags2 = self.sol.create(FlagGrid)
+        vel2 = self.sol.create(MACGrid)
+        velOld = self.sol.create(MACGrid)
         velParts = self.sol.create(MACGrid)
         pressure = self.sol.create(RealGrid)
         mapWeights = self.sol.create(MACGrid)
 
-        volume = self.sol.create(RealGrid, name='volume') # volume measure illustration
+        volume = self.sol.create( RealGrid, name='volume' ) # volume measure illustration
 
         # add velocity data to particles
-        pVel     = self.pp.create(PdataVec3)
-        pVel2     = self.pp.create(PdataVec3)
+        pVel = self.pp.create(PdataVec3)
+        pVel2 = self.pp.create(PdataVec3)
         phiParts = self.sol.create(LevelsetGrid)
-        phiMesh  = self.sol.create(LevelsetGrid)
         fractions = self.sol.create(MACGrid) # Sticks to walls and becomes slow without this? Not anymore. Shrinks an obstacle box and draws it inaccurately.
-        mesh     = self.sol.create(Mesh, name='mesh')
-        bfs      = self.sol.create(IntGrid) # discrete distance from surface
+
+        bfs = self.sol.create(IntGrid) # discrete distance from surface
 
         # acceleration data for particle
         pindex = self.sol.create(ParticleIndexSystem)
-        gpi    = self.sol.create(IntGrid)
+        gpi = self.sol.create(IntGrid)
 
         correct21 = Correct21( self.dim, self.sol, self.part_per_cell_1d, self.pp )
 
+        if self.bMesh:
+            mesh_gen = mesh_generator( self.dim, self.gs )
+
+        # info
         print()
         print( 'dim:', self.dim, ', res:', self.res, ', ppc:', ppc )
         print( 'narrowBand:', self.narrowBand, ', narrowBandWidth:', self.narrowBandWidth )
@@ -355,24 +389,29 @@ class Simulation:
             gui.show()
             #gui.pause()
         else:
-            bScreenShot = 0
+            self.bScreenShot = 0
 
         it = 0
         it2 = 0
 
+        if self.bMesh:
+            mesh_gen.generate( self.pp )
+
+        if self.bSaveMesh:
+            mesh_gen.save( it )
+
         if self.bScreenShot:
             gui.screenshot( out + 'frame_%04d.png' % it ); # slow
 
-        if self.bSaveParts:
-            if self.bSaveUni:
-                self.pressure.save( out + 'ref_parts_0000.uni' )
-                self.pp.save( out + 'parts_%04d.uni' % it )
+        if self.bSaveUni:
+            self.pressure.save( out + 'ref_parts_0000.uni' )
+            self.pp.save( out + 'parts_%04d.uni' % it )
 
+        if self.bSaveVDB:
             self.phi.set_name( 'phi' )
             objects = [ self.flags, self.phi, self.pp ] # need the 3 of them for volumetric .vdb and they need to be named (bifrost looks for a channel by name)
             #objects = [ self.pp ]
             fname = out + 'fluid_data_%04d.vdb' % it
-            print( fname )
             save( name=fname, objects=objects ) # error in debug mode "string too long?"
 
         # measure
@@ -471,12 +510,12 @@ class Simulation:
                 self.phiObs.join( shape.computeLevelset() )
                 #self.phiObs.printGrid()
 
-                # mesh
+                # obs mesh
                 self.obs.mesh.load_pos()
                 d = self.obs.center - self.obs.center0
                 self.obs.mesh.offset( d )
 
-                # flags
+                # obs flags
                 if 1:
                     mark_obstacle_box( flags=self.flags, p0=p0, p1=p1 )
                 elif 1:
@@ -760,12 +799,7 @@ class Simulation:
 
             # mesh
             if self.bMesh:
-                phiMesh.copyFrom( self.phi )
-                improvedParticleLevelset( self.pp, pindex, self.flags, gpi, phiMesh, radiusFactor, 1, 1 , 0.4, 3.5 ) # creates artifacts in dam flip05 128
-
-                # mesh
-                phiMesh.setBound( value=0., boundaryWidth=1 )
-                phiMesh.createMesh( mesh )
+                mesh_gen.generate( self.pp )
 
             # print/write
             if 0:
@@ -797,16 +831,19 @@ class Simulation:
                     print( f'- saving: {fname}' )
                     gui.screenshot( fname ) # slow
 
-                # save particle data
-                if self.bSaveParts:
-                    if self.bSaveUni:
-                        # save particle data for flip03_gen.py surface generation scene
-                        self.pp.save( out + 'parts_%04d.uni' % it )
+                # data
+                if self.bSaveUni:
+                    # save particle data for flip03_gen.py surface generation scene
+                    self.pp.save( out + 'parts_%04d.uni' % it )
 
+                if self.bSaveVDB:
                     # pdata fields must be before pp
                     objects = [ self.flags, self.phi, self.pp ]
                     #objects = [ self.pp ]
                     save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
+
+                if self.bSaveMesh:
+                    mesh_gen.save( it )
                 
         # video
         if 1:
@@ -847,5 +884,5 @@ if __name__ == '__main__':
     matlab_eval( cmd )
             
     # simulation
-    sim = Simulation()
+    sim = simulation()
     sim.main()

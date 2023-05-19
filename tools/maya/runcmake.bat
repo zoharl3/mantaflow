@@ -3,25 +3,15 @@
 cls
 
 @SETLOCAL
-@SET CMAKE_EXEC="c:\prog\cmake-gui\bin\cmake.exe"
-@IF EXIST %CMAKE_EXEC% GOTO START
-@GOTO ERROR
 
-:START
 mkdir build
 cd build
-%CMAKE_EXEC% ^
--DMAYA_VERSION=2020 ^
--Wno-dev -G"Visual Studio 16" -A"x64" ..
 
-rem -Wno-dev -G"Visual Studio 16" -A"x64" -T v141 ..
+cmake ^
+-DCMAKE_TOOLCHAIN_FILE=C:/prj-external-libs/vcpkg/scripts/buildsystems/vcpkg.cmake ^ -DVCPKG_TARGET_TRIPLET=x64-windows ^
+-DMAYA_VERSION=2023 ^
+-Wno-dev -G "Visual Studio 17 2022" -T "v142" ..
 
 cd ..
 
-@GOTO EOF
-
-@:ERROR
-@echo ERROR: CMake not found.
-
-:EOF
 pause
