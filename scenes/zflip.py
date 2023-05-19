@@ -63,6 +63,8 @@ class moving_obstacle:
     def __init__( self, sol ):
         self.exists = 0
         self.vel = sol.create(MACGrid, name='')
+
+    def create( self, sol ):
         self.center0 = self.center = Vec3( 0 )
         self.rad = 0
         self.vel_vec = Vec3( 0 )
@@ -81,22 +83,25 @@ class moving_obstacle:
         self.shape = 0 # 0:box, 1:sphere
 
 class mesh_generator:
-    def __init__( self, dim, gs ):
-        upres = 2.0 # scale resolution
+    def __init__( self, dim, gs, sol_main ):
+        upres = 1 # 1, 2; scale resolution; I don't notice any difference
 
-        self.gs = upres*gs
-        sol = Solver( name='gen_sol', gridSize=self.gs, dim=dim )
+        if 1 and upres != 1:
+            self.gs = upres*gs
+            sol = Solver( name='gen_sol', gridSize=self.gs, dim=dim )
+        else:
+            sol = sol_main
 
         self.flags = sol.create(FlagGrid)
         self.phi = sol.create(LevelsetGrid)
         self.pindex = sol.create(ParticleIndexSystem) 
         self.gpi = sol.create(IntGrid)
-        self.mesh = sol.create( Mesh, name='mesh' )
+        self.mesh = sol_main.create( Mesh, name='mesh' )
 
         self.flags.initDomain( boundaryWidth=0 )
 
     def generate( self, pp ):
-        radiusFactor = 2.5
+        radiusFactor = 1
 
         self.phi.setBound( value=0., boundaryWidth=1 )
         gridParticleIndex( parts=pp , flags=self.flags, indexSys=self.pindex, index=self.gpi )
@@ -193,9 +198,7 @@ class simulation:
             fluidBasin = Box( parent=self.sol, p0=self.gs*Vec3(0,0,0), p1=self.gs*Vec3(1.0,0.1,1.0)) # basin
             dropCenter = Vec3(0.5,0.3,0.5)
             dropRadius = 0.1
-            fluidDrop  = Sphere( parent=self.sol , center=self.gs*dropCenter, radius=res*dropRadius)
-            fluidVel   = Sphere( parent=self.sol , center=self.gs*dropCenter, radius=res*(dropRadius+0.05) )
-            fluidSetVel= Vec3(0,-1,0)
+            fluidDrop  = Sphere( parent=self.sol , center=self.gs*dropCenter, radius=self.res*dropRadius)
             self.phi = fluidBasin.computeLevelset()
             self.phi.join( fluidDrop.computeLevelset() ) # add drop
             self.flags.updateFromLevelset( self.phi )
@@ -235,6 +238,7 @@ class simulation:
             # moving obstacle
             self.obs.exists = 1
             if self.obs.exists:
+                self.obs.create( self.sol )
                 self.obs.rad = .05*self.res # .05, .1, .3
                 self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.5 - self.obs.rad/self.res, 0.5 ) # y:0.6(default), 0.9
 
@@ -317,9 +321,6 @@ class simulation:
 
         correct21 = Correct21( self.dim, self.sol, self.part_per_cell_1d, self.pp )
 
-        if self.bMesh:
-            mesh_gen = mesh_generator( self.dim, self.gs )
-
         # info
         print()
         print( 'dim:', self.dim, ', res:', self.res, ', ppc:', ppc )
@@ -376,6 +377,11 @@ class simulation:
             extrapolateLsSimple( phi=self.phi, distance=4, inside=True ) # 4
         #self.phi.printGrid()
 
+        # after initializing particles and before gui
+        if self.bMesh:
+            mesh_gen = mesh_generator( self.dim, self.gs, self.sol )
+            mesh_gen.generate( self.pp )
+
         if 1 and GUI:
             gui = Gui()
             for i in range( 2 ):
@@ -393,9 +399,6 @@ class simulation:
 
         it = 0
         it2 = 0
-
-        if self.bMesh:
-            mesh_gen.generate( self.pp )
 
         if self.bSaveMesh:
             mesh_gen.save( it )
