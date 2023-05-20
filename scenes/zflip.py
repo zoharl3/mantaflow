@@ -83,43 +83,59 @@ class moving_obstacle:
         self.shape = 0 # 0:box, 1:sphere
 
 class mesh_generator:
-    def __init__( self, dim, gs, sol_main ):
-        upres = 2 # 1, 2; scale resolution; I don't notice any difference
+    def __init__( self, dim, gs, sol_main, narrowBand ):
+        self.upres = 2 # 1, 2; scale resolution
 
+        self.bScale = self.upres != 1
+        self.narrowBand = narrowBand
         self.gs0 = gs
 
-        if 1 and upres != 1:
-            self.gs = upres*gs
+        if 1 and self.bScale:
+            self.gs = self.upres*gs
             self.sol = Solver( name='gen_sol', gridSize=self.gs, dim=dim )
         else:
             self.sol = sol_main
 
         self.flags = self.sol.create(FlagGrid)
         self.phi = self.sol.create(LevelsetGrid)
+        self.phiParts = self.sol.create(LevelsetGrid)
         self.pindex = self.sol.create(ParticleIndexSystem) 
         self.gpi = self.sol.create(IntGrid)
-        self.mesh = self.sol.create( Mesh, name='mesh' if self.sol == sol_main else '' ) # viewing a mesh from a different solver leads to a crash
+        self.mesh = sol_main.create( Mesh, name='mesh' ) # viewing a mesh from a different solver leads to a crash
 
         self.flags.initDomain( boundaryWidth=0 )
+
+    def update_phi( self, phi ):
+        if not self.narrowBand:
+            return
+        interpolateGrid( self.phi, phi )
 
     def generate( self, pp ):
         radiusFactor = 2.5 # 1, 2, 2.5
 
-        if self.gs != self.gs0:
+        if self.bScale:
             pp.transformPositions( self.gs0, self.gs )
 
         self.phi.setBound( value=0., boundaryWidth=1 )
         gridParticleIndex( parts=pp , flags=self.flags, indexSys=self.pindex, index=self.gpi )
 
-        #unionParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phi, radiusFactor )
-        #averagedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phi, radiusFactor , 1, 1 )
-        improvedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phi, radiusFactor, 1, 1, 0.4, 3.5 )
+        # similar to flip03_gen.py
+        #unionParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phiParts, radiusFactor )
+        #averagedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phiParts, radiusFactor , 1, 1 )
+        improvedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phiParts, radiusFactor, 1, 1, 0.4, 3.5 )
 
-        if self.gs != self.gs0:
-            pp.transformPositions( self.gs, self.gs0 )
+        if self.narrowBand:
+            self.phi.addConst( 1. )
+            self.phi.join( self.phiParts )
+        else:
+            self.phi.copyFrom( phiParts )
 
         self.phi.setBound( value=0., boundaryWidth=1 )
         self.phi.createMesh( self.mesh )
+
+        if self.bScale:
+            pp.transformPositions( self.gs, self.gs0 )
+            self.mesh.scale( Vec3(1/self.upres) )
 
     def save( self, it ):
         fname = out + 'fluid_surface_%04d.bobj.gz' % it
@@ -390,7 +406,8 @@ class simulation:
 
         # after initializing particles and before gui
         if self.bMesh:
-            mesh_gen = mesh_generator( self.dim, self.gs, self.sol )
+            mesh_gen = mesh_generator( self.dim, self.gs, self.sol, self.narrowBand )
+            mesh_gen.update_phi( self.phi )
             mesh_gen.generate( self.pp )
 
         if 1 and GUI:
@@ -770,13 +787,17 @@ class simulation:
             if self.b_correct21:
                 correct21.main( self.sol, self.flags, self.pp, self.vel, pindex, gpi, self.phiObs )
             
+            # for narrowBand, before updating phi with the particles
+            if self.bMesh:
+                mesh_gen.update_phi( self.phi )
+
             # create level set from particles
             if 1:
                 gridParticleIndex( parts=self.pp, flags=self.flags, indexSys=pindex, index=gpi )
                 unionParticleLevelset( self.pp, pindex, self.flags, gpi, phiParts, radiusFactor ) 
                 if self.narrowBand:
                     # combine level set of particles with grid level set
-                    self.phi.addConst( 1. ); # shrink slightly
+                    self.phi.addConst( 1. ) # shrink slightly
                     self.phi.join( phiParts )
                     extrapolateLsSimple( phi=self.phi, distance=self.narrowBandWidth+2, inside=True, include_walls=include_walls )
                 else:
