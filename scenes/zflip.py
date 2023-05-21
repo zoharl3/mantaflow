@@ -79,7 +79,7 @@ class moving_obstacle:
         self.stay = 0
         self.stay_last_it = 0
         self.mesh = sol.create( Mesh, name='mo_mesh' )
-        self.file = None # loaded into maya by load_obstacle.py
+        self.file = None # loaded into maya by set_fluid.py
         self.shape = 0 # 0:box, 1:sphere
 
 class mesh_generator:
@@ -153,7 +153,7 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.dim = 3 # 2, 3
+        self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
@@ -282,6 +282,7 @@ class simulation:
                 p1 = self.obs.center + Vec3(self.obs.rad)
                 if self.dim == 2:
                     p0.z = p1.z = 0.5
+                self.obs.shape = 1
                 if self.obs.shape == 0:
                     shape = Box( parent=self.sol, p0=p0, p1=p1 )
                 else:
@@ -684,7 +685,7 @@ class simulation:
 
                 # obs_vel: it modifies it to either one cell distance or zero, staying in place and losing velocity (unlike particles)
                 
-                ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs_center=self.obs.center, obs_rad=self.obs.rad, obs_vel=obs_vel_vec3 )
+                ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs_shape=self.obs.shape, obs_center=self.obs.center, obs_rad=self.obs.rad, obs_vel=obs_vel_vec3 )
 
                 if not ret2:
                     ret = -1
