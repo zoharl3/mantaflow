@@ -156,9 +156,9 @@ class simulation:
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 22 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 0
+        self.b_fixed_vol = 1
         self.b_correct21 = 0
 
         self.narrowBand = bool( 1 )
@@ -282,7 +282,7 @@ class simulation:
                 p1 = self.obs.center + Vec3(self.obs.rad)
                 if self.dim == 2:
                     p0.z = p1.z = 0.5
-                self.obs.shape = 1
+                self.obs.shape = 1 # box/sphere
                 if self.obs.shape == 0:
                     shape = Box( parent=self.sol, p0=p0, p1=p1 )
                 else:
@@ -496,9 +496,8 @@ class simulation:
 
             # moving obstacle
             if self.obs.exists:
-                #self.flags.printGrid()
                 dv = self.sol.timestep * self.obs.force
-                if int( self.obs.center.y - self.obs.rad ) > .2: # move
+                if self.obs.center.y - self.obs.rad > 1.1: # move
                     print( '- obstacle still moves' )
                     if self.obs.increase_vel:
                         self.obs.vel_vec += dv
@@ -549,7 +548,9 @@ class simulation:
 
                 # obs flags
                 if 1:
-                    mark_obstacle_box( flags=self.flags, p0=p0, p1=p1 )
+                    ret2 = mark_obstacle( flags=self.flags, center=self.obs.center, rad=self.obs.rad, shape=self.obs.shape )
+                    if self.b_fixed_vol:
+                        assert( ret2 )
                 elif 1:
                     setObstacleFlags( flags=self.flags, phiObs=self.phiObs )
                 else: # more precise
@@ -683,7 +684,7 @@ class simulation:
 
                 obs_vel_vec3 = Vec3(0) if obs_naive else self.obs.vel_vec
 
-                # obs_vel: it modifies it to either one cell distance or zero, staying in place and losing velocity (unlike particles)
+                # obs_vel: it modifies it to either one or zero cell distance, staying in place and losing velocity (unlike particles)
                 
                 ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs_shape=self.obs.shape, obs_center=self.obs.center, obs_rad=self.obs.rad, obs_vel=obs_vel_vec3 )
 
@@ -708,6 +709,8 @@ class simulation:
                 # limit dt to one-cell movement
                 while 1:
                     obs_center2 = self.obs.center + self.sol.timestep * self.obs.vel_vec
+                    if obs_center2.y < 1.1 + self.obs.rad:
+                        obs_center2.y = 1.1 + self.obs.rad
                     if int( self.obs.center.y - self.obs.rad ) - int( obs_center2.y - self.obs.rad ) <= 1:
                         break
                     self.sol.timestep /= 2
@@ -721,7 +724,7 @@ class simulation:
                     if self.dim == 2:
                         p0.z = p1.z = 0.5
                     flags2.copyFrom( self.flags )
-                    if not mark_obstacle_box( flags=flags2, p0=p0, p1=p1 ):
+                    if not mark_obstacle( flags=self.flags, center=self.obs.center, rad=self.obs.rad, shape=self.obs.shape ):
                         emphasize( '  - obstacle position is invalid; stopping the obstacle' )
                         assert( not self.b_fixed_vol or obs_naive )
                         obs_stop = 1
