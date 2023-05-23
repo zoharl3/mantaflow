@@ -62,13 +62,13 @@ class Correct21:
 class moving_obstacle:
     def __init__( self, sol ):
         self.exists = 0
-        self.vel = sol.create(MACGrid, name='')
+        self.vel = sol.create( MACGrid, name='' )
 
     def create( self, sol ):
         self.center0 = self.center = Vec3( 0 )
         self.rad = 0
         self.vel_vec = Vec3( 0 )
-        self.phi_init = sol.create(LevelsetGrid)
+        self.phi_init = sol.create( LevelsetGrid )
         self.hstart = 0
         self.hstop = 0
         self.skip = 0
@@ -81,6 +81,7 @@ class moving_obstacle:
         self.mesh = sol.create( Mesh, name='mo_mesh' )
         self.file = None # loaded into maya by set_fluid.py
         self.shape = 0 # 0:box, 1:sphere
+        self.part = sol.create( obs_particles )
 
 class mesh_generator:
     def __init__( self, dim, gs, sol_main, narrowBand ):
@@ -297,6 +298,8 @@ class simulation:
                 self.obs.vel_vec = Vec3( 0, -0, 0 )
                 self.obs.vel.setConst( self.obs.vel_vec )
                 self.obs.vel.setBound( value=Vec3(0.), boundaryWidth=self.boundary_width+1 )
+
+                self.obs.part.create( self.obs.center, self.obs.rad, self.obs.shape, self.res )
 
         #self.phi.printGrid()
         #self.phiObs.printGrid()
@@ -548,7 +551,7 @@ class simulation:
 
                 # obs flags
                 if 1:
-                    ret2 = mark_obstacle( flags=self.flags, center=self.obs.center, rad=self.obs.rad, shape=self.obs.shape )
+                    ret2 = mark_obstacle( flags=self.flags, obs=self.obs.part, center=obs_center2 )
                     if self.b_fixed_vol:
                         assert( ret2 )
                 elif 1:
@@ -686,7 +689,7 @@ class simulation:
 
                 # obs_vel: it modifies it to either one or zero cell distance, staying in place and losing velocity (unlike particles)
                 
-                ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs_shape=self.obs.shape, obs_center=self.obs.center, obs_rad=self.obs.rad, obs_vel=obs_vel_vec3 )
+                ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs=(self.obs.part if self.obs.exists else None), obs_vel=obs_vel_vec3 )
 
                 if not ret2:
                     ret = -1
@@ -719,12 +722,8 @@ class simulation:
                 # test obstacle position
                 print( '  - obs_stop=%d' % obs_stop )
                 if 1 and not obs_stop:
-                    p0 = obs_center2 - Vec3( self.obs.rad )
-                    p1 = obs_center2 + Vec3( self.obs.rad )
-                    if self.dim == 2:
-                        p0.z = p1.z = 0.5
                     flags2.copyFrom( self.flags )
-                    if not mark_obstacle( flags=self.flags, center=self.obs.center, rad=self.obs.rad, shape=self.obs.shape ):
+                    if not mark_obstacle( flags=self.flags, obs=self.obs.part, center=obs_center2 ):
                         emphasize( '  - obstacle position is invalid; stopping the obstacle' )
                         assert( not self.b_fixed_vol or obs_naive )
                         obs_stop = 1

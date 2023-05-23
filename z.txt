@@ -46,6 +46,7 @@ if(!bp->isActive(i) ) {
 - Incorrect FLIP · Issue #7 · thunil/mantaflow · GitHub
 https://github.com/thunil/mantaflow/issues/7
     - see update_particles() in fluid2d_sph.m
+    - the source code in build/pp is generated for the python extension
 
 - Needs env var
 set PYTHONHOME=c:\Python37\
