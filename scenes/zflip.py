@@ -157,9 +157,9 @@ class simulation:
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 22 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 1
+        self.b_fixed_vol = 0
         self.b_correct21 = 0
 
         self.narrowBand = bool( 1 )
@@ -268,7 +268,7 @@ class simulation:
             if self.obs.exists:
                 self.obs.create( self.sol )
                 self.obs.rad = .05*self.res # .05, .1, .3
-                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.6 - self.obs.rad/self.res, 0.5 ) # y:0.6(default), 0.9
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.5 - self.obs.rad/self.res, 0.5 ) # y:0.6(default), 0.9
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
                 self.obs.file.write( f'{2*self.obs.rad/self.res}\n' )
@@ -686,10 +686,14 @@ class simulation:
                 #dt_bound = max( dt_bound, dt/4 )
 
                 obs_vel_vec3 = Vec3(0) if obs_naive else self.obs.vel_vec
+                obsp = None
+                if self.obs.exists:
+                    obsp = self.obs.part
+                    obsp.update_center( self.obs.center )
 
                 # obs_vel: it modifies it to either one or zero cell distance, staying in place and losing velocity (unlike particles)
                 
-                ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs=(self.obs.part if self.obs.exists else None), obs_vel=obs_vel_vec3 )
+                ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs=obsp, obs_vel=obs_vel_vec3 )
 
                 if not ret2:
                     ret = -1
