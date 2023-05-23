@@ -268,7 +268,7 @@ class simulation:
             if self.obs.exists:
                 self.obs.create( self.sol )
                 self.obs.rad = .05*self.res # .05, .1, .3
-                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.5 - self.obs.rad/self.res, 0.5 ) # y:0.6(default), 0.9
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.6 - self.obs.rad/self.res, 0.5 ) # y:0.6(default), 0.9
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
                 self.obs.file.write( f'{2*self.obs.rad/self.res}\n' )
@@ -283,7 +283,7 @@ class simulation:
                 p1 = self.obs.center + Vec3(self.obs.rad)
                 if self.dim == 2:
                     p0.z = p1.z = 0.5
-                self.obs.shape = 1 # box/sphere
+                self.obs.shape = 0 # box/sphere
                 if self.obs.shape == 0:
                     shape = Box( parent=self.sol, p0=p0, p1=p1 )
                 else:
@@ -299,7 +299,7 @@ class simulation:
                 self.obs.vel.setConst( self.obs.vel_vec )
                 self.obs.vel.setBound( value=Vec3(0.), boundaryWidth=self.boundary_width+1 )
 
-                self.obs.part.create( self.obs.center, self.obs.rad, self.obs.shape, self.res )
+                self.obs.part.create( self.obs.center, self.obs.rad, self.obs.shape, self.gs )
 
         #self.phi.printGrid()
         #self.phiObs.printGrid()
@@ -551,7 +551,7 @@ class simulation:
 
                 # obs flags
                 if 1:
-                    ret2 = mark_obstacle( flags=self.flags, obs=self.obs.part, center=obs_center2 )
+                    ret2 = mark_obstacle( flags=self.flags, obs=self.obs.part, center=self.obs.center )
                     if self.b_fixed_vol:
                         assert( ret2 )
                 elif 1:

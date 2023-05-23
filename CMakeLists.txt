@@ -274,7 +274,9 @@ set(NOPP_HEADERS
 if(1)
     include( c:/prj/mantaflow_mod/mantaflow_mod.cmake )
     message( "sources2: " ${pp_sources2} )
+    message( "headers2: " ${pp_headers2} )
     list(APPEND PP_SOURCES ${pp_sources2})
+    list(APPEND PP_HEADERS ${pp_headers2})
 endif()
 
 if(GUI)
