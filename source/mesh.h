@@ -153,8 +153,10 @@ public:
     PYTHON() void computeVelocity(Mesh& oldMesh, MACGrid& vel);
 
     static Vec3 m_color; // zl
+    static bool m_b2D;
 
     static PYTHON() void set_color( Vec3 c ) { m_color = c; };
+    static PYTHON() void set_2D( bool b2D ) { m_b2D = b2D; };
 
     PYTHON() void save_pos();
     PYTHON() void load_pos();

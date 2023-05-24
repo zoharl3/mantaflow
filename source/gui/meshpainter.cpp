@@ -199,7 +199,7 @@ void MeshPainter::paint() {
 		glEnable(GL_BLEND);
 		glDisable(GL_DEPTH_TEST);
 	}
-	if (triColor)
+	if ( Mesh::m_b2D || triColor )
 		glDisable(GL_LIGHTING);
 		
 	// draw triangles        

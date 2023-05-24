@@ -161,7 +161,7 @@ class simulation:
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 0
+        self.b_fixed_vol = 1
         self.b_correct21 = 0
 
         self.narrowBand = bool( 1 )
@@ -171,6 +171,8 @@ class simulation:
 
         #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
         self.gs = Vec3( self.res, self.res, self.res )
+
+        self.b2D = self.dim == 2
 
         if self.dim == 2:
             self.gs.z = 1
@@ -269,9 +271,9 @@ class simulation:
             self.obs.exists = 1
             if self.obs.exists:
                 self.obs.create( self.sol )
-                self.obs.rad = .07*self.res # .05(default), .1, .3
-                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.6 - self.obs.rad/self.res, 0.5 ) # y:0.6(default), 0.9
-                self.obs.shape = 1 # box/sphere
+                self.obs.rad = .25*self.res # box:.05(default), .1, .3, sphere:.07
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.9 - self.obs.rad/self.res, 0.5 ) # y:0.6(default), 0.9
+                self.obs.shape = 0 # box/sphere
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
                 self.obs.file.write( f'{self.obs.shape} {self.obs.rad/self.res}\n' )
@@ -293,6 +295,8 @@ class simulation:
                 self.obs.mesh.fromShape( shape )
                 self.obs.mesh.save_pos()
                 self.obs.mesh.set_color( Vec3( 0.5, 0.2, 0.2 ) )
+                self.obs.mesh.set_2D( self.dim == 2 )
+
                 self.obs.phi_init.copyFrom( self.phiObs )
                 self.phiObs.join( shape.computeLevelset() )
 
