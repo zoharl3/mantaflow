@@ -112,6 +112,7 @@ class mesh_generator:
         interpolateGrid( self.phi, phi )
 
     def generate( self, pp ):
+        print( '- mesh_generator::generate()' )
         radiusFactor = 2.5 # 1, 2, 2.5
 
         if self.bScale:
@@ -120,6 +121,7 @@ class mesh_generator:
         self.phi.setBound( value=0., boundaryWidth=1 )
         gridParticleIndex( parts=pp , flags=self.flags, indexSys=self.pindex, index=self.gpi )
 
+        print( '  - union particle level sets' )
         # similar to flip03_gen.py
         #unionParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phiParts, radiusFactor )
         #averagedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phiParts, radiusFactor , 1, 1 )
@@ -159,7 +161,7 @@ class simulation:
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 1
+        self.b_fixed_vol = 0
         self.b_correct21 = 0
 
         self.narrowBand = bool( 1 )
@@ -269,9 +271,10 @@ class simulation:
                 self.obs.create( self.sol )
                 self.obs.rad = .07*self.res # .05(default), .1, .3
                 self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.6 - self.obs.rad/self.res, 0.5 ) # y:0.6(default), 0.9
+                self.obs.shape = 1 # box/sphere
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
-                self.obs.file.write( f'{2*self.obs.rad/self.res}\n' )
+                self.obs.file.write( f'{self.obs.shape} {self.obs.rad/self.res}\n' )
                 self.obs.file.flush()
 
                 span = 0.02 # 0, .01, .05
@@ -283,7 +286,6 @@ class simulation:
                 p1 = self.obs.center + Vec3(self.obs.rad)
                 if self.dim == 2:
                     p0.z = p1.z = 0.5
-                self.obs.shape = 1 # box/sphere
                 if self.obs.shape == 0:
                     shape = Box( parent=self.sol, p0=p0, p1=p1 )
                 else:
@@ -299,7 +301,9 @@ class simulation:
                 self.obs.vel.setConst( self.obs.vel_vec )
                 self.obs.vel.setBound( value=Vec3(0.), boundaryWidth=self.boundary_width+1 )
 
+                tic()
                 self.obs.part.create( self.obs.center, self.obs.rad, self.obs.shape, self.gs )
+                toc()
 
         #self.phi.printGrid()
         #self.phiObs.printGrid()
@@ -831,6 +835,8 @@ class simulation:
                 markFluidCells( parts=self.pp, flags=self.flags )
                 self.flags.mark_surface()
 
+            toc()
+
             # measure
             if 1:
                 m = measure( self.pp, pVel, self.flags, self.gravity, ppc, V0, volume )
@@ -841,7 +847,9 @@ class simulation:
 
             # mesh
             if self.bMesh:
+                tic()
                 mesh_gen.generate( self.pp )
+                toc()
 
             # print/write
             if 0:
@@ -852,7 +860,6 @@ class simulation:
                 #self.pp.writeParticlesText( out + 'flipt_%04d.txt' % it )
             
             print( '(iteration) ', end='' )
-            toc()
 
             # step; updates gui and when pause takes place
             print( '- step (%g)' % it )
