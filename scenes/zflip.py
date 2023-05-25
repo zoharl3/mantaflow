@@ -170,7 +170,8 @@ class simulation:
         ###
 
         #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
-        self.gs = Vec3( self.res, self.res, self.res )
+        self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # shaft
+        #self.gs = Vec3( self.res, self.res, self.res )
 
         self.b2D = self.dim == 2
 
@@ -185,6 +186,11 @@ class simulation:
         self.gravity = -0.1 # -0.1
         self.gravity *= math.sqrt( self.res )
         #self.gravity = -0.003 # flip5
+
+        f_set = open( out + '_settings.txt', 'w' )
+        c = self.gs
+        f_set.write( '%d %d %d\n' % ( c.x, c.y, c.z ) )
+        f_set.flush()
 
         self.sol = Solver( name='sol', gridSize=self.gs, dim=self.dim )
 
@@ -261,9 +267,9 @@ class simulation:
 
         else: # a low, full box with an obstacle
             # water
-            h = 0.35 # 0.25, 0.35(default), 0.55, 0.9
-            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, h, 1) ) )
-            print( f'- water level h={h}*res={h*self.res}' )
+            fluid_h = 0.75 # 0.25, 0.35(default), 0.55, 0.9
+            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, fluid_h, 1) ) )
+            print( f'- water level h={fluid_h}*res={fluid_h*self.gs.y}' )
             self.phi = fluidbox.computeLevelset()
             self.flags.updateFromLevelset( self.phi )
 
@@ -271,18 +277,19 @@ class simulation:
             self.obs.exists = 1
             if self.obs.exists:
                 self.obs.create( self.sol )
-                self.obs.rad = .25*self.res # box:.05(default), .1, .3, sphere:.07
+                self.obs.rad = .07*self.res # box:.05(default), .1, .3, sphere:.07
                 self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.9 - self.obs.rad/self.res, 0.5 ) # y:0.6(default), 0.9
-                self.obs.shape = 0 # box/sphere
+                self.obs.shape = 1 # box/sphere
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
-                self.obs.file.write( f'{self.obs.shape} {self.obs.rad/self.res}\n' )
+                maxc = max([self.gs.x, self.gs.y, self.gs.z])
+                self.obs.file.write( f'{self.obs.shape} {self.obs.rad/maxc}\n' )
                 self.obs.file.flush()
 
                 span = 0.02 # 0, .01, .05
-                h2 = h
-                self.obs.hstart = h2*self.res + 2 # must be soon enough to determine the impact speed with obs.vel when switching to state 1
-                self.obs.hstop = self.obs.hstart - span*self.res
+                fluid_h2 = fluid_h
+                self.obs.hstart = fluid_h2*self.gs.y + 2 # must be soon enough to determine the impact speed with obs.vel when switching to state 1
+                self.obs.hstop = self.obs.hstart - span*self.gs.y
 
                 p0 = self.obs.center - Vec3(self.obs.rad)
                 p1 = self.obs.center + Vec3(self.obs.rad)
@@ -571,7 +578,7 @@ class simulation:
 
                 # write pos
                 c = self.obs.center
-                c /= self.res
+                c /= self.gs
                 self.obs.file.write( '%g %g %g\n' % ( c.x, c.y, c.z ) )
                 self.obs.file.flush()
 
