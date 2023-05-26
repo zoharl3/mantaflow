@@ -141,7 +141,7 @@ class mesh_generator:
             self.mesh.scale( Vec3(1/self.upres) )
 
     def save( self, it ):
-        fname = out + 'fluid_surface_%04d.bobj.gz' % it
+        fname = out + 'surface_%04d.bobj.gz' % it
         self.mesh.save( fname )
 
 class simulation:
@@ -159,7 +159,7 @@ class simulation:
         self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 1
         self.b_correct21 = 0
@@ -167,11 +167,11 @@ class simulation:
         self.narrowBand = bool( 1 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
-        ###
-
         #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
-        self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # shaft
+        self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         #self.gs = Vec3( self.res, self.res, self.res )
+
+        ###
 
         self.b2D = self.dim == 2
 
@@ -187,11 +187,6 @@ class simulation:
         self.gravity *= math.sqrt( self.res )
         #self.gravity = -0.003 # flip5
 
-        f_set = open( out + '_settings.txt', 'w' )
-        c = self.gs
-        f_set.write( '%d %d %d\n' % ( c.x, c.y, c.z ) )
-        f_set.flush()
-
         self.sol = Solver( name='sol', gridSize=self.gs, dim=self.dim )
 
         # automatic names are given only if the create is called from global context
@@ -204,6 +199,8 @@ class simulation:
         self.obs = moving_obstacle( self.sol )
 
         self.boundary_width = 0
+
+        self.scene = {'type':0, 'name':'other'}
 
     def setup_scene( self ):
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
@@ -232,6 +229,9 @@ class simulation:
             self.phi = fluidbox.computeLevelset()
             self.flags.updateFromLevelset( self.phi )
 
+            self.scene['type'] = 0
+            self.scene['name'] = 'dam'
+
         elif 0: # falling drop
             fluidBasin = Box( parent=self.sol, p0=self.gs*Vec3(0,0,0), p1=self.gs*Vec3(1.0,0.1,1.0)) # basin
             dropCenter = Vec3(0.5,0.3,0.5)
@@ -240,6 +240,9 @@ class simulation:
             self.phi = fluidBasin.computeLevelset()
             self.phi.join( fluidDrop.computeLevelset() ) # add drop
             self.flags.updateFromLevelset( self.phi )
+
+            self.scene['type'] = 1
+            self.scene['name'] = 'drop'
 
         elif 0: # basin
             # water
@@ -266,8 +269,9 @@ class simulation:
                 self.phi.subtract( self.phiObs )
 
         else: # a low, full box with an obstacle
+            # scale box height in gs
             # water
-            fluid_h = 0.75 # 0.25, 0.35(default), 0.55, 0.9
+            fluid_h = 0.5 # 0.35, 0.5(default)
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, fluid_h, 1) ) )
             print( f'- water level h={fluid_h}*res={fluid_h*self.gs.y}' )
             self.phi = fluidbox.computeLevelset()
@@ -277,9 +281,10 @@ class simulation:
             self.obs.exists = 1
             if self.obs.exists:
                 self.obs.create( self.sol )
-                self.obs.rad = .07*self.res # box:.05(default), .1, .3, sphere:.07
-                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.9 - self.obs.rad/self.res, 0.5 ) # y:0.6(default), 0.9
-                self.obs.shape = 1 # box/sphere
+                self.obs.shape = 1 # box:0, sphere:1
+                self.obs.rad = .08 if self.obs.shape == 0 else 0.1 # box:.08(default), .3, sphere:.1
+                self.obs.rad *= self.res
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.res, 0.5 ) # y:0.6, 0.95(default)
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
                 maxc = max([self.gs.x, self.gs.y, self.gs.z])
@@ -315,6 +320,9 @@ class simulation:
                 tic()
                 self.obs.part.create( self.obs.center, self.obs.rad, self.obs.shape, self.gs )
                 toc()
+
+                self.scene['type'] = 2 if self.obs.shape == 0 else 3
+                self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
 
         #self.phi.printGrid()
         #self.phiObs.printGrid()
@@ -375,6 +383,25 @@ class simulation:
         print( 'gravity: %0.02f' % self.gravity )
         print( 'timestep:', self.dt )
 
+        # adaptive time stepping; from flip5
+        b_adaptive_time_step = 0
+        if b_adaptive_time_step:
+            self.sol.frameLength = 1.0   # length of one frame (in "world time")
+            self.sol.timestep    = 1.0
+            self.sol.timestepMin = 0.5   # time step range
+            self.sol.timestepMax = 1.0
+            self.sol.cfl         = 5.0   # maximal velocity per cell, 0 to use fixed timesteps
+
+        # setup scene
+        self.setup_scene()
+
+        # setting file
+        f_set = open( out + '_settings.txt', 'w' )
+        c = self.gs
+        f_set.write( '%d %d %d\n' % ( c.x, c.y, c.z ) ) # gs
+        f_set.write( f"{self.scene['type']}\n" )
+        f_set.flush()
+
         # create dir
         name = f'{self.res}^{self.dim}'
 
@@ -389,19 +416,9 @@ class simulation:
         if self.narrowBand:
             name += f' band{self.narrowBandWidth}'
 
+        name += f", {self.scene['name']}"
+
         os.mkdir( out + name )
-
-        # adaptive time stepping; from flip5
-        b_adaptive_time_step = 0
-        if b_adaptive_time_step:
-            self.sol.frameLength = 1.0   # length of one frame (in "world time")
-            self.sol.timestep    = 1.0
-            self.sol.timestepMin = 0.5   # time step range
-            self.sol.timestepMax = 1.0
-            self.sol.cfl         = 5.0   # maximal velocity per cell, 0 to use fixed timesteps
-
-        # setup scene
-        self.setup_scene()
 
         # size of particles 
         radiusFactor = 1.0
@@ -535,7 +552,8 @@ class simulation:
                     obs_vel_vec2 = self.obs.vel_vec + Vec3(0) # force copy
                     if self.obs.state == 1:
                         if self.dim == 3:
-                            obs_vel_vec2.y = 9*self.gravity # 9; splash size
+                            splash = 9 if self.obs.shape == 0 else 40 # box:9, sphere:40; splash size
+                            obs_vel_vec2.y = splash*self.gravity 
                         else:
                             obs_vel_vec2.y = 3*self.gravity
                         print( '  - set obs.vel.y to {obs_vel_vec2.y} due to state 1' )
@@ -774,7 +792,8 @@ class simulation:
                                             self.obs.state = 2
                                             emphasize2( f'  - new obs.state: {self.obs.state}' )
                                         if 1:
-                                            self.obs.vel_vec.y = self.gravity/2
+                                            # speed in water
+                                            self.obs.vel_vec.y = self.gravity
                                     if 1:
                                         self.obs.center = obs_center2
                                 else:
