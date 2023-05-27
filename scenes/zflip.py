@@ -131,7 +131,7 @@ class mesh_generator:
             self.phi.addConst( 1. )
             self.phi.join( self.phiParts )
         else:
-            self.phi.copyFrom( phiParts )
+            self.phi.copyFrom( self.phiParts )
 
         self.phi.setBound( value=0., boundaryWidth=1 )
         self.phi.createMesh( self.mesh )
@@ -164,7 +164,7 @@ class simulation:
         self.b_fixed_vol = 1
         self.b_correct21 = 0
 
-        self.narrowBand = bool( 0 )
+        self.narrowBand = bool( 1 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
         #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
@@ -284,6 +284,9 @@ class simulation:
                 self.obs.shape = 0 # box:0, sphere:1
                 self.obs.rad = .08 if self.obs.shape == 0 else 0.1 # box:.08(default), .3, sphere:.1
                 self.obs.rad *= self.res
+                # shrink a bit if exactly cell size
+                if abs( self.obs.rad - round(self.obs.rad) ) < 1e-7:
+                    self.obs.rad *= 0.99
                 self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.res, 0.5 ) - Vec3( 0, 1, 0 ) # y:0.6, 0.95(default)
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
