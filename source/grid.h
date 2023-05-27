@@ -66,7 +66,7 @@ public:
 	//! Check if linear index is in the range of the array
 	inline bool isInBounds(IndexInt idx) const;
 
-	inline bool is_boundary( const Vec3i &p, int bnd ) const;
+	inline bool is_boundary( const Vec3i &p, int bnd = 0 ) const;
 
 	//! Get the type of grid
 	inline GridType getType() const { return mType; }
@@ -439,7 +439,7 @@ bool GridBase::isInBounds(IndexInt idx) const {
 	return true;
 }
 
-bool GridBase::is_boundary( const Vec3i &p, int bnd = 0 ) const {
+bool GridBase::is_boundary( const Vec3i &p, int bnd ) const {
     if ( !isInBounds( p ) )
         return false;
 

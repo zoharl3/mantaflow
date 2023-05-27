@@ -159,17 +159,17 @@ class simulation:
         self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 1
         self.b_correct21 = 0
 
-        self.narrowBand = bool( 1 )
+        self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
         #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
-        self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
-        #self.gs = Vec3( self.res, self.res, self.res )
+        #self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
+        self.gs = Vec3( self.res, self.res, self.res )
 
         ###
 
@@ -281,10 +281,10 @@ class simulation:
             self.obs.exists = 1
             if self.obs.exists:
                 self.obs.create( self.sol )
-                self.obs.shape = 1 # box:0, sphere:1
+                self.obs.shape = 0 # box:0, sphere:1
                 self.obs.rad = .08 if self.obs.shape == 0 else 0.1 # box:.08(default), .3, sphere:.1
                 self.obs.rad *= self.res
-                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.res, 0.5 ) # y:0.6, 0.95(default)
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.res, 0.5 ) - Vec3( 0, 1, 0 ) # y:0.6, 0.95(default)
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
                 maxc = max([self.gs.x, self.gs.y, self.gs.z])
@@ -531,20 +531,23 @@ class simulation:
 
             # moving obstacle
             if self.obs.exists:
-                dv = self.sol.timestep * self.obs.force
-                if self.obs.center.y - self.obs.rad > 1.1: # move
-                    print( '- obstacle still moves' )
-                    if self.obs.increase_vel:
-                        self.obs.vel_vec += dv
-                        max_y_speed = 7*self.gravity # 7, 10
-                        if self.b_fixed_vol and self.obs.vel_vec.y < max_y_speed:
-                            print( f'  - limiting speed to {max_y_speed}' )
-                            self.obs.vel_vec.y = max_y_speed
-                else: # stay
-                    print( '- obstacle reached the bottom' )
-                    self.obs.vel_vec = Vec3( 0 )
-                    self.obs.force = Vec3( 0 )
-                    self.obs.state = 3
+                if self.obs.state != 3:
+                    if self.obs.center.y - self.obs.rad + self.obs.vel_vec.y*self.dt > 1.1: # move
+                        print( '- obstacle still moves' )
+                        if self.obs.increase_vel:
+                            dv = self.sol.timestep * self.obs.force
+                            self.obs.vel_vec += dv
+                            max_y_speed = 7*self.gravity # 7, 10
+                            if self.b_fixed_vol and self.obs.vel_vec.y < max_y_speed:
+                                print( f'  - limiting speed to {max_y_speed}' )
+                                self.obs.vel_vec.y = max_y_speed
+                    else: # stay
+                        print( '- obstacle reached the bottom' )
+                        self.obs.vel_vec = Vec3( 0 )
+                        self.obs.force = Vec3( 0 )
+                        self.obs.state = 3
+                else:
+                    print( '- obstacle rests' )
 
                 # obs.vel for boundary conditions
                 if 1:
@@ -760,7 +763,7 @@ class simulation:
                 print( '  - obs_stop=%d' % obs_stop )
                 if 1 and not obs_stop:
                     flags2.copyFrom( self.flags )
-                    if not mark_obstacle( flags=self.flags, obs=self.obs.part, center=obs_center2 ):
+                    if not mark_obstacle( flags=flags2, obs=self.obs.part, center=obs_center2 ):
                         emphasize( '  - obstacle position is invalid; stopping the obstacle' )
                         assert( not self.b_fixed_vol or obs_naive )
                         obs_stop = 1
@@ -881,13 +884,13 @@ class simulation:
                 mesh_gen.generate( self.pp )
                 toc()
 
-            # print/write
+            # print
             if 0:
-                #self.flags.printGrid()
-                self.vel.printGrid()
+                self.flags.printGrid()
+                #self.vel.printGrid()
             
-                self.pp.printParts()
-                #self.pp.writeParticlesText( out + 'flipt_%04d.txt' % it )
+                #self.pp.printParts()
+                #self.pp.writeParticlesText( out + 'particles_%04d.txt' % it )
             
             print( '(iteration) ', end='' )
 
