@@ -156,7 +156,7 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.dim = 2 # 2, 3
+        self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
@@ -164,14 +164,21 @@ class simulation:
         self.b_fixed_vol = 1
         self.b_correct21 = 0
 
-        self.narrowBand = bool( 0 )
+        self.narrowBand = bool( 1 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
-        #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
-        self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
-        #self.gs = Vec3( self.res, self.res, self.res )
+        self.splash = 1 # disable this for big box, else it's too fast for flip
+
+        if 1:
+            #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
+           self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
+        else:
+            self.gs = Vec3( self.res, self.res, self.res ) # iso
 
         ###
+
+        if not self.narrowBand:
+            self.narrowBandWidth = -1
 
         self.max_gs = max( [self.gs.x, self.gs.y, self.gs.z] )
 
@@ -274,7 +281,7 @@ class simulation:
         else: # a low, full box with an obstacle
             # scale box height in gs
             # water
-            fluid_h = 0.5 # 0.35, 0.5(default)
+            fluid_h = 0.5 # 0.4(large box), 0.5(default)
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, fluid_h, 1) ) )
             print( f'- water level h={fluid_h}*res={fluid_h*self.gs.y}' )
             self.phi = fluidbox.computeLevelset()
@@ -285,14 +292,15 @@ class simulation:
             if self.obs.exists:
                 self.obs.create( self.sol )
 
-                self.obs.shape = 0 # box:0, sphere:1
+                self.obs.shape = 1 # box:0, sphere:1
                 
                 # rad 
                 if self.obs.shape == 0: # box:.08(default), sphere:.1
                     self.obs.rad = 0.08
                 else: 
                     self.obs.rad = 0.1
-                self.obs.rad *= 4 # large
+                if 0: # large
+                    self.obs.rad *= 5.3 # 4, 5.3
                 self.obs.rad *= self.res
                 # shrink a bit if exactly cell size
                 if abs( self.obs.rad - round(self.obs.rad) ) < 1e-7:
@@ -454,13 +462,14 @@ class simulation:
         if 1:
             #obs_vel_vec2 = self.obs.vel_vec + dv # add some velocity in case it stopped--to remove remaining particles from the bottom
             obs_vel_vec2 = self.obs.vel_vec + Vec3(0) # force copy
-            if self.obs.state == 1:
+            # splash
+            if self.splash and self.obs.state == 1:
                 if self.dim == 3:
                     splash = 9 if self.obs.shape == 0 else 40 # box:9, sphere:40; splash size
                     obs_vel_vec2.y = splash*self.gravity 
                 else:
                     obs_vel_vec2.y = 3*self.gravity
-                print( '  - set obs.vel.y to {obs_vel_vec2.y} due to state 1' )
+                print( '  - set obs.vel.y to {obs_vel_vec2.y} due to state 1 (splash)' )
             self.obs.vel.setConst( obs_vel_vec2 )
             self.obs.vel.setBound( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
             #self.obs.vel.printGrid()
@@ -569,7 +578,7 @@ class simulation:
         f_set.flush()
 
         # create dir
-        name = f'{self.res}^{self.dim}'
+        name = '[%d,%d,%d]' % ( self.gs.x, self.gs.y, self.gs.z )
 
         if self.b_correct21:
             name += ' cor21'
