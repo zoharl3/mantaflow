@@ -168,10 +168,12 @@ class simulation:
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
         #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
-        #self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
-        self.gs = Vec3( self.res, self.res, self.res )
+        self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
+        #self.gs = Vec3( self.res, self.res, self.res )
 
         ###
+
+        self.max_gs = max( [self.gs.x, self.gs.y, self.gs.z] )
 
         self.b2D = self.dim == 2
 
@@ -281,17 +283,16 @@ class simulation:
             self.obs.exists = 1
             if self.obs.exists:
                 self.obs.create( self.sol )
-                self.obs.shape = 0 # box:0, sphere:1
+                self.obs.shape = 1 # box:0, sphere:1
                 self.obs.rad = .08 if self.obs.shape == 0 else 0.1 # box:.08(default), .3, sphere:.1
                 self.obs.rad *= self.res
                 # shrink a bit if exactly cell size
                 if abs( self.obs.rad - round(self.obs.rad) ) < 1e-7:
                     self.obs.rad *= 0.99
-                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.res, 0.5 ) - Vec3( 0, 1, 0 ) # y:0.6, 0.95(default)
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.gs.y, 0.5 ) - Vec3( 0, 1, 0 ) # y:0.6, 0.95(default)
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
-                maxc = max([self.gs.x, self.gs.y, self.gs.z])
-                self.obs.file.write( f'{self.obs.shape} {self.obs.rad/maxc}\n' )
+                self.obs.file.write( f'{self.obs.shape} {self.obs.rad/self.max_gs}\n' )
                 self.obs.file.flush()
 
                 span = 0.02 # 0, .01, .05
