@@ -278,7 +278,7 @@ class simulation:
                 self.phiObs.join( meshObs )
                 self.phi.subtract( self.phiObs )
 
-        else: # a low, full box with an obstacle
+        elif 0: # moving obstacle
             # scale box height in gs
             # water
             fluid_h = 0.5 # 0.4(large box), 0.5(default)
@@ -338,6 +338,7 @@ class simulation:
                 self.obs.vel.setConst( self.obs.vel_vec )
                 self.obs.vel.setBound( value=Vec3(0.), boundaryWidth=self.boundary_width+1 )
 
+                # fill obstacle with particles
                 tic()
                 self.obs.part.create( self.obs.center, self.obs.rad, self.obs.shape, self.gs )
                 toc()
@@ -345,6 +346,29 @@ class simulation:
                 self.scene['type'] = 2 if self.obs.shape == 0 else 3
                 self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
 
+        elif 1: # tubes
+            # water
+            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0.5, 0) ), p1=self.gs*( Vec3(1, 0.9, 1) ) )
+            self.phi = fluidbox.computeLevelset()
+            self.flags.updateFromLevelset( self.phi )
+
+            # obstacle
+            if 1:
+                mesh = self.sol.create( Mesh, name='omesh' ) # need to switch to it in the gui to view
+
+                #mesh.load( r'c:\prj\mantaflow_mod\resources\cube1.obj' )
+                #mesh.scale( Vec3(1) )
+
+                mesh.load( r'c:\prj\mantaflow_mod\resources\tubes.obj' )
+                mesh.scale( Vec3(res) )
+
+                mesh.offset( self.gs * Vec3( 0, 0, 0 ) )
+                meshObs = self.sol.create( LevelsetGrid )
+                mesh.computeLevelset( meshObs, 2 ) # uses normals, thus a smooth mesh is better
+                #meshObs.printGrid()
+                #self.phiObs.printGrid()
+                self.phiObs.join( meshObs )
+                self.phi.subtract( self.phiObs )
         #self.phi.printGrid()
         #self.phiObs.printGrid()
 
