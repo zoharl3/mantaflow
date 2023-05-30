@@ -156,12 +156,12 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.dim = 3 # 2, 3
+        self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 1
+        self.b_fixed_vol = 0
         self.b_correct21 = 0
 
         self.narrowBand = bool( 1 )
@@ -278,7 +278,7 @@ class simulation:
                 self.phiObs.join( meshObs )
                 self.phi.subtract( self.phiObs )
 
-        elif 0: # moving obstacle
+        elif 1: # moving obstacle
             # scale box height in gs
             # water
             fluid_h = 0.5 # 0.4(large box), 0.5(default)
@@ -292,7 +292,7 @@ class simulation:
             if self.obs.exists:
                 self.obs.create( self.sol )
 
-                self.obs.shape = 1 # box:0, sphere:1
+                self.obs.shape = 0 # box:0, sphere:1
                 
                 # rad 
                 if self.obs.shape == 0: # box:.08(default), sphere:.1
@@ -431,7 +431,7 @@ class simulation:
                                     emphasize2( f'  - new obs.state: {self.obs.state}' )
                                 if 1:
                                     # speed in water
-                                    self.obs.vel_vec.y = self.gravity/1
+                                    self.obs.vel_vec.y = self.gravity/5
                             if 1:
                                 self.obs.center = obs_center2
                         else:
