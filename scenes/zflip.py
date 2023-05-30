@@ -156,7 +156,7 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.dim = 2 # 2, 3
+        self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
@@ -167,7 +167,8 @@ class simulation:
         self.narrowBand = bool( 1 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
-        self.splash = 1 # disable this for big box, else it's too fast for flip
+        self.obs_shape = 0 # box:0, sphere:1
+        self.large_obs = 0
 
         if 1:
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
@@ -176,6 +177,11 @@ class simulation:
             self.gs = Vec3( self.res, self.res, self.res ) # iso
 
         ###
+
+        self.splash = 1 
+        # disable splash, else it's too fast for flip
+        if self.large_obs:
+            self.splash = 0
 
         if not self.narrowBand:
             self.narrowBandWidth = -1
@@ -279,9 +285,10 @@ class simulation:
                 self.phi.subtract( self.phiObs )
 
         elif 1: # moving obstacle
-            # scale box height in gs
             # water
-            fluid_h = 0.5 # 0.4(large box), 0.5(default)
+            fluid_h = 0.5 # 0.5(default)
+            if self.large_obs:
+                fluid_h = 0.3 # 0.3(large box)
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, fluid_h, 1) ) )
             print( f'- water level h={fluid_h}*res={fluid_h*self.gs.y}' )
             self.phi = fluidbox.computeLevelset()
@@ -292,27 +299,27 @@ class simulation:
             if self.obs.exists:
                 self.obs.create( self.sol )
 
-                self.obs.shape = 0 # box:0, sphere:1
+                self.obs.shape = self.obs_shape
                 
                 # rad 
                 if self.obs.shape == 0: # box:.08(default), sphere:.1
                     self.obs.rad = 0.08
                 else: 
                     self.obs.rad = 0.1
-                if 0: # large
+                if self.large_obs: # large
                     self.obs.rad *= 5.3 # 4, 5.3
                 self.obs.rad *= self.res
                 # shrink a bit if exactly cell size
                 if abs( self.obs.rad - round(self.obs.rad) ) < 1e-7:
                     self.obs.rad *= 0.99
 
-                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.gs.y, 0.5 ) - Vec3( 0, 1, 0 ) # y:0.6, 0.95(default)
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, ( 1 + fluid_h )/2, 0.5 )
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
                 self.obs.file.write( f'{self.obs.shape} {self.obs.rad/self.max_gs}\n' )
                 self.obs.file.flush()
 
-                span = 0.02 # 0, .01, .05
+                span = self.obs.rad/self.res/2 # 0, 0.02
                 fluid_h2 = fluid_h
                 self.obs.hstart = fluid_h2*self.gs.y + 2 # must be soon enough to determine the impact speed with obs.vel when switching to state 1
                 self.obs.hstop = self.obs.hstart - span*self.gs.y
@@ -405,14 +412,16 @@ class simulation:
 
         self.obs.increase_vel = 1
         print( f'  - obs: .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .skip={self.obs.skip}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, stay={self.obs.stay}, hstart={self.obs.hstart}, hstop={self.obs.hstop}' )
-        if self.obs.state != 3:
-            if self.obs.state == 0 and int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ) and pyNorm( self.obs.vel_vec ) > 0: # state 0 and no grid movement
+        if self.obs.state != 3: # still moving
+            # state 0, still moving, but no grid movement
+            if self.obs.state == 0 and int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ) and pyNorm( self.obs.vel_vec ) > 0:
                 self.obs.center = obs_center2
             else:
-                if self.obs.state == 1 or not obs_stop:
+                if self.obs.state == 1 or not obs_stop: # not stopped
                     self.obs.stay = 0
+                    # between hstart and hstop
                     if self.obs.state < 2 and self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart:
-                        if self.obs.state == 0:
+                        if self.obs.state == 0: # state 1
                             self.obs.state = 1
                             emphasize2( f'  - new obs.state: {self.obs.state}' )
                         # wait by skipping grid progress
@@ -429,9 +438,9 @@ class simulation:
                                 if 0:
                                     self.obs.state = 2
                                     emphasize2( f'  - new obs.state: {self.obs.state}' )
-                                if 1:
+                                if 0:
                                     # speed in water
-                                    self.obs.vel_vec.y = self.gravity/5
+                                    self.obs.vel_vec.y = self.gravity/1
                             if 1:
                                 self.obs.center = obs_center2
                         else:
@@ -439,18 +448,19 @@ class simulation:
                             emphasize2( f'  - skip {self.obs.skip}/{n_skips}' )
                         self.obs.force.y = 0
                     else:
-                        if 1 and self.obs.state == 1:
+                        if 1 and self.obs.state == 1: # state 2
                             self.obs.state = 2
                             emphasize2( f'  - new obs.state: {self.obs.state}' )
-                            if 0:
-                                self.obs.vel_vec.y = self.gravity/2 # 1, 2, 6
+                            if 1:
+                                # speed in water
+                                self.obs.vel_vec.y = self.gravity/1
                                 #self.obs.vel_vec /= 4
                                 #self.obs.vel_vec = Vec3(0)
-
+                            if 0:
                                 self.obs.force = Vec3(0)
                                 #self.obs.force /= 4
                         self.obs.center = obs_center2
-                else:
+                else: # was stopped
                     self.obs.increase_vel = 0
                     if int(it) > self.obs.stay_last_it:
                         self.obs.stay_last_it = int(it)
