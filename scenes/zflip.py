@@ -275,7 +275,10 @@ class simulation:
                 #self.obs_mesh.scale( Vec3(1) )
 
                 self.obs_mesh.load( r'c:\prj\mantaflow_mod\resources\funnel.obj' )
-                self.obs_mesh.scale( Vec3(self.res) ) # the scale needs to be in all axes
+                s = Vec3(self.res) # the scale needs to be in all axes
+                if self.b2D:
+                    s.z = .1
+                self.obs_mesh.scale( s )
                 self.obs_mesh.offset( self.gs * Vec3(0.5, 0.3, 0.5) )
 
                 mesh_phi = self.sol.create( LevelsetGrid )
@@ -380,8 +383,9 @@ class simulation:
                 self.phi.subtract( self.phiObs )
                 self.flags.updateFromLevelset( self.phi )
 
-        #self.phi.printGrid()
-        #self.phiObs.printGrid()
+        self.phi.printGrid()
+        self.phiObs.printGrid()
+        self.flags.printGrid()
 
         sampleLevelsetWithParticles( phi=self.phi, flags=self.flags, parts=self.pp, discretization=self.part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
 
