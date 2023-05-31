@@ -69,8 +69,8 @@ class moving_obstacle:
         self.rad = 0
         self.vel_vec = Vec3( 0 )
         self.phi_init = sol.create( LevelsetGrid )
-        self.hstart = 0
-        self.hstop = 0
+        self.start_h = 0
+        self.stop_h = 0
         self.skip = 0
         self.skip_last_it = 0 # the iteration where the last skip was made
         self.state = 0
@@ -159,9 +159,9 @@ class simulation:
         self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 0
+        self.b_fixed_vol = 1
         self.b_correct21 = 0
 
         self.narrowBand = bool( 1 )
@@ -178,8 +178,8 @@ class simulation:
 
         ###
 
-        self.splash = 1 
-        # disable splash, else it's too fast for flip
+        self.splash = 1
+        # disable splash (else it's too fast for flip)
         if self.large_obs:
             self.splash = 0
 
@@ -286,7 +286,7 @@ class simulation:
 
         elif 1: # moving obstacle
             # water
-            fluid_h = 0.5 # 0.5(default)
+            fluid_h = 0.6 # 0.6(default)
             if self.large_obs:
                 fluid_h = 0.3 # 0.3(large box)
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, fluid_h, 1) ) )
@@ -313,16 +313,18 @@ class simulation:
                 if abs( self.obs.rad - round(self.obs.rad) ) < 1e-7:
                     self.obs.rad *= 0.99
 
-                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, ( 1 + fluid_h )/2, 0.5 )
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.gs.y, 0.5 ) - Vec3( 0, 1, 0 ) # start from ceiling
+                if self.b2D:
+                    self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, ( 1 + fluid_h )/2, 0.5 ) # middle of the air
 
                 self.obs.file = open( out + '_obstacle.txt', 'w' )
                 self.obs.file.write( f'{self.obs.shape} {self.obs.rad/self.max_gs}\n' )
                 self.obs.file.flush()
 
-                span = self.obs.rad/self.res/2 # 0, 0.02
+                span = 2 * self.obs.rad/self.res # 0, 0.02
                 fluid_h2 = fluid_h
-                self.obs.hstart = fluid_h2*self.gs.y + 2 # must be soon enough to determine the impact speed with obs.vel when switching to state 1
-                self.obs.hstop = self.obs.hstart - span*self.gs.y
+                self.obs.start_h = fluid_h2*self.gs.y + 2 # must be soon enough to determine the impact speed with obs.vel when switching to state 1
+                self.obs.stop_h = self.obs.start_h - span*self.gs.y
 
                 p0 = self.obs.center - Vec3(self.obs.rad)
                 p1 = self.obs.center + Vec3(self.obs.rad)
@@ -401,7 +403,7 @@ class simulation:
             self.sol.timestep /= 2
             print( f'  - halving the time step: {self.sol.timestep}' )
 
-        # test obstacle position
+        # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
         if 0 and not obs_stop:
             self.flags2.copyFrom( self.flags )
@@ -411,7 +413,7 @@ class simulation:
                 obs_stop = 1
 
         self.obs.increase_vel = 1
-        print( f'  - obs: .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .skip={self.obs.skip}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, stay={self.obs.stay}, hstart={self.obs.hstart}, hstop={self.obs.hstop}' )
+        print( f'  - obs: .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .skip={self.obs.skip}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, stay={self.obs.stay}, start_h={self.obs.start_h}, stop_h={self.obs.stop_h}' )
         if self.obs.state != 3: # still moving
             # state 0, still moving, but no grid movement
             if self.obs.state == 0 and int( obs_center2.y - self.obs.rad ) == int( self.obs.center.y - self.obs.rad ) and pyNorm( self.obs.vel_vec ) > 0:
@@ -419,8 +421,8 @@ class simulation:
             else:
                 if self.obs.state == 1 or not obs_stop: # not stopped
                     self.obs.stay = 0
-                    # between hstart and hstop
-                    if self.obs.state < 2 and self.obs.hstop <= self.obs.center.y - self.obs.rad <= self.obs.hstart:
+                    # between start_h and stop_h
+                    if self.obs.state < 2 and self.obs.stop_h <= self.obs.center.y - self.obs.rad <= self.obs.start_h:
                         if self.obs.state == 0: # state 1
                             self.obs.state = 1
                             emphasize2( f'  - new obs.state: {self.obs.state}' )
@@ -494,16 +496,20 @@ class simulation:
 
         # obs.vel for boundary conditions
         if 1:
-            #obs_vel_vec2 = self.obs.vel_vec + dv # add some velocity in case it stopped--to remove remaining particles from the bottom
             obs_vel_vec2 = self.obs.vel_vec + Vec3(0) # force copy
-            # splash
+            # splash speed
             if self.splash and self.obs.state == 1:
+                self.splash = 0 # instantaneous
                 if self.dim == 3:
-                    splash = 9 if self.obs.shape == 0 else 40 # box:9, sphere:40; splash size
-                    obs_vel_vec2.y = splash*self.gravity 
-                else:
-                    obs_vel_vec2.y = 3*self.gravity
-                print( '  - set obs.vel.y to {obs_vel_vec2.y} due to state 1 (splash)' )
+                    if self.b_fixed_vol:
+                        splash_scale = 3
+                        if self.obs.shape == 1: 
+                            splash_scale *= 1.5
+                else: # 2D
+                    splash_scale = 1
+                #obs_vel_vec2.y = splash_scale*self.gravity 
+                obs_vel_vec2.y *= splash_scale
+                print( f'  - set obs.vel.y to {obs_vel_vec2.y} due to state 1 (splash)' )
             self.obs.vel.setConst( obs_vel_vec2 )
             self.obs.vel.setBound( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
             #self.obs.vel.printGrid()
