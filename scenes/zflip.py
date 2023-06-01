@@ -65,6 +65,7 @@ class moving_obstacle:
         self.vel = sol.create( MACGrid, name='' )
 
     def create( self, sol ):
+        self.exists = 1
         self.center0 = self.center = Vec3( 0 )
         self.rad = 0
         self.vel_vec = Vec3( 0 )
@@ -82,6 +83,14 @@ class moving_obstacle:
         self.file = None # loaded into maya by set_fluid.py
         self.shape = 0 # 0:box, 1:sphere
         self.part = sol.create( obs_particles )
+
+class static_obstacle:
+    def __init__( self, sol ):
+        self.exists = 0
+
+    def create( self, sol ):
+        self.exists = 1
+        self.mesh = sol.create( Mesh, name='static_obs_mesh' ) # need to switch to it in the gui to view
 
 class mesh_generator:
     def __init__( self, dim, gs, sol_main, narrowBand ):
@@ -148,21 +157,21 @@ class simulation:
     def __init__( self ):
         # flags
         self.bScreenShot = 1
-        self.bMesh       = 1
+        self.b_fluid_mesh       = 1
         self.bSaveMesh   = 1 # .bobj.gz
         self.bSaveVDB    = 0 # .vdb
         self.bSaveUni    = 0 # .uni
-        if not self.bMesh:
+        if not self.b_fluid_mesh:
             self.bSaveMesh = 0
 
         # params
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 22 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 0
-        self.b_correct21 = 0
+        self.b_correct21 = 1
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -192,7 +201,7 @@ class simulation:
 
         if self.dim == 2:
             self.gs.z = 1
-            self.bMesh = 0
+            self.b_fluid_mesh = 0
             self.bSaveVDB = 0
             self.bSaveMesh = 0
 
@@ -212,8 +221,8 @@ class simulation:
         self.phiObs = self.sol.create(LevelsetGrid, name='')
         self.phi = None
 
-        self.obs_mesh = None # static obs
         self.obs = moving_obstacle( self.sol )
+        self.obs2 = static_obstacle( self.sol )
 
         self.boundary_width = 0
 
@@ -244,7 +253,7 @@ class simulation:
 
             # phi
             self.phi = fluidbox.computeLevelset()
-            self.flags.updateFromLevelset( self.phi )
+            self.flags.updateFromLevelset( self.phi ) # update fluid flags
 
             self.scene['type'] = 0
             self.scene['name'] = 'dam'
@@ -261,7 +270,7 @@ class simulation:
             self.scene['type'] = 1
             self.scene['name'] = 'drop'
 
-        elif 1: # basin
+        elif 0: # basin
             # water
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0.6, 0) ), p1=self.gs*( Vec3(1, 0.9, 1) ) )
             self.phi = fluidbox.computeLevelset()
@@ -269,25 +278,20 @@ class simulation:
 
             # obstacle
             if 1:
-                self.obs_mesh = self.sol.create( Mesh, name='obs_mesh' ) # need to switch to it in the gui to view
-
-                #self.obs_mesh.load( r'c:\prj\mantaflow_mod\resources\cube1.obj' )
-                #self.obs_mesh.scale( Vec3(1) )
-
-                self.obs_mesh.load( r'c:\prj\mantaflow_mod\resources\funnel.obj' )
+                self.obs2.create( self.sol )
+                self.obs2.mesh.load( r'c:\prj\mantaflow_mod\resources\funnel.obj' )
                 s = Vec3(self.res) # the scale needs to be in all axes
                 if self.b2D:
-                    s.z = .1
-                self.obs_mesh.scale( s )
-                self.obs_mesh.offset( self.gs * Vec3(0.5, 0.3, 0.5) )
+                    s.z = 2
+                self.obs2.mesh.scale( s )
+                self.obs2.mesh.offset( self.gs * Vec3(0.5, 0.3, 0.5) )
 
                 mesh_phi = self.sol.create( LevelsetGrid )
-                self.obs_mesh.computeLevelset( mesh_phi, 2 ) # uses normals, thus a smooth mesh is better
+                self.obs2.mesh.computeLevelset( mesh_phi, 2 ) # uses normals, thus a smooth mesh is better
                 #mesh_phi.printGrid()
                 #self.phiObs.printGrid()
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs )
-                self.flags.updateFromLevelset( self.phi )
 
         elif 0: # moving obstacle
             # water
@@ -300,8 +304,7 @@ class simulation:
             self.flags.updateFromLevelset( self.phi )
 
             # moving obstacle
-            self.obs.exists = 1
-            if self.obs.exists:
+            if 1:
                 self.obs.create( self.sol )
 
                 self.obs.shape = self.obs_shape
@@ -369,33 +372,34 @@ class simulation:
 
             # obstacle
             if 1:
-                self.obs_mesh = self.sol.create( Mesh, name='obs_mesh' )
-
-                self.obs_mesh.load( r'c:\prj\mantaflow_mod\resources\tubes.obj' )
-                self.obs_mesh.scale( Vec3(self.res) )
-                self.obs_mesh.offset( self.gs * Vec3( 0, 0, 0 ) )
+                self.obs2.create( self.sol )
+                self.obs2.mesh.load( r'c:\prj\mantaflow_mod\resources\tubes.obj' )
+                s = Vec3(self.res*0.8)
+                if self.b2D:
+                    s.z = 4
+                self.obs2.mesh.scale( s )
+                self.obs2.mesh.offset( Vec3( 0., 0, -s.z/2 ) )
 
                 mesh_phi = self.sol.create( LevelsetGrid )
-                self.obs_mesh.computeLevelset( mesh_phi, 2 )
+                self.obs2.mesh.computeLevelset( mesh_phi, 2 )
                 #mesh_phi.printGrid()
                 #self.phiObs.printGrid()
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs )
-                self.flags.updateFromLevelset( self.phi )
 
-        self.phi.printGrid()
-        self.phiObs.printGrid()
-        self.flags.printGrid()
+        #self.phiObs.printGrid()
+        #self.flags.printGrid()
 
         sampleLevelsetWithParticles( phi=self.phi, flags=self.flags, parts=self.pp, discretization=self.part_per_cell_1d, randomness=0.1 ) # 0.05, 0.1, 0.2
 
         # also sets boundary flags for phiObs (and shrinks it)
-        if self.obs.exists:
+        if self.obs.exists or self.obs2.exists:
             if 1:
                 setObstacleFlags( flags=self.flags, phiObs=self.phiObs )
             else:
                 updateFractions( flags=self.flags, phiObs=self.phiObs, fractions=fractions, boundaryWidth=self.boundary_width )
                 setObstacleFlags( flags=self.flags, phiObs=self.phiObs, fractions=fractions )
+        #self.phi.printGrid()
 
     def update_obstacle( self, obs_naive, obs_stop, it ):
         print( '- update_obstacle()' )
@@ -663,14 +667,17 @@ class simulation:
         #self.phi.printGrid()
 
         # after initializing particles and before gui
-        if self.bMesh:
+        if self.b_fluid_mesh:
             mesh_gen = mesh_generator( self.dim, self.gs, self.sol, self.narrowBand )
             mesh_gen.update_phi( self.phi )
             mesh_gen.generate( self.pp )
 
         if 1 and GUI:
             gui = Gui()
-            for i in range( 2 ):
+            mode = 2
+            if 1 and self.b2D and not self.obs.exists:
+                mode = 1
+            for i in range( mode ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
             gui.setRealGridDisplay( 0 ) # 0:none, 1:volume
             gui.setVec3GridDisplay( 0 ) # 0:none, 1:vel
@@ -869,7 +876,9 @@ class simulation:
                 #dt_bound = self.sol.timestep/4
                 #dt_bound = max( dt_bound, dt/4 )
 
-                obs_vel_vec3 = Vec3(0) if obs_naive or not self.obs.exists else self.obs.vel_vec
+                obs_vel_vec3 = Vec3(0) 
+                if not obs_naive and self.obs.exists:
+                    obs_vel_vec3 = self.obs.vel_vec
                 obsp = None
                 if self.obs.exists:
                     obsp = self.obs.part
@@ -904,7 +913,7 @@ class simulation:
                 self.move_obstacle()
 
             # for narrowBand, before updating phi with the particles
-            if self.bMesh:
+            if self.b_fluid_mesh:
                 mesh_gen.update_phi( self.phi )
 
             # create level set from particles
@@ -951,13 +960,13 @@ class simulation:
                 #volume.printGrid()
 
             # mesh
-            if self.bMesh:
+            if self.b_fluid_mesh:
                 tic()
                 mesh_gen.generate( self.pp )
                 toc()
 
             # print
-            if 1:
+            if 0:
                 self.flags.printGrid()
                 #self.vel.printGrid()
                 self.phiObs.printGrid()
