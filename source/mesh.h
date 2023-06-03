@@ -152,7 +152,8 @@ public:
 	PYTHON() void rotate(Vec3 thetas);
     PYTHON() void computeVelocity(Mesh& oldMesh, MACGrid& vel);
 
-    static Vec3 m_color; // zl
+    // zl
+    static Vec3 m_color; 
     static bool m_b2D;
 
     static PYTHON() void set_color( Vec3 c ) { m_color = c; };
@@ -160,6 +161,10 @@ public:
 
     PYTHON() void save_pos();
     PYTHON() void load_pos();
+
+	PYTHON() std::string get_name() { return getName(); }
+	PYTHON() void set_name( std::string s ) { setName( s ); }
+    //
 
 	PYTHON() void computeLevelset(LevelsetGrid& levelset, Real sigma, Real cutoff=-1.);
 	PYTHON() LevelsetGrid getLevelset(Real sigma, Real cutoff = -1.);

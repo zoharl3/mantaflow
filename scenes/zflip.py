@@ -19,6 +19,10 @@ logging.basicConfig(
 )
 #logging.info('') # example
 
+def toVec3( c ):
+    assert( len(c) == 3 )
+    return Vec3( c[0], c[1], c[2] )
+
 # correct21 (position solver, Thuerey21)
 # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
 class Correct21:
@@ -67,7 +71,7 @@ class moving_obstacle:
     def create( self, sol ):
         self.exists = 1
         self.center0 = self.center = Vec3( 0 )
-        self.rad = 0
+        self.rad = 0 # radius (at least) in the y-axis
         self.vel_vec = Vec3( 0 )
         self.phi_init = sol.create( LevelsetGrid )
         self.start_h = 0
@@ -168,20 +172,20 @@ class simulation:
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 20 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 0
-        self.b_correct21 = 1
+        self.b_fixed_vol = 1
+        self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
-        self.obs_shape = 0 # box:0, sphere:1
-        self.large_obs = 0
+        self.obs_shape = -1 # none:-1 box:0, sphere:1
+        self.large_obs = 0 # sets to box
 
-        if 0:
+        if 0 or self.obs_shape >= 0:
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
-           self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
+            self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else:
             self.gs = Vec3( self.res, self.res, self.res ) # iso
 
@@ -191,6 +195,7 @@ class simulation:
         # disable splash (else it's too fast for flip)
         if self.large_obs:
             self.splash = 0
+            self.obs_shape = 0
 
         if not self.narrowBand:
             self.narrowBandWidth = -1
@@ -291,9 +296,9 @@ class simulation:
                 #mesh_phi.printGrid()
                 #self.phiObs.printGrid()
                 self.phiObs.join( mesh_phi )
-                self.phi.subtract( self.phiObs )
+                self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 0: # moving obstacle
+        elif 0 or self.obs_shape >= 0: # moving obstacle
             # water
             fluid_h = 0.6 # 0.6(default)
             if self.large_obs:
@@ -306,7 +311,6 @@ class simulation:
             # moving obstacle
             if 1:
                 self.obs.create( self.sol )
-
                 self.obs.shape = self.obs_shape
                 
                 # rad 
@@ -321,6 +325,7 @@ class simulation:
                 if abs( self.obs.rad - round(self.obs.rad) ) < 1e-7:
                     self.obs.rad *= 0.99
 
+                # center0
                 self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.gs.y, 0.5 ) - Vec3( 0, 1, 0 ) # start from ceiling
                 if self.b2D:
                     self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, ( 1 + fluid_h )/2, 0.5 ) # middle of the air
@@ -335,14 +340,17 @@ class simulation:
                 self.obs.stop_h = self.obs.start_h - span*self.gs.y
                 print( '- start_h={self.obs.start_h}, stop_h={self.obs.stop_h}' )
 
-                p0 = self.obs.center - Vec3(self.obs.rad)
-                p1 = self.obs.center + Vec3(self.obs.rad)
-                if self.dim == 2:
-                    p0.z = p1.z = 0.5
+                # shape
                 if self.obs.shape == 0:
+                    p0 = self.obs.center - Vec3(self.obs.rad)
+                    p1 = self.obs.center + Vec3(self.obs.rad)
+                    if self.dim == 2:
+                        p0.z = p1.z = 0.5
                     shape = Box( parent=self.sol, p0=p0, p1=p1 )
                 else:
                     shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
+
+                # mesh
                 self.obs.mesh.fromShape( shape )
                 self.obs.mesh.save_pos()
                 self.obs.mesh.set_color( Vec3( 0.5, 0.2, 0.2 ) )
@@ -358,23 +366,26 @@ class simulation:
 
                 # fill obstacle with particles
                 tic()
-                self.obs.part.create( self.obs.center, self.obs.rad, self.obs.shape, self.gs )
+                self.obs.part.create( self.obs.center, Vec3( self.obs.rad ), self.obs.shape, self.gs )
                 toc()
 
                 self.scene['type'] = 2 if self.obs.shape == 0 else 3
                 self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
 
-        elif 1: # tubes
+        elif 1: # spiral/tubes
             # water
-            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.6, 0, 0) ), p1=self.gs*( Vec3(1, 1, 1) ) )
+            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.5, 0, 0) ), p1=self.gs*( Vec3(1, 0.7, 1) ) ) # tubes:0.6, spiral:0.4
             self.phi = fluidbox.computeLevelset()
             self.flags.updateFromLevelset( self.phi )
 
-            # obstacle
+            # static obstacle
             if 1:
                 self.obs2.create( self.sol )
-                self.obs2.mesh.load( r'c:\prj\mantaflow_mod\resources\tubes.obj' )
-                s = Vec3(self.res*0.8)
+                self.obs2.mesh.set_name( '' )
+                #self.obs2.mesh.load( r'c:\prj\mantaflow_mod\resources\tubes.obj' )
+                self.obs2.mesh.load( r'c:\prj\mantaflow_mod\resources\spiral.obj' )
+                s = Vec3( self.res )
+                s.x *= 0.7
                 if self.b2D:
                     s.z = 4
                 self.obs2.mesh.scale( s )
@@ -387,6 +398,38 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs )
 
+            # moving obstacle
+            if 1:
+                self.obs.create( self.sol )
+                self.obs.shape = 0
+                self.obs.rad = 1
+                left_y = 0.35 - 0.5/self.res
+                rad3 = self.res*Vec3( (1-left_y)/2, self.obs.rad/self.res, 0.5 ) - Vec3( .5, 0, 0 )
+                self.obs.center0 = self.obs.center = self.gs*Vec3( left_y+rad3.x/self.res, 0.9, 0.5 ) 
+
+                p0 = self.obs.center - rad3
+                p1 = self.obs.center + rad3
+                if self.dim == 2:
+                    p0.z = p1.z = 0.5
+                shape = Box( parent=self.sol, p0=p0, p1=p1 )
+
+                # mesh
+                self.obs.mesh.fromShape( shape )
+                self.obs.mesh.save_pos()
+                self.obs.mesh.set_color( Vec3( 0.5, 0.2, 0.2 ) )
+                self.obs.mesh.set_2D( self.dim == 2 )
+
+                self.obs.phi_init.copyFrom( self.phiObs )
+                self.phiObs.join( shape.computeLevelset() )
+
+                self.obs.force = Vec3( 0, 0, 0 )
+                self.obs.vel_vec = Vec3( 0, 0*self.gravity, 0 )
+                self.obs.vel.setConst( self.obs.vel_vec )
+                self.obs.vel.setBound( value=Vec3(0.), boundaryWidth=self.boundary_width+1 )
+
+                self.obs.part.create( self.obs.center, rad3, self.obs.shape, self.gs )
+
+        # common
         #self.phiObs.printGrid()
         #self.flags.printGrid()
 
@@ -415,7 +458,7 @@ class simulation:
 
         # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
-        if 0 and not obs_stop:
+        if 1 and not obs_stop:
             self.flags2.copyFrom( self.flags )
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
                 emphasize( '  - obstacle position is invalid; stopping the obstacle' )
@@ -478,7 +521,7 @@ class simulation:
                     if int(it) > self.obs.stay_last_it:
                         self.obs.stay_last_it = int(it)
                         self.obs.stay += 1
-                    if 1 and self.obs.stay > 50: # 50
+                    if 0 and self.obs.stay > 50: # 50
                         print( f'  - no obstacle progress (stay={self.obs.stay}); stopping it' )
                         self.obs.vel_vec = Vec3( 0 )
                         self.obs.force = Vec3( 0 )
@@ -551,18 +594,19 @@ class simulation:
             ret2 = mark_obstacle( flags=self.flags, obs=self.obs.part, center=self.obs.center )
             if self.b_fixed_vol:
                 assert( ret2 )
-        elif 1:
+        elif 0:
             setObstacleFlags( flags=self.flags, phiObs=self.phiObs )
-        else: # more precise
+        elif 0: # more precise
             updateFractions( flags=self.flags, phiObs=self.phiObs, fractions=fractions, boundaryWidth=self.boundary_width )
             setObstacleFlags( flags=self.flags, phiObs=self.phiObs, fractions=fractions )
         #self.flags.printGrid()
 
         # write pos
-        c = self.obs.center
-        c /= self.gs
-        self.obs.file.write( '%g %g %g\n' % ( c.x, c.y, c.z ) )
-        self.obs.file.flush()
+        if self.obs.file:
+            c = self.obs.center
+            c /= self.gs
+            self.obs.file.write( '%g %g %g\n' % ( c.x, c.y, c.z ) )
+            self.obs.file.flush()
 
     def main( self ):
         if self.b_correct21:

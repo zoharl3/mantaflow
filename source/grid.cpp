@@ -895,7 +895,7 @@ void FlagGrid::mark_surface()
 	bool bDiagonals = 1;
     static vector<Vec3i> dir = FlagGrid::get_ne_directions( mParent->is2D(), 0, bDiagonals );
     int nd = dir.size();
-    printf( "- mark_surface(), nd=%d\n", nd );
+	int n_marked = 0;
 
     FOR_IJK( *this ) {
 		Vec3i idx( i, j, k );
@@ -921,9 +921,12 @@ void FlagGrid::mark_surface()
             if ( d != nd ) {
 //cout << "    marking interface" << endl;
                 mData[index( idx )] |= TypeSurface;
+				++n_marked;
             }
         }
     }
+
+	printf( "- mark_surface(), nd=%d, n_marked=%d\n", nd, n_marked );
 }
 
 // flag grid helper
