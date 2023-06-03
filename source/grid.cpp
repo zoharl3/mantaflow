@@ -929,6 +929,18 @@ void FlagGrid::mark_surface()
 	printf( "- mark_surface(), nd=%d, n_marked=%d\n", nd, n_marked );
 }
 
+void FlagGrid::clear_obstacle( bool include_boundary ) {
+    printf( "- FlagGrid::clear_obstacle( include_boundary=%d )\n", include_boundary );
+    FOR_IJK( *this ) {
+        auto i2 = Vec3i( i, j, k );
+        if ( !isObstacle( i2 ) )
+			continue;
+        if ( !include_boundary && is_boundary( i2 ) )
+            continue;
+        operator()(i2) = FlagGrid::TypeEmpty;
+    }
+}
+
 // flag grid helper
 
 bool isIsolatedFluidCell(const IndexInt idx, const FlagGrid &flags)

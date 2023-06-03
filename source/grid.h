@@ -373,8 +373,9 @@ public:
 	//! set all cells (except obs/in/outflow) to type (fluid by default)
 	PYTHON() void fillGrid(int type=TypeFluid);
 
-	// mark as surface fluid cells that border non-fluid cells
+	// zl mark as surface fluid cells that border non-fluid cells
 	PYTHON() void mark_surface();
+	PYTHON() void clear_obstacle( bool include_boundary = false );
 
 	//! count no. of cells matching flags via "AND"
 	//! warning for large grids! only regular int returned (due to python interface)

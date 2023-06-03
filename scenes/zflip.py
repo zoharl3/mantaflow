@@ -95,6 +95,7 @@ class static_obstacle:
     def create( self, sol ):
         self.exists = 1
         self.mesh = sol.create( Mesh, name='static_obs_mesh' ) # need to switch to it in the gui to view
+        self.part = None
 
 class mesh_generator:
     def __init__( self, dim, gs, sol_main, narrowBand ):
@@ -172,7 +173,7 @@ class simulation:
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 20 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 1
         self.b_correct21 = 0
@@ -398,6 +399,10 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs )
 
+                # obs particles
+                self.obs2.part = self.sol.create( obs_particles )
+                self.obs2.part.create_from_levelset( mesh_phi )
+
             # moving obstacle
             if 1:
                 self.obs.create( self.sol )
@@ -423,7 +428,7 @@ class simulation:
                 self.phiObs.join( shape.computeLevelset() )
 
                 self.obs.force = Vec3( 0, 0, 0 )
-                self.obs.vel_vec = Vec3( 0, 0*self.gravity, 0 )
+                self.obs.vel_vec = Vec3( 0, self.gravity*1, 0 )
                 self.obs.vel.setConst( self.obs.vel_vec )
                 self.obs.vel.setBound( value=Vec3(0.), boundaryWidth=self.boundary_width+1 )
 
@@ -460,6 +465,7 @@ class simulation:
         print( '  - obs_stop=%d' % obs_stop )
         if 1 and not obs_stop:
             self.flags2.copyFrom( self.flags )
+            self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
                 emphasize( '  - obstacle position is invalid; stopping the obstacle' )
                 assert( not self.b_fixed_vol or obs_naive )
@@ -591,6 +597,7 @@ class simulation:
 
         # obs flags
         if 1:
+            self.flags.clear_obstacle()
             ret2 = mark_obstacle( flags=self.flags, obs=self.obs.part, center=self.obs.center )
             if self.b_fixed_vol:
                 assert( ret2 )
@@ -951,10 +958,16 @@ class simulation:
             if self.b_correct21:
                 correct21.main( self.sol, self.flags, self.pp, self.vel, pindex, gpi, self.phiObs )
             
-            # obstacle
+            # moving obstacle
             if self.obs.exists:
                 self.update_obstacle( obs_naive, obs_stop, it )
                 self.move_obstacle()
+
+            # static obstacle
+            if self.obs2.exists and self.obs2.part:
+                ret2 = mark_obstacle( flags=self.flags, obs=self.obs2.part, center=Vec3(0) )
+                if self.b_fixed_vol:
+                    assert( ret2 )
 
             # for narrowBand, before updating phi with the particles
             if self.b_fluid_mesh:
