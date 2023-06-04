@@ -70,12 +70,16 @@ class moving_obstacle:
 
     def create( self, sol ):
         self.exists = 1
+
         self.center0 = self.center = Vec3( 0 )
         self.rad = 0 # radius (at least) in the y-axis
         self.vel_vec = Vec3( 0 )
+
         self.phi_init = sol.create( LevelsetGrid )
+
         self.start_h = 0
         self.stop_h = 0
+
         self.skip = 0
         self.skip_last_it = 0 # the iteration where the last skip was made
         self.state = 0
@@ -83,9 +87,11 @@ class moving_obstacle:
         self.increase_vel = 1
         self.stay = 0
         self.stay_last_it = 0
+
         self.mesh = sol.create( Mesh, name='mov_obs_mesh' )
         self.file = None # loaded into maya by set_fluid.py
         self.shape = 0 # 0:box, 1:sphere
+
         self.part = sol.create( obs_particles )
 
 class static_obstacle:
@@ -95,7 +101,20 @@ class static_obstacle:
     def create( self, sol ):
         self.exists = 1
         self.mesh = sol.create( Mesh, name='static_obs_mesh' ) # need to switch to it in the gui to view
+
         self.part = None
+
+        self.vel = sol.create( MACGrid )
+        self.flags = sol.create( FlagGrid )
+
+    # only for this obstacle cells
+    def set_wall_bcs( self , flags, vel ):
+        if not self.part:
+            return
+        self.flags.copyFrom( flags )
+        self.flags.clear_obstacle()
+        mark_obstacle( flags=self.flags, obs=self.part, center=Vec3(0) )
+        setWallBcs( flags=self.flags, vel=vel, obvel=self.vel )
 
 class mesh_generator:
     def __init__( self, dim, gs, sol_main, narrowBand ):
@@ -111,11 +130,11 @@ class mesh_generator:
         else:
             self.sol = sol_main
 
-        self.flags = self.sol.create(FlagGrid)
-        self.phi = self.sol.create(LevelsetGrid)
-        self.phiParts = self.sol.create(LevelsetGrid)
-        self.pindex = self.sol.create(ParticleIndexSystem) 
-        self.gpi = self.sol.create(IntGrid)
+        self.flags = self.sol.create( FlagGrid )
+        self.phi = self.sol.create( LevelsetGrid )
+        self.phiParts = self.sol.create( LevelsetGrid )
+        self.pindex = self.sol.create( ParticleIndexSystem )
+        self.gpi = self.sol.create( IntGrid )
         self.mesh = sol_main.create( Mesh, name='mesh' ) # viewing a mesh from a different solver leads to a crash
 
         self.flags.initDomain( boundaryWidth=0 )
@@ -175,7 +194,7 @@ class simulation:
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 1
+        self.b_fixed_vol = 0
         self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
@@ -409,8 +428,9 @@ class simulation:
                 self.obs.shape = 0
                 self.obs.rad = 1
                 left_y = 0.35 - 0.5/self.res
-                rad3 = self.res*Vec3( (1-left_y)/2, self.obs.rad/self.res, 0.5 ) - Vec3( .5, 0, 0 )
-                self.obs.center0 = self.obs.center = self.gs*Vec3( left_y+rad3.x/self.res, 0.9, 0.5 ) 
+                rad3 = self.res*Vec3( (1 - left_y)/2, self.obs.rad/self.res, 0.5 )
+                rad3 -= Vec3( 0, 0, 0 ) # .5, 2
+                self.obs.center0 = self.obs.center = self.gs*Vec3( (1 + left_y)/2, 0.9, 0.5 ) 
 
                 p0 = self.obs.center - rad3
                 p1 = self.obs.center + rad3
@@ -463,7 +483,7 @@ class simulation:
 
         # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
-        if 1 and not obs_stop:
+        if 0 and not obs_stop:
             self.flags2.copyFrom( self.flags )
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
@@ -702,7 +722,7 @@ class simulation:
 
         np = self.pp.pySize()
         V0 = float( np ) / ppc
-        #np_max = 2*np
+        #np_max = 2*np % for emitter
         np_max = ppc * (self.res-2)**self.dim * 0.5
         print( f'# particles: {np}, np_max={np_max}' )
 
@@ -856,13 +876,19 @@ class simulation:
                     self.vel.add( vel2 )
 
             # set velocity for obstacles
+            # there used to be another setWallBcs after the pressure solve, but it's not necessary: these are boundary conditions (must hold)
             print( '- setWallBcs' )
+            #self.obs.vel.printGrid()
+            #self.vel.printGrid()
+
             #setWallBcs( flags=self.flags, vel=self.vel )
             #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions )
             #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions, phiObs=self.phiObs, obvel=self.obs.vel ) # calls KnSetWallBcsFrac, which doesn't work?
-            #self.obs.vel.printGrid()
-            #self.vel.printGrid()
             setWallBcs( flags=self.flags, vel=self.vel, obvel=self.obs.vel ) # calls KnSetWallBcs; default
+
+            if self.obs2.exists:
+                self.obs2.set_wall_bcs( self.flags, self.vel )
+
             #self.vel.printGrid()
             #self.flags.printGrid()
 
@@ -873,12 +899,6 @@ class simulation:
                 solvePressure( flags=self.flags, vel=self.vel, pressure=pressure, phi=self.phi )
                 print( '  (pressure) ', end='' )
                 toc()
-
-                #setWallBcs( flags=self.flags, vel=self.vel )
-                #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions )
-                #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions, phiObs=self.phiObs, obvel=self.obs.vel )
-                setWallBcs( flags=self.flags, vel=self.vel, obvel=self.obs.vel )
-                #self.vel.printGrid()
 
             dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
             print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
