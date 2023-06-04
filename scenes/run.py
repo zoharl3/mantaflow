@@ -6,8 +6,7 @@ if 1: # release
     cmd = r'..\build\RelWithDebInfo\manta zflip.py'
 
 # for cygwin
-if 1:
-    cmd = cmd.replace( '\\', '/' )
+cmd = cmd.replace( '\\', '/' )
 
 os.system( 'rm _log.ans' )
 

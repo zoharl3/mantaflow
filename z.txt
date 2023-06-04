@@ -3,6 +3,8 @@
     - LockedObjPainter::nextObject()
         - I patched it to view only named objects
     - python
+        - expose a class member var
+PYTHON(name=timestep)  Real mDt;  
         - explicit typedef is needed for python
 PYTHON() alias Grid<Real> RealGrid
         - I wanted to return vector<double>, but it was tricky, so I returned vector<float> which was already supported.

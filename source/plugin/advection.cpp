@@ -28,6 +28,7 @@ void SemiLagrange (const FlagGrid& flags, const MACGrid& vel, Grid<T>& dst, cons
     if (orderTrace == 1) {
         // traceback position
         Vec3 pos = Vec3(i+0.5f,j+0.5f,k+0.5f) - vel.getCentered(i,j,k) * dt;
+//printf( "SemiLagrange (%d, %d, %d)", i, j, k ); cout << pos << endl;
         dst(i,j,k) = src.getInterpolatedHi(pos, orderSpace);
     } else if (orderTrace == 2) {
         // backtracing using explicit midpoint

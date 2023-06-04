@@ -64,18 +64,21 @@ class Correct21:
             self.deltaX.printGrid()
 
 class moving_obstacle:
-    def __init__( self, sol ):
+    def __init__( self, sim ):
         self.exists = 0
-        self.vel = sol.create( MACGrid, name='' )
+        self.sim = sim
+        self.sol = self.sim.sol
+        self.vel = self.sol.create( MACGrid, name='' )
 
-    def create( self, sol ):
+    def create( self ):
         self.exists = 1
 
         self.center0 = self.center = Vec3( 0 )
         self.rad = 0 # radius (at least) in the y-axis
+        self.rad3 = Vec3( 0 )
         self.vel_vec = Vec3( 0 )
 
-        self.phi_init = sol.create( LevelsetGrid )
+        self.phi_init = self.sol.create( LevelsetGrid )
 
         self.start_h = 0
         self.stop_h = 0
@@ -88,24 +91,45 @@ class moving_obstacle:
         self.stay = 0
         self.stay_last_it = 0
 
-        self.mesh = sol.create( Mesh, name='mov_obs_mesh' )
+        self.mesh = self.sol.create( Mesh, name='mov_obs_mesh' )
         self.file = None # loaded into maya by set_fluid.py
         self.shape = 0 # 0:box, 1:sphere
 
-        self.part = sol.create( obs_particles )
+        self.part = self.sol.create( obs_particles )
+
+    def init( self, shape ):
+        # mesh
+        self.mesh.fromShape( shape )
+        self.mesh.save_pos()
+        self.mesh.set_color( Vec3( 0.5, 0.2, 0.2 ) )
+        self.mesh.set_2D( self.sol.is2D() )
+
+        # phi
+        self.phi_init.copyFrom( self.sim.phiObs )
+        self.sim.phiObs.join( shape.computeLevelset() )
+
+        # vel
+        self.vel.setConst( self.vel_vec )
+        self.vel.setBound( value=Vec3(0.), boundaryWidth=self.sim.boundary_width+1 )
+
+        # fill obstacle with particles
+        tic()
+        self.part.create( self.center, self.rad3, self.shape, self.sim.gs )
+        toc()
 
 class static_obstacle:
     def __init__( self, sol ):
+        self.sol = sol
         self.exists = 0
 
-    def create( self, sol ):
+    def create( self ):
         self.exists = 1
-        self.mesh = sol.create( Mesh, name='static_obs_mesh' ) # need to switch to it in the gui to view
+        self.mesh = self.sol.create( Mesh, name='static_obs_mesh' ) # need to switch to it in the gui to view
 
         self.part = None
 
-        self.vel = sol.create( MACGrid )
-        self.flags = sol.create( FlagGrid )
+        self.vel = self.sol.create( MACGrid )
+        self.flags = self.sol.create( FlagGrid )
 
     # only for this obstacle cells
     def set_wall_bcs( self , flags, vel ):
@@ -195,7 +219,7 @@ class simulation:
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 0
-        self.b_correct21 = 0
+        self.b_correct21 = 1
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -246,7 +270,7 @@ class simulation:
         self.phiObs = self.sol.create(LevelsetGrid, name='')
         self.phi = None
 
-        self.obs = moving_obstacle( self.sol )
+        self.obs = moving_obstacle( self )
         self.obs2 = static_obstacle( self.sol )
 
         self.boundary_width = 0
@@ -330,7 +354,7 @@ class simulation:
 
             # moving obstacle
             if 1:
-                self.obs.create( self.sol )
+                self.obs.create()
                 self.obs.shape = self.obs_shape
                 
                 # rad 
@@ -344,6 +368,7 @@ class simulation:
                 # shrink a bit if exactly cell size
                 if abs( self.obs.rad - round(self.obs.rad) ) < 1e-7:
                     self.obs.rad *= 0.99
+                self.obs.rad3 = Vec3( self.obs.rad )
 
                 # center0
                 self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.gs.y, 0.5 ) - Vec3( 0, 1, 0 ) # start from ceiling
@@ -370,24 +395,10 @@ class simulation:
                 else:
                     shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
 
-                # mesh
-                self.obs.mesh.fromShape( shape )
-                self.obs.mesh.save_pos()
-                self.obs.mesh.set_color( Vec3( 0.5, 0.2, 0.2 ) )
-                self.obs.mesh.set_2D( self.dim == 2 )
-
-                self.obs.phi_init.copyFrom( self.phiObs )
-                self.phiObs.join( shape.computeLevelset() )
-
+                # init
                 self.obs.force = Vec3( 0, self.gravity, 0 )
                 self.obs.vel_vec = Vec3( 0, -0, 0 )
-                self.obs.vel.setConst( self.obs.vel_vec )
-                self.obs.vel.setBound( value=Vec3(0.), boundaryWidth=self.boundary_width+1 )
-
-                # fill obstacle with particles
-                tic()
-                self.obs.part.create( self.obs.center, Vec3( self.obs.rad ), self.obs.shape, self.gs )
-                toc()
+                self.obs.init( shape )
 
                 self.scene['type'] = 2 if self.obs.shape == 0 else 3
                 self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
@@ -400,7 +411,7 @@ class simulation:
 
             # static obstacle
             if 1:
-                self.obs2.create( self.sol )
+                self.obs2.create()
                 self.obs2.mesh.set_name( '' )
                 #self.obs2.mesh.load( r'c:\prj\mantaflow_mod\resources\tubes.obj' )
                 self.obs2.mesh.load( r'c:\prj\mantaflow_mod\resources\spiral.obj' )
@@ -424,35 +435,49 @@ class simulation:
 
             # moving obstacle
             if 1:
-                self.obs.create( self.sol )
+                self.obs.create()
                 self.obs.shape = 0
                 self.obs.rad = 1
                 left_y = 0.35 - 0.5/self.res
-                rad3 = self.res*Vec3( (1 - left_y)/2, self.obs.rad/self.res, 0.5 )
-                rad3 -= Vec3( 0, 0, 0 ) # .5, 2
+                self.obs.rad3 = self.res*Vec3( (1 - left_y)/2, self.obs.rad/self.res, 0.5 )
+                self.obs.rad3 -= Vec3( 0, 0, 0 ) # .5, 2
                 self.obs.center0 = self.obs.center = self.gs*Vec3( (1 + left_y)/2, 0.9, 0.5 ) 
 
-                p0 = self.obs.center - rad3
-                p1 = self.obs.center + rad3
+                p0 = self.obs.center - self.obs.rad3
+                p1 = self.obs.center + self.obs.rad3
                 if self.dim == 2:
                     p0.z = p1.z = 0.5
                 shape = Box( parent=self.sol, p0=p0, p1=p1 )
 
-                # mesh
-                self.obs.mesh.fromShape( shape )
-                self.obs.mesh.save_pos()
-                self.obs.mesh.set_color( Vec3( 0.5, 0.2, 0.2 ) )
-                self.obs.mesh.set_2D( self.dim == 2 )
-
-                self.obs.phi_init.copyFrom( self.phiObs )
-                self.phiObs.join( shape.computeLevelset() )
-
+                # init
                 self.obs.force = Vec3( 0, 0, 0 )
                 self.obs.vel_vec = Vec3( 0, self.gravity*1, 0 )
-                self.obs.vel.setConst( self.obs.vel_vec )
-                self.obs.vel.setBound( value=Vec3(0.), boundaryWidth=self.boundary_width+1 )
+                self.obs.init( shape )
 
-                self.obs.part.create( self.obs.center, rad3, self.obs.shape, self.gs )
+        elif 1: # compress
+            # water
+            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0) ), p1=self.gs*( Vec3(1, 0.3, 1) ) )
+            self.phi = fluidbox.computeLevelset()
+            self.flags.updateFromLevelset( self.phi )
+
+            # moving obstacle
+            if 1:
+                self.obs.create()
+                self.obs.shape = 0
+                self.obs.rad = 1
+                self.obs.rad3 = self.res*Vec3( 0.5, self.obs.rad/self.res, 0.5 )
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.4, 0.5 ) 
+
+                p0 = self.obs.center - self.obs.rad3
+                p1 = self.obs.center + self.obs.rad3
+                if self.dim == 2:
+                    p0.z = p1.z = 0.5
+                shape = Box( parent=self.sol, p0=p0, p1=p1 )
+
+                # init
+                self.obs.force = Vec3( 0, 0, 0 )
+                self.obs.vel_vec = Vec3( 0, self.gravity*1, 0 )
+                self.obs.init( shape )
 
         # common
         #self.phiObs.printGrid()
@@ -1117,7 +1142,7 @@ if __name__ == '__main__':
     os.system( 'cp %s../video.bat %s' % (out, out) )
 
     # (debug) for consistent result; for large res, the step() hangs?
-    if 0:
+    if 1:
         limit_to_one_core()
 
     # init matlab

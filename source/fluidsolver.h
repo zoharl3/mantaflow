@@ -36,9 +36,9 @@ public:
 	inline Real  getTime() const    { return mTimeTotal; }
 
 	//! Check dimensionality
-	inline bool is2D() const { return mDim==2; }
+	PYTHON() inline bool is2D() const { return mDim==2; }
 	//! Check dimensionality (3d or above)
-	inline bool is3D() const { return mDim==3; }
+	PYTHON() inline bool is3D() const { return mDim==3; }
 	
 	PYTHON() void printMemInfo();
 	

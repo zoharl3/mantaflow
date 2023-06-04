@@ -61,15 +61,17 @@ static inline void checkIndexInterpol(const Vec3i& size, IndexInt idx) {
     if (px < 0.) { xi = 0; s0 = 1.0; s1 = 0.0; } \
     if (py < 0.) { yi = 0; t0 = 1.0; t1 = 0.0; } \
     if (pz < 0.) { zi = 0; f0 = 1.0; f1 = 0.0; } \
-    if (xi >= size.x-1) { xi = size.x-2; s0 = 0.0; s1 = 1.0; } \
-    if (yi >= size.y-1) { yi = size.y-2; t0 = 0.0; t1 = 1.0; } \
-    if (size.z>1) { if (zi >= size.z-1) { zi = size.z-2; f0 = 0.0; f1 = 1.0; } } \
+    /* zl I changed it from xi to px since if it's too large, then it may be > max int */ \
+    if (px >= size.x-1) { xi = size.x-2; s0 = 0.0; s1 = 1.0; } \
+    if (py >= size.y-1) { yi = size.y-2; t0 = 0.0; t1 = 1.0; } \
+    if (size.z>1) { if (pz >= size.z-1) { zi = size.z-2; f0 = 0.0; f1 = 1.0; } } \
     const int X = 1; \
     const int Y = size.x;    
         
 template <class T>
 inline T interpol(const T* data, const Vec3i& size, const int Z, const Vec3& pos) {
     BUILD_INDEX
+//printf( "xi=%d, yi=%d, zi=%d\n", xi, yi, zi );
     IndexInt idx = (IndexInt)xi + (IndexInt)Y * yi + (IndexInt)Z * zi;    
     DEBUG_ONLY(checkIndexInterpol(size,idx)); DEBUG_ONLY(checkIndexInterpol(size,idx+X+Y+Z));
     
