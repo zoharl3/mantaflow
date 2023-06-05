@@ -456,7 +456,7 @@ KERNEL() void knCopyMacToVec3(MACGrid &source, Grid<Vec3>& target)
 {
 	target(i,j,k) = source(i,j,k);
 }
-// simple helper functions to copy (convert) mac to vec3 , and levelset to real grids
+// simple helper functions to copy (convert) mac to vec3, and levelset to real grids
 // (are assumed to be the same for running the test cases - in general they're not!)
 PYTHON() void copyMacToVec3(MACGrid &source, Grid<Vec3>& target)
 {

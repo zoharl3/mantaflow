@@ -55,7 +55,7 @@ class Correct21:
         computeDeltaX( deltaX=self.deltaX, Lambda=self.Lambda, flags=self.flagsPos )
         max_deltaX = self.deltaX.getMaxAbs()
         print( f'    - max_deltaX.MaxAbs={max_deltaX}' )
-        if max_deltaX > 1:
+        if max_deltaX > 30:
             warn( 'deltaX blew up; skipping correction' )
             return
         mapMACToPartPositions( flags=self.flagsPos, deltaX=self.deltaX, parts=pp, dt=sol.timestep )
@@ -219,12 +219,12 @@ class simulation:
 
         # params
         self.dim = 2 # 2, 3
-        self.part_per_cell_1d = 2 # 3, 2(default), 1
+        self.part_per_cell_1d = 1 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 10 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 0
-        self.b_correct21 = 1
+        self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -461,7 +461,7 @@ class simulation:
 
         elif 1: # compress
             # water
-            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0) ), p1=self.gs*( Vec3(1, 0.3, 1) ) )
+            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.3, 0, 0) ), p1=self.gs*( Vec3(1, 0.3, 1) ) )
             self.phi = fluidbox.computeLevelset()
             self.flags.updateFromLevelset( self.phi )
 
@@ -513,7 +513,7 @@ class simulation:
 
         # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
-        if 0 and not obs_stop:
+        if 1 and not obs_stop:
             self.flags2.copyFrom( self.flags )
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
@@ -607,6 +607,7 @@ class simulation:
         # obs.vel for boundary conditions
         if 1:
             obs_vel_vec2 = self.obs.vel_vec + Vec3(0) # force copy
+
             # splash speed
             if self.splash and self.obs.state == 1:
                 self.splash = 0 # instantaneous
@@ -620,9 +621,11 @@ class simulation:
                 #obs_vel_vec2.y = splash_scale*self.gravity 
                 obs_vel_vec2.y *= splash_scale
                 print( f'  - set obs.vel.y to {obs_vel_vec2.y} due to state 1, splash_scale={splash_scale}' )
+
             self.obs.vel.setConst( obs_vel_vec2 )
-            self.obs.vel.setBound( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
-            #self.obs.vel.printGrid()
+            #self.obs.vel.setBound( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
+            self.obs.vel.setBoundMAC( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
+            self.obs.vel.printGrid()
         elif self.obs.state < 2:
             self.obs.state = 2
 
@@ -775,13 +778,21 @@ class simulation:
 
         if 1 and GUI:
             gui = Gui()
+
+            # mesh
             mode = 2
             if 1 and self.b2D and not self.obs.exists:
                 mode = 1
             for i in range( mode ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
+
+            # field
             gui.setRealGridDisplay( 0 ) # 0:none, 1:volume
-            gui.setVec3GridDisplay( 0 ) # 0:none, 1:vel
+            gui.setVec3GridDisplay( 1 ) # 0:none, 1:vel
+            for i in range( 1 ): # 0:center, 1:wall, 2:color, 3:none
+                gui.nextVec3Display()
+
+            # cam
             if 0 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 ) # drop
                 gui.setCamRot( 35, -30, 0 )
@@ -908,8 +919,8 @@ class simulation:
             # set velocity for obstacles
             # there used to be another setWallBcs after the pressure solve, but it's not necessary: these are boundary conditions (must hold)
             print( '- setWallBcs' )
-            #self.obs.vel.printGrid()
-            #self.vel.printGrid()
+            self.obs.vel.printGrid()
+            self.vel.printGrid()
 
             #setWallBcs( flags=self.flags, vel=self.vel )
             #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions )
@@ -919,7 +930,7 @@ class simulation:
             if self.obs2.exists:
                 self.obs2.set_wall_bcs( self.flags, self.vel )
 
-            #self.vel.printGrid()
+            self.vel.printGrid()
             #self.flags.printGrid()
 
             # pressure solve
@@ -937,8 +948,9 @@ class simulation:
                 print( f'  - vel.MaxAbs={maxVel}' )
                 if maxVel > 40:
                     b_bad_pressure = 1
-                    warn( 'velocity blew up; resetting vel' )
-                    self.vel.clear()
+                    warn( 'velocity blew up; fixing vel' )
+                    #self.vel.clear()
+                    self.vel.copyFrom( velOld )
 
             dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
             print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
@@ -959,7 +971,7 @@ class simulation:
             print( '- advect' )
             # advect particles
             self.pp.advectInGrid( flags=self.flags, vel=self.vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
-            if 0 and not self.b_fixed_vol and not self.b_correct21:
+            if 1 and not self.b_fixed_vol and not self.b_correct21:
                 pushOutofObs( parts=self.pp, flags=self.flags, phiObs=self.phiObs ) # creates issues for correct21 and fixedVol; can push particles into walls
             # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5; it makes it worse for fixed_vol
             if 1 and not self.b_fixed_vol:
@@ -1160,7 +1172,7 @@ if __name__ == '__main__':
     os.system( 'cp %s../video.bat %s' % (out, out) )
 
     # (debug) for consistent result; for large res, the step() hangs?
-    if 1:
+    if 0:
         limit_to_one_core()
 
     #setDebugLevel( 10 )
