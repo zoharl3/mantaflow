@@ -38,7 +38,7 @@ class Correct21:
             self.gCnt = s.create(IntGrid)
 
     def main( self, sol, flags, pp, vel, pindex, gpi, phiObs ):
-        print( '- position solver' )
+        print( '- Correct21.main()' )
         copyFlagsToFlags(flags, self.flagsPos)
         mapMassToGrid(flags=self.flagsPos, density=self.density, parts=pp, source=self.pMass, deltaX=self.deltaX, phiObs=phiObs, dt=sol.timestep, particleMass=self.mass, noDensityClamping=self.resampleParticles)
         
@@ -51,9 +51,14 @@ class Correct21:
     
         # position solver
         print( '  - solve pressure due to density' )
-        solvePressureSystem(rhs=self.density, vel=vel, pressure=self.Lambda, flags=self.flagsPos, cgAccuracy=1e-3)
-        computeDeltaX(deltaX=self.deltaX, Lambda=self.Lambda, flags=self.flagsPos)
-        mapMACToPartPositions(flags=self.flagsPos, deltaX=self.deltaX, parts=pp, dt=sol.timestep)
+        solvePressureSystem( rhs=self.density, vel=vel, pressure=self.Lambda, flags=self.flagsPos, cgAccuracy=1e-3 )
+        computeDeltaX( deltaX=self.deltaX, Lambda=self.Lambda, flags=self.flagsPos )
+        max_deltaX = self.deltaX.getMaxAbs()
+        print( f'    - max_deltaX.MaxAbs={max_deltaX}' )
+        if max_deltaX > 1:
+            warn( 'deltaX blew up; skipping correction' )
+            return
+        mapMACToPartPositions( flags=self.flagsPos, deltaX=self.deltaX, parts=pp, dt=sol.timestep )
         
         # print
         if 0:
@@ -219,7 +224,7 @@ class simulation:
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 0
-        self.b_correct21 = 0
+        self.b_correct21 = 1
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -918,9 +923,11 @@ class simulation:
             #self.flags.printGrid()
 
             # pressure solve
+            b_bad_pressure = 0
             if 1:
                 print( '- pressure' )
                 tic()
+                # Solving Poisson eq for the pressure, with Neumann BC on walls and Dirichlet on empty cells (p=0).
                 # If there's fluid caged in a solid with no empty cells, then there are only Neumann conditions. Then, need to fix one pressure cell (Dirichlet) to eliminate DOF. Setting the flag zeroPressureFixing won't help if there are empty cells in other parts of the domain.
                 solvePressure( flags=self.flags, vel=self.vel, pressure=pressure, phi=self.phi )
                 print( '  (pressure) ', end='' )
@@ -929,8 +936,9 @@ class simulation:
                 maxVel = self.vel.getMaxAbs()
                 print( f'  - vel.MaxAbs={maxVel}' )
                 if maxVel > 40:
-                    warn( 'velocity blew up, resetting vel' )
-                    #self.vel.clear()
+                    b_bad_pressure = 1
+                    warn( 'velocity blew up; resetting vel' )
+                    self.vel.clear()
 
             dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
             print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
@@ -1008,7 +1016,10 @@ class simulation:
 
             # correct21
             if self.b_correct21:
-                correct21.main( self.sol, self.flags, self.pp, self.vel, pindex, gpi, self.phiObs )
+                if b_bad_pressure:
+                    warn( "skipping correct21 due to bad pressure" )
+                else:
+                    correct21.main( self.sol, self.flags, self.pp, self.vel, pindex, gpi, self.phiObs )
             
             # moving obstacle
             if self.obs.exists:
