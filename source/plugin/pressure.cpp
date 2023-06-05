@@ -350,6 +350,7 @@ PYTHON() void solvePressureSystem(
 		if(FLOATINGPOINT_PRECISION==1) debMsg("Warning - high CG accuracy with single-precision floating point accuracy might not converge...", 2);
 
 		int numEmpty = CountEmptyCells(flags);
+        debMsg( "Number of empty cells: " << numEmpty, 2 ); // zl
 		IndexInt fixPidx = -1;
 		if(numEmpty==0) {
 			// Determine appropriate fluid cell for pressure fixing
@@ -378,8 +379,9 @@ PYTHON() void solvePressureSystem(
 					}
 				}
 			}
-			//debMsg("No empty cells! Fixing pressure of cell "<<fixPidx<<" to zero",1);
+			debMsg("No empty cells! Fixing pressure of cell "<<fixPidx<<" to zero",1);
 		}
+
 		if(fixPidx>=0) {
 			fixPressure(fixPidx, Real(0), rhs, A0, Ai, Aj, Ak);
 			static bool msgOnce = false;

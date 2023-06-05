@@ -219,7 +219,7 @@ class simulation:
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 0
-        self.b_correct21 = 1
+        self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -403,7 +403,7 @@ class simulation:
                 self.scene['type'] = 2 if self.obs.shape == 0 else 3
                 self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
 
-        elif 1: # spiral/tubes
+        elif 0: # spiral/tubes
             # water
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.5, 0, 0) ), p1=self.gs*( Vec3(1, 0.7, 1) ) ) # tubes:0.6, spiral:0.4
             self.phi = fluidbox.computeLevelset()
@@ -464,9 +464,9 @@ class simulation:
             if 1:
                 self.obs.create()
                 self.obs.shape = 0
-                self.obs.rad = 1
-                self.obs.rad3 = self.res*Vec3( 0.5, self.obs.rad/self.res, 0.5 )
-                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.4, 0.5 ) 
+                self.obs.rad = .1*self.res
+                self.obs.rad3 = self.res*Vec3( 0.5, self.obs.rad/self.res, 0.5 ) - Vec3( 1., 0, 0 ) # 1, 1.6
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.3 + (2 + self.obs.rad) /self.res, 0.5 ) - Vec3( 0., 0, 0 ) # 0, 0.6
 
                 p0 = self.obs.center - self.obs.rad3
                 p1 = self.obs.center + self.obs.rad3
@@ -921,9 +921,16 @@ class simulation:
             if 1:
                 print( '- pressure' )
                 tic()
+                # If there's fluid caged in a solid with no empty cells, then there are only Neumann conditions. Then, need to fix one pressure cell (Dirichlet) to eliminate DOF. Setting the flag zeroPressureFixing won't help if there are empty cells in other parts of the domain.
                 solvePressure( flags=self.flags, vel=self.vel, pressure=pressure, phi=self.phi )
                 print( '  (pressure) ', end='' )
                 toc()
+
+                maxVel = self.vel.getMaxAbs()
+                print( f'  - vel.MaxAbs={maxVel}' )
+                if maxVel > 40:
+                    warn( 'velocity blew up, resetting vel' )
+                    #self.vel.clear()
 
             dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
             print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
@@ -1144,6 +1151,8 @@ if __name__ == '__main__':
     # (debug) for consistent result; for large res, the step() hangs?
     if 1:
         limit_to_one_core()
+
+    #setDebugLevel( 10 )
 
     # init matlab
     cmd = "%%close all;\n clear classes; clear java; dbclear all; clear all; pack; jheapcl(0); set(0, 'DefaultFigureWindowState', 'minimized');" + " cd c:/prj/test_data/relative/_tmp;" + " addpath( 'c:/prj/mantaflow_mod' );"
