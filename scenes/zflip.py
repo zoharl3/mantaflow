@@ -161,7 +161,8 @@ class static_obstacle:
         self.flags.copyFrom( flags )
         self.flags.clear_obstacle()
         mark_obstacle( flags=self.flags, obs=self.part, center=Vec3(0) )
-        setWallBcs( flags=self.flags, vel=vel, obvel=self.vel )
+        #setWallBcs( flags=self.flags, vel=vel, obvel=self.vel )
+        set_wall_bcs2( flags=self.flags, vel=vel, obvel=self.vel )
 
 class mesh_generator:
     def __init__( self, dim, gs, sol_main, narrowBand ):
@@ -239,10 +240,10 @@ class simulation:
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 10 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 0
-        self.b_correct21 = 0
+        self.b_correct21 = 1
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -304,7 +305,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -426,7 +427,7 @@ class simulation:
                 self.scene['type'] = 2 if self.obs.shape == 0 else 3
                 self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
 
-        elif 0: # spiral/tubes
+        elif 1: # spiral/tubes
             # water
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.5, 0, 0) ), p1=self.gs*( Vec3(1, 0.7, 1) ) ) # tubes:0.6, spiral:0.4
             self.phi = fluidbox.computeLevelset()
@@ -460,10 +461,10 @@ class simulation:
             if 1:
                 self.obs.create()
                 self.obs.shape = 0
-                self.obs.rad = 1
+                self.obs.rad = .9
                 left_y = 0.35 - 0.5/self.res
                 self.obs.rad3 = self.res*Vec3( (1 - left_y)/2, self.obs.rad/self.res, 0.5 )
-                self.obs.rad3 -= Vec3( 0, 0, 0 ) # .5, 2
+                self.obs.rad3 -= Vec3( 1, 0, 0 ) # .5, 2
                 self.obs.center0 = self.obs.center = self.gs*Vec3( (1 + left_y)/2, 0.9, 0.5 ) 
 
                 p0 = self.obs.center - self.obs.rad3
@@ -642,10 +643,13 @@ class simulation:
 
             #obs_vel_vec2.x = 1 # debug
             self.obs.vel.setConst( obs_vel_vec2 )
+
             #self.obs.vel.setBoundMAC( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1, normalOnly=False )
             #self.obs.vel.setBound( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
             self.obs.vel.set_bound_MAC2( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 0 )
+            
             #self.obs.vel.printGrid()
+
         elif self.obs.state < 2:
             self.obs.state = 2
 
@@ -808,8 +812,8 @@ class simulation:
 
             # field
             gui.setRealGridDisplay( 0 ) # 0:none, 1:volume
-            gui.setVec3GridDisplay( 1 ) # 0:none, 1:vel
-            for i in range( 1 ): # 0:center, 1:wall, 2:color, 3:none
+            gui.setVec3GridDisplay( 0 ) # 0:none, 1:vel
+            for i in range( 0 ): # 0:center, 1:wall, 2:color, 3:none
                 gui.nextVec3Display()
 
             # cam
@@ -939,21 +943,19 @@ class simulation:
             # set velocity for obstacles
             # there used to be another setWallBcs after the pressure solve, but it's not necessary: these are boundary conditions (must hold)
             print( '- set wall boundary conditions' )
-            self.obs.vel.printGrid()
-            self.vel.printGrid()
+            #self.obs.vel.printGrid()
+            #self.vel.printGrid()
 
             #setWallBcs( flags=self.flags, vel=self.vel )
             #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions )
             #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions, phiObs=self.phiObs, obvel=self.obs.vel ) # calls KnSetWallBcsFrac, which doesn't work?
             #setWallBcs( flags=self.flags, vel=self.vel, obvel=self.obs.vel ) # calls KnSetWallBcs
-            set_wall_bcs2( flags=self.flags, vel=self.vel, obvel=self.obs.vel ) # calls KnSetWallBcs
-
-            self.vel.set_bound_MAC2( value=Vec3( 7, 8, 9 ), boundaryWidth=self.boundary_width + 0 )
+            set_wall_bcs2( flags=self.flags, vel=self.vel, obvel=self.obs.vel )
 
             if self.obs2.exists:
                 self.obs2.set_wall_bcs( self.flags, self.vel )
 
-            self.vel.printGrid()
+            #self.vel.printGrid()
             #self.flags.printGrid()
 
             # pressure solve
@@ -979,7 +981,7 @@ class simulation:
             print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
             extrapolateMACSimple( flags=self.flags, vel=self.vel, distance=dist, intoObs=False )
             #self.flags.printGrid()
-            self.vel.printGrid()
+            #self.vel.printGrid()
 
             print( '- set particles\' pos0' )
             set_particles_pos0( pp=self.pp )
@@ -1195,7 +1197,7 @@ if __name__ == '__main__':
     os.system( 'cp %s../video.bat %s' % (out, out) )
 
     # (debug) for consistent result; for large res, the step() hangs?
-    if 1:
+    if 0:
         limit_to_one_core()
 
     #setDebugLevel( 10 )
