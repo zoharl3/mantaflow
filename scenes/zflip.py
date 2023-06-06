@@ -23,6 +23,24 @@ def toVec3( c ):
     assert( len(c) == 3 )
     return Vec3( c[0], c[1], c[2] )
 
+def test_MAC():
+    sol = Solver( gridSize=Vec3(2, 2, 1), dim=2 )
+    v = sol.create( MACGrid )
+
+    v.set( 0, 0, 0, Vec3(1, 1, 0) )
+    v.set( 0, 1, 0, Vec3(2, 2, 0) )
+    v.set( 1, 0, 0, Vec3(3, 3, 0) )
+    v.set( 1, 1, 0, Vec3(4, 4, 0) )
+
+    v.printGrid()
+
+    print( f'v.getInterpolated(0.5, 0.5)={v.getInterpolated(Vec3(0.5, 0.5, 0.5))}' )
+    print( f'v.getCentered(0, 0)={v.getCentered(Vec3(0, 0, 0))}' ) # the single cell that the 2x2 grid defines
+    #print( f'v.getAtMACX(0, 0)={v.getAtMACX(0, 0, 0)}' ) # boundary can't be calculated, asserts in debug
+    print( f'v.getAtMACX(1, 0)={v.getAtMACX(1, 0, 0)}' ) # at cell [1, 0], x-component is the one from the cell, y-component is interpolated with previous cell
+    #print( f'v.getAtMACX(1, 1)={v.getAtMACX(1, 1, 0)}' ) # boundary
+    print( f'v.getAtMACY(0, 1)={v.getAtMACY(0, 1, 0)}' )
+
 # correct21 (position solver, Thuerey21)
 # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
 class Correct21:
@@ -221,7 +239,7 @@ class simulation:
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 1 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 10 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 9 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 0
         self.b_correct21 = 0
@@ -268,11 +286,11 @@ class simulation:
         self.sol = Solver( name='sol', gridSize=self.gs, dim=self.dim )
 
         # automatic names are given only if the create is called from global context
-        self.flags = self.sol.create(FlagGrid, name='flags')
-        self.flags2 = self.sol.create(FlagGrid)
-        self.vel = self.sol.create(MACGrid, name='vel')
-        self.pp = self.sol.create(BasicParticleSystem, name='pp')
-        self.phiObs = self.sol.create(LevelsetGrid, name='')
+        self.flags = self.sol.create( FlagGrid, name='flags' )
+        self.flags2 = self.sol.create( FlagGrid)
+        self.vel = self.sol.create( MACGrid, name='vel' )
+        self.pp = self.sol.create( BasicParticleSystem, name='pp' )
+        self.phiObs = self.sol.create( LevelsetGrid, name='' )
         self.phi = None
 
         self.obs = moving_obstacle( self )
@@ -622,10 +640,12 @@ class simulation:
                 obs_vel_vec2.y *= splash_scale
                 print( f'  - set obs.vel.y to {obs_vel_vec2.y} due to state 1, splash_scale={splash_scale}' )
 
+            #obs_vel_vec2.x = 1 # debug
             self.obs.vel.setConst( obs_vel_vec2 )
+            #self.obs.vel.setBoundMAC( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1, normalOnly=False )
             #self.obs.vel.setBound( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
-            self.obs.vel.setBoundMAC( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 1 )
-            self.obs.vel.printGrid()
+            self.obs.vel.set_bound_MAC2( value=Vec3( 0 ), boundaryWidth=self.boundary_width + 0 )
+            #self.obs.vel.printGrid()
         elif self.obs.state < 2:
             self.obs.state = 2
 
@@ -938,7 +958,7 @@ class simulation:
             if 1:
                 print( '- pressure' )
                 tic()
-                # Solving Poisson eq for the pressure, with Neumann BC on walls and Dirichlet on empty cells (p=0).
+                # Solving Poisson eq for the pressure, with Neumann BC on walls (given as velocity, where u = \nabla p) and Dirichlet on empty cells (p=0).
                 # If there's fluid caged in a solid with no empty cells, then there are only Neumann conditions. Then, need to fix one pressure cell (Dirichlet) to eliminate DOF. Setting the flag zeroPressureFixing won't help if there are empty cells in other parts of the domain.
                 solvePressure( flags=self.flags, vel=self.vel, pressure=pressure, phi=self.phi )
                 print( '  (pressure) ', end='' )
@@ -956,7 +976,7 @@ class simulation:
             print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
             extrapolateMACSimple( flags=self.flags, vel=self.vel, distance=dist, intoObs=False )
             #self.flags.printGrid()
-            #self.vel.printGrid()
+            self.vel.printGrid()
 
             print( '- set particles\' pos0' )
             set_particles_pos0( pp=self.pp )
@@ -1181,6 +1201,9 @@ if __name__ == '__main__':
     cmd = "%%close all;\n clear classes; clear java; dbclear all; clear all; pack; jheapcl(0); set(0, 'DefaultFigureWindowState', 'minimized');" + " cd c:/prj/test_data/relative/_tmp;" + " addpath( 'c:/prj/mantaflow_mod' );"
     matlab_eval( cmd )
             
+    # test
+    test_MAC()
+
     # simulation
     sim = simulation()
     sim.main()

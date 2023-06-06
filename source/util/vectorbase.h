@@ -522,7 +522,7 @@ template<class S> std::string Vector3D<S>::toString() const {
 	char buf[256];
 	
 	if ( b_print_2D )
-        snprintf( buf, 256, "[%+4.2f,%+4.2f]", (double)( *this )[0], (double)( *this )[1] ); // short 2D
+        snprintf( buf, 256, "[%+4.1f,%+4.1f]", (double)( *this )[0], (double)( *this )[1] ); // short 2D
     else
         snprintf( buf, 256, "[%+4.2f,%+4.2f,%+4.2f]", (double)( *this )[0], (double)( *this )[1], (double)( *this )[2] ); // short 3D
 

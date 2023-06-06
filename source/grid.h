@@ -119,7 +119,7 @@ public:
 	
 	//! all kinds of access functions, use grid(), grid[] or grid.get()
 	//! access data
-	inline T get(int i,int j, int k) const         { return mData[index(i,j,k)]; }
+	PYTHON() inline T get(int i,int j, int k) const         { return mData[index(i,j,k)]; }
 	//! access data
 	inline T& get(int i,int j, int k)              { return mData[index(i,j,k)]; }
 	//! access data
@@ -144,10 +144,10 @@ public:
 	inline const T operator[](IndexInt idx) const  { DEBUG_ONLY(checkIndex(idx)); return mData[idx]; }
 
 	//! set data
-	inline void set(int i, int j, int k, T& val)              { mData[index(i,j,k)] = val; }
+	PYTHON() inline void set(int i, int j, int k, T& val)              { mData[index(i,j,k)] = val; }
 
 	// interpolated access
-	inline T    getInterpolated(const Vec3& pos) const { return interpol<T>(mData, mSize, mStrideZ, pos); }
+	PYTHON() inline T    getInterpolated(const Vec3& pos) const { return interpol<T>(mData, mSize, mStrideZ, pos); }
 	inline void setInterpolated(const Vec3& pos, const T& val, Grid<Real>& sumBuffer) const { setInterpol<T>(mData, mSize, mStrideZ, pos, val, &sumBuffer[0]); }
 	// higher order interpolation (1=linear, 2=cubic)
 	inline T getInterpolatedHi(const Vec3& pos, int order) const { 
@@ -259,12 +259,12 @@ public:
 	
 	// specialized functions for interpolating MAC information
 	inline Vec3 getCentered(int i, int j, int k) const;
-	inline Vec3 getCentered(const Vec3i& pos) const { return getCentered(pos.x, pos.y, pos.z); }
-	inline Vec3 getAtMACX(int i, int j, int k) const;
-	inline Vec3 getAtMACY(int i, int j, int k) const;
-	inline Vec3 getAtMACZ(int i, int j, int k) const;
+	PYTHON() inline Vec3 getCentered(const Vec3i& pos) const { return getCentered(pos.x, pos.y, pos.z); }
+	PYTHON() inline Vec3 getAtMACX(int i, int j, int k) const;
+	PYTHON() inline Vec3 getAtMACY(int i, int j, int k) const;
+	PYTHON() inline Vec3 getAtMACZ(int i, int j, int k) const;
 	// interpolation
-	inline Vec3 getInterpolated(const Vec3& pos) const { return interpolMAC(mData, mSize, mStrideZ, pos); }
+	PYTHON() inline Vec3 getInterpolated(const Vec3& pos) const { return interpolMAC(mData, mSize, mStrideZ, pos); }
 	inline void setInterpolated(const Vec3& pos, const Vec3& val, Vec3* tmp) const { return setInterpolMAC(mData, mSize, mStrideZ, pos, val, tmp); }
 	inline Vec3 getInterpolatedHi(const Vec3& pos, int order) const { 
 		switch(order) {
@@ -287,6 +287,8 @@ public:
 	//! optionally, only set normal components
 	PYTHON() void setBoundMAC(Vec3 value, int boundaryWidth, bool normalOnly=false);
 	
+	PYTHON() void set_bound_MAC2( Vec3 value, int boundaryWidth );
+
 protected:
 };
 

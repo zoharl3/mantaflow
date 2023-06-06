@@ -39,6 +39,10 @@ if(!bp->isActive(i) ) {
         - if ( key == Qt::Key_C && ctrl )
     - A grid is created in FluidSolver::getGridPointer(). 
     - A MAC is defined as usual.
+        - The i index in a kernel refers to x-axis or columns. j refers to y-axis (pointing up) or rows, which start from the bottom (flipped).
+        - Interpolates with previous cell. Interpolating boundary is undefined. A 2x2 grid defines one cell.
+        - interpolMAC() in the center of a cell is equal to getCentered()
+        - See test_MAC() in zflip.py
     - knMapLinearVec3ToMACGrid() has a kernel macro in the definition. This macro has a variadic param, and it's executed for every point.
     - setInterpolMAC() interpolates MAC from particles. The four grid points are ref[0], ref[X], ref[Y], ref[X+Y]. 
     - The output precision (also 2D/3D) is set in Vector3D<S>::toString() in vectorbase.h.
