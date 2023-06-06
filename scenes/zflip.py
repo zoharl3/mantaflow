@@ -242,8 +242,8 @@ class simulation:
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 0
-        self.b_correct21 = 1
+        self.b_fixed_vol = 1
+        self.b_correct21 = 0
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -427,7 +427,7 @@ class simulation:
                 self.scene['type'] = 2 if self.obs.shape == 0 else 3
                 self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
 
-        elif 1: # spiral/tubes
+        elif 0: # spiral/tubes
             # water
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.5, 0, 0) ), p1=self.gs*( Vec3(1, 0.7, 1) ) ) # tubes:0.6, spiral:0.4
             self.phi = fluidbox.computeLevelset()
@@ -970,12 +970,12 @@ class simulation:
                 toc()
 
                 maxVel = self.vel.getMaxAbs()
-                print( f'  - vel.MaxAbs={maxVel}' )
-                if maxVel > 40:
+                print( '  - vel.MaxAbs=%0.2f' % maxVel )
+                if maxVel > 40: # 40
                     b_bad_pressure = 1
                     warn( 'velocity blew up; fixing vel' )
-                    #self.vel.clear()
-                    self.vel.copyFrom( velOld )
+                    self.vel.clear()
+                    #self.vel.copyFrom( velOld )
 
             dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
             print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
