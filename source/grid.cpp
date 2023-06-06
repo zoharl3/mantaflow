@@ -684,7 +684,7 @@ KERNEL() void kn_set_bound_MAC2( Grid<Vec3>& grid, Vec3 value, int w ) {
 		( grid.is3D() && ( k <= w - 1 || k >= grid.getSizeZ() - 1 - w ) ) )
         grid( i, j, k ).x = value.x;
 
-    if ( i <= w || i >= grid.getSizeX() - 1 - w || 
+    if ( i <= w - 1 || i >= grid.getSizeX() - 1 - w || 
 		j <= w || j >= grid.getSizeY() - 2 - w || 
 		( grid.is3D() && ( k <= w - 1 || k >= grid.getSizeZ() - 1 - w ) ) )
         grid( i, j, k ).y = value.y;
