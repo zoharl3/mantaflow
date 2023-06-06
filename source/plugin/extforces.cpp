@@ -341,7 +341,7 @@ void kn_set_wall_bcs2( const FlagGrid &flags, MACGrid &vel, const MACGrid &obvel
     if ( i > 0 )
         if ( flags.isFluid( i - 1, j, k ) || flags.isFluid( i, j, k ) ) {
             if ( flags.isObstacle( i - 1, j, k ) || flags.isObstacle( i, j, k ) ) {
-//printf( "(%d, %d).x fluid & obstacle; obvel:", i, j ); cout << obvel( i - 1, j, k ) << endl;
+//printf( "(%d, %d).x fluid & obstacle; obvel:", i, j ); cout << obvel( i, j, k ) << endl;
                 vel( i, j, k ).x = obvel( i, j, k ).x;
             }
         }
@@ -349,7 +349,7 @@ void kn_set_wall_bcs2( const FlagGrid &flags, MACGrid &vel, const MACGrid &obvel
 	if ( j > 0 )
         if ( flags.isFluid( i, j - 1, k ) || flags.isFluid( i, j, k ) ) {
             if ( flags.isObstacle( i, j - 1, k ) || flags.isObstacle( i, j, k ) ) {
-//printf( "(%d, %d).y fluid & obstacle; obvel:", i, j ); cout << obvel( i, j - 1, k ) << endl;
+//printf( "(%d, %d).y fluid & obstacle; obvel:", i, j ); cout << obvel( i, j, k ) << endl;
                 vel( i, j, k ).y = obvel( i, j, k ).y;
             }
         }
@@ -357,10 +357,13 @@ void kn_set_wall_bcs2( const FlagGrid &flags, MACGrid &vel, const MACGrid &obvel
     if ( !vel.is3D() ) {
         vel( i, j, k ).z = 0;
     } else {
-        // if ( k > 0 && flags.isObstacle( i, j, k - 1 ) )
-        //     vel( i, j, k ).z = bcsVel.z;
-        // if ( k > 0 && curObs && flags.isFluid( i, j, k - 1 ) )
-        //     vel( i, j, k ).z = bcsVel.z;
+        if ( k > 0 )
+            if ( flags.isFluid( i, j, k - 1 ) || flags.isFluid( i, j, k ) ) {
+                if ( flags.isObstacle( i, j, k - 1 ) || flags.isObstacle( i, j, k ) ) {
+// printf( "(%d, %d).y fluid & obstacle; obvel:", i, j ); cout << obvel( i, j, k ) << endl;
+                    vel( i, j, k ).z = obvel( i, j, k ).z;
+                }
+            }
     }
 }
 
