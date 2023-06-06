@@ -334,6 +334,41 @@ PYTHON() void setWallBcs(const FlagGrid& flags, MACGrid& vel, const MACGrid* obv
     }
 }
 
+// zl my version that corresponds to set_bound_MAC2
+// see Bridson15, pg.72, fig. 5.2
+KERNEL()
+void kn_set_wall_bcs2( const FlagGrid &flags, MACGrid &vel, const MACGrid &obvel ) {
+    if ( i > 0 )
+        if ( flags.isFluid( i - 1, j, k ) || flags.isFluid( i, j, k ) ) {
+            if ( flags.isObstacle( i - 1, j, k ) || flags.isObstacle( i, j, k ) ) {
+//printf( "(%d, %d).x fluid & obstacle; obvel:", i, j ); cout << obvel( i - 1, j, k ) << endl;
+                vel( i - 1, j, k ).x = obvel( i - 1, j, k ).x;
+            }
+        }
+
+	if ( j > 0 )
+        if ( flags.isFluid( i, j - 1, k ) || flags.isFluid( i, j, k ) ) {
+            if ( flags.isObstacle( i, j - 1, k ) || flags.isObstacle( i, j, k ) ) {
+//printf( "(%d, %d).y fluid & obstacle; obvel:", i, j ); cout << obvel( i, j - 1, k ) << endl;
+                vel( i, j - 1, k ).y = obvel( i, j - 1, k ).y;
+            }
+        }
+
+    if ( !vel.is3D() ) {
+        vel( i, j, k ).z = 0;
+    } else {
+        // if ( k > 0 && flags.isObstacle( i, j, k - 1 ) )
+        //     vel( i, j, k ).z = bcsVel.z;
+        // if ( k > 0 && curObs && flags.isFluid( i, j, k - 1 ) )
+        //     vel( i, j, k ).z = bcsVel.z;
+    }
+}
+
+PYTHON() 
+void set_wall_bcs2( const FlagGrid &flags, MACGrid &vel, const MACGrid &obvel ) {
+    kn_set_wall_bcs2( flags, vel, obvel );
+}
+
 //! add Forces between fl/fl and fl/em cells (interpolate cell centered forces to MAC grid)
 KERNEL(bnd=1) void KnAddForceIfLower(const FlagGrid& flags, MACGrid& vel, const Grid<Vec3>& force) {
 	bool curFluid = flags.isFluid(i,j,k);

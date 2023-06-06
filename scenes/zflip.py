@@ -237,9 +237,9 @@ class simulation:
 
         # params
         self.dim = 2 # 2, 3
-        self.part_per_cell_1d = 1 # 3, 2(default), 1
+        self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 9 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 10 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 0
         self.b_correct21 = 0
@@ -304,7 +304,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 0: # dam
+        if 1: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -938,14 +938,17 @@ class simulation:
 
             # set velocity for obstacles
             # there used to be another setWallBcs after the pressure solve, but it's not necessary: these are boundary conditions (must hold)
-            print( '- setWallBcs' )
+            print( '- set wall boundary conditions' )
             self.obs.vel.printGrid()
             self.vel.printGrid()
 
             #setWallBcs( flags=self.flags, vel=self.vel )
             #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions )
             #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions, phiObs=self.phiObs, obvel=self.obs.vel ) # calls KnSetWallBcsFrac, which doesn't work?
-            setWallBcs( flags=self.flags, vel=self.vel, obvel=self.obs.vel ) # calls KnSetWallBcs; default
+            #setWallBcs( flags=self.flags, vel=self.vel, obvel=self.obs.vel ) # calls KnSetWallBcs
+            set_wall_bcs2( flags=self.flags, vel=self.vel, obvel=self.obs.vel ) # calls KnSetWallBcs
+
+            self.vel.set_bound_MAC2( value=Vec3( 7, 8, 9 ), boundaryWidth=self.boundary_width + 0 )
 
             if self.obs2.exists:
                 self.obs2.set_wall_bcs( self.flags, self.vel )
@@ -1192,7 +1195,7 @@ if __name__ == '__main__':
     os.system( 'cp %s../video.bat %s' % (out, out) )
 
     # (debug) for consistent result; for large res, the step() hangs?
-    if 0:
+    if 1:
         limit_to_one_core()
 
     #setDebugLevel( 10 )
@@ -1202,7 +1205,7 @@ if __name__ == '__main__':
     matlab_eval( cmd )
             
     # test
-    test_MAC()
+    #test_MAC()
 
     # simulation
     sim = simulation()

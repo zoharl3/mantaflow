@@ -2,7 +2,7 @@
 import os, sys, keyboard
 
 cmd = r'..\build\debug\manta zflip.py'
-if 0: # release
+if 1: # release
     cmd = r'..\build\RelWithDebInfo\manta zflip.py'
 
 # for cygwin
