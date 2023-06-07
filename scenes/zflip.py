@@ -237,18 +237,18 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.dim = 2 # 2, 3
+        self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 0
-        self.b_correct21 = 1
+        self.b_fixed_vol = 1
+        self.b_correct21 = 0
 
-        self.narrowBand = bool( 0 )
+        self.narrowBand = bool( 1 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
-        self.obs_shape = -1 # none:-1 box:0, sphere:1
+        self.obs_shape = 0 # none:-1 box:0, sphere:1
         self.large_obs = 0 # sets to box
 
         if 0 or self.obs_shape >= 0:
@@ -631,6 +631,7 @@ class simulation:
             # splash speed
             if self.splash and self.obs.state == 1:
                 self.splash = 0 # instantaneous
+                splash_scale = 1
                 if self.dim == 3:
                     if self.b_fixed_vol:
                         splash_scale = 3
@@ -745,7 +746,7 @@ class simulation:
             self.sol.timestep    = 1.0
             self.sol.timestepMin = 0.5   # time step range
             self.sol.timestepMax = 1.0
-            self.sol.cfl         = 5.0   # maximal velocity per cell, 0 to use fixed timesteps
+            self.sol.cfl         = 1.0   # maximal velocity per cell, 0 to use fixed timesteps
 
         # setup scene
         self.setup_scene()
@@ -810,7 +811,7 @@ class simulation:
                 mode = 1
             for i in range( mode ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
-            gui.nextMesh()
+            #gui.nextMesh()
 
             # field
             gui.setRealGridDisplay( 0 ) # 0:none, 1:volume
@@ -973,11 +974,16 @@ class simulation:
 
                 maxVel = self.vel.getMaxAbs()
                 print( '  - vel.MaxAbs=%0.2f' % maxVel )
-                if maxVel > 30: # 30
-                    b_bad_pressure = 1
-                    warn( 'velocity blew up; fixing vel' )
-                    self.vel.clear()
-                    #self.vel.copyFrom( velOld )
+                speed_limit = 1.5/self.dt # 1, 1.5
+                if maxVel > speed_limit:
+                    if maxVel < 40:
+                        print(  f'- scaling vel to speed_limit={speed_limit}' )
+                        self.vel.multConst( Vec3(speed_limit/maxVel) )
+                    else:
+                        b_bad_pressure = 1
+                        warn( 'velocity blew up; fixing vel' )
+                        self.vel.clear()
+                        #self.vel.copyFrom( velOld )
 
             dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
             print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
