@@ -726,6 +726,15 @@ if(1)
     message( "gurobi include: ${GUROBI_INCLUDE_DIRS}\n  libs: ${GUROBI_CXX_LIBRARY} ${GUROBI_CXX_DEBUG_LIBRARY} ${GUROBI_LIBRARY}" )
     list( APPEND F_LIBS optimized ${GUROBI_CXX_LIBRARY} debug ${GUROBI_CXX_DEBUG_LIBRARY} )
     link_libraries( ${GUROBI_LIBRARY} )
+    
+    # cgal
+    find_package(CGAL COMPONENTS Core REQUIRED)
+    include( ${CGAL_USE_FILE} )
+    
+    # gmp
+    find_package( GMP REQUIRED )
+    link_libraries( ${GMP_LIBRARIES} )
+    message( "GMP_LIBRARIES: " ${GMP_LIBRARIES} )
 endif()
 
 #******************************************************************************

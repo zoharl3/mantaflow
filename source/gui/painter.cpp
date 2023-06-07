@@ -402,7 +402,7 @@ template<> void GridPainter<int>::paint() {
 	
 	bool rbox = true;
 	bool skipFluid = mLocalGrid->getSize().max() >= 64; 
-	bool drawLines = !mHide && mLocalGrid->getSize().max() <= 80; 
+	bool drawLines = !mHide && mLocalGrid->getSize().max() <= 500; // 80, 500
 	if (drawLines) {
 		//glDepthFunc(GL_LESS);
 		glBegin(GL_LINES);

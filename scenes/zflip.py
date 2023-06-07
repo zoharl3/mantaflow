@@ -73,7 +73,7 @@ class Correct21:
         computeDeltaX( deltaX=self.deltaX, Lambda=self.Lambda, flags=self.flagsPos )
         max_deltaX = self.deltaX.getMaxAbs()
         print( f'    - max_deltaX.MaxAbs={max_deltaX}' )
-        if max_deltaX > 30:
+        if max_deltaX > 10: # 10
             warn( 'deltaX blew up; skipping correction' )
             return
         mapMACToPartPositions( flags=self.flagsPos, deltaX=self.deltaX, parts=pp, dt=sol.timestep )
@@ -242,8 +242,8 @@ class simulation:
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 1
-        self.b_correct21 = 0
+        self.b_fixed_vol = 0
+        self.b_correct21 = 1
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -427,7 +427,7 @@ class simulation:
                 self.scene['type'] = 2 if self.obs.shape == 0 else 3
                 self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
 
-        elif 0: # spiral/tubes
+        elif 1: # spiral/tubes
             # water
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.5, 0, 0) ), p1=self.gs*( Vec3(1, 0.7, 1) ) ) # tubes:0.6, spiral:0.4
             self.phi = fluidbox.computeLevelset()
@@ -436,7 +436,7 @@ class simulation:
             # static obstacle
             if 1:
                 self.obs2.create()
-                self.obs2.mesh.set_name( '' )
+                #self.obs2.mesh.set_name( '' )
                 #self.obs2.mesh.load( r'c:\prj\mantaflow_mod\resources\tubes.obj' )
                 self.obs2.mesh.load( r'c:\prj\mantaflow_mod\resources\spiral.obj' )
                 s = Vec3( self.res )
@@ -455,7 +455,8 @@ class simulation:
 
                 # obs particles
                 self.obs2.part = self.sol.create( obs_particles )
-                self.obs2.part.create_from_levelset( mesh_phi )
+                #self.obs2.part.create_from_levelset( mesh_phi )
+                self.obs2.part.create_from_mesh( self.obs2.mesh )
 
             # moving obstacle
             if 1:
@@ -511,7 +512,7 @@ class simulation:
 
         # also sets boundary flags for phiObs (and shrinks it)
         if self.obs.exists or self.obs2.exists:
-            if 1:
+            if 1: # imprecise
                 setObstacleFlags( flags=self.flags, phiObs=self.phiObs )
             else:
                 updateFractions( flags=self.flags, phiObs=self.phiObs, fractions=fractions, boundaryWidth=self.boundary_width )
@@ -809,6 +810,7 @@ class simulation:
                 mode = 1
             for i in range( mode ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
+            gui.nextMesh()
 
             # field
             gui.setRealGridDisplay( 0 ) # 0:none, 1:volume
@@ -971,7 +973,7 @@ class simulation:
 
                 maxVel = self.vel.getMaxAbs()
                 print( '  - vel.MaxAbs=%0.2f' % maxVel )
-                if maxVel > 40: # 40
+                if maxVel > 30: # 30
                     b_bad_pressure = 1
                     warn( 'velocity blew up; fixing vel' )
                     self.vel.clear()
@@ -997,6 +999,7 @@ class simulation:
             # advect particles
             self.pp.advectInGrid( flags=self.flags, vel=self.vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
             if 1 and not self.b_fixed_vol and not self.b_correct21:
+                print( '- pushOutofObs' )
                 pushOutofObs( parts=self.pp, flags=self.flags, phiObs=self.phiObs ) # creates issues for correct21 and fixedVol; can push particles into walls
             # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5; it makes it worse for fixed_vol
             if 1 and not self.b_fixed_vol:
@@ -1012,7 +1015,7 @@ class simulation:
             include_walls = false
             obs_naive = 0
             obs_stop = 0
-            print( f'  - obs_naive={obs_naive}' )
+            print( f'- obs_naive={obs_naive}' )
             if self.b_fixed_vol:
                 self.phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
                 #self.phi.printGrid()
