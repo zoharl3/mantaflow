@@ -25,6 +25,7 @@ namespace Manta {
 GLWidget::GLWidget(QWidget* p): QGLWidget(QGLFormat(QGL::SampleBuffers), p), mRotX(0), mRotY(0), mGridsize(0), mScreenshotNumber(0),
 		mWidth(800), mHeight(600)
 {
+    m_b2D = false;
 	mPlaneDim = 2; // Y plane
 	mPlane = -1;
 	mCamPos = Vec3(0, 0, -1.5);
@@ -94,15 +95,26 @@ void GLWidget::resizeGL(int w, int h)
 	glViewport(0, 0, (GLsizei) w, (GLsizei) h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	GLfloat fov = 45;
-	GLfloat zNear = 0.05f;
-	GLfloat zFar = 100.0f;
-	GLfloat aspect = float(w)/float(h);
-	GLfloat fH = tan( float(fov / 360.0f * M_PI) ) * zNear;
-	GLfloat fW = fH * aspect;
-	glFrustum( -fW, fW, -fH, fH, zNear, zFar );    
+
+	if ( m_b2D ) {
+        GLfloat fov = 45;
+        GLfloat zNear = 1.3f;
+        GLfloat zFar = 100.0f;
+        GLfloat aspect = float( w ) / float( h );
+        GLfloat fH = tan( float( fov / 360.0f * M_PI ) ) * zNear;
+        GLfloat fW = fH * aspect;
+        glOrtho( -fW, fW, -fH, fH, zNear, zFar );
+    } else {
+        GLfloat fov = 45;
+        GLfloat zNear = 0.05f;
+        GLfloat zFar = 100.0f;
+        GLfloat aspect = float( w ) / float( h );
+        GLfloat fH = tan( float( fov / 360.0f * M_PI ) ) * zNear;
+        GLfloat fW = fH * aspect;
+        glFrustum( -fW, fW, -fH, fH, zNear, zFar );
+    }
+
 	glMatrixMode(GL_MODELVIEW);
-	
 }
 
 void GLWidget::mouseReleaseEvent(QMouseEvent* event) {

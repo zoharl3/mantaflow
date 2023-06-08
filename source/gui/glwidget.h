@@ -52,6 +52,10 @@ public:
         print_cam();
     }
 
+	void set_2D( bool b2D ) {
+		m_b2D = b2D;
+    }
+
 	void setPlane(int plane) { updatePlane(plane); }
 
 public slots:
@@ -85,6 +89,8 @@ protected:
 	
 	int   mScreenshotNumber;
 	int   mWidth, mHeight;
+
+	bool m_b2D;
 };
 
 } // namespace

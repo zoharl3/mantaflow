@@ -237,7 +237,7 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.dim = 2 # 2, 3
+        self.dim = 3 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
@@ -245,7 +245,7 @@ class simulation:
         self.b_fixed_vol = 1
         self.b_correct21 = 0
 
-        self.narrowBand = bool( 0 )
+        self.narrowBand = bool( 1 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
         self.obs_shape = -1 # none:-1 box:0, sphere:1
@@ -455,8 +455,10 @@ class simulation:
 
                 # obs particles
                 self.obs2.part = self.sol.create( obs_particles )
+                tic()
                 #self.obs2.part.create_from_levelset( mesh_phi )
                 self.obs2.part.create_from_mesh( self.obs2.mesh )
+                toc()
 
             # moving obstacle
             if 1:
@@ -810,6 +812,7 @@ class simulation:
 
         if 1 and GUI:
             gui = Gui()
+            gui.set_2D( self.b2D ) # ortho view
 
             # mesh
             mode = 2
@@ -817,7 +820,9 @@ class simulation:
                 mode = 1
             for i in range( mode ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
-            #gui.nextMesh()
+            if self.obs2:
+                gui.setBackgroundMesh( self.obs2.mesh )
+                gui.nextMesh()
 
             # field
             gui.setRealGridDisplay( 0 ) # 0:none, 1:volume

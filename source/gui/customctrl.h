@@ -136,6 +136,9 @@ public:
 	PYTHON() void windowSize(int w, int h);
 	PYTHON() void setPlane(int plane);
 	
+	// zl
+	PYTHON() void set_2D( bool b2D );
+	
 protected:
 	GuiThread* mGuiPtr;
 	MainThread* mMainPtr;

@@ -214,5 +214,8 @@ PbClass* Gui::addControl(PbType t) {
 	return obj;
 }
 
+void Gui::set_2D( bool b2D ) {
+    mGuiPtr->getWindow()->set_2D( b2D );
+}
 
 } // namespace

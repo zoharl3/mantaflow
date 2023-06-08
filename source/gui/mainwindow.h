@@ -70,6 +70,10 @@ public slots:
 	void windowSize(int w, int h);
 	void setPlane(int plane);
 
+	void set_2D( bool b2D ) {
+        mGlWidget->set_2D( b2D );
+    }
+
 signals:
 	void painterEvent(int e, int param=0);    
 	void wakeMain();
