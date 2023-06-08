@@ -237,18 +237,18 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.dim = 3 # 2, 3
+        self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.b_fixed_vol = 1
         self.b_correct21 = 0
 
-        self.narrowBand = bool( 1 )
+        self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
-        self.obs_shape = 0 # none:-1 box:0, sphere:1
+        self.obs_shape = -1 # none:-1 box:0, sphere:1
         self.large_obs = 0 # sets to box
 
         if 0 or self.obs_shape >= 0:
@@ -427,7 +427,7 @@ class simulation:
                 self.scene['type'] = 2 if self.obs.shape == 0 else 3
                 self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
 
-        elif 1: # spiral/tubes
+        elif 1: # spiral
             # water
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.5, 0, 0) ), p1=self.gs*( Vec3(1, 0.7, 1) ) ) # tubes:0.6, spiral:0.4
             self.phi = fluidbox.computeLevelset()
@@ -437,14 +437,14 @@ class simulation:
             if 1:
                 self.obs2.create()
                 #self.obs2.mesh.set_name( '' )
-                #self.obs2.mesh.load( r'c:\prj\mantaflow_mod\resources\tubes.obj' )
                 self.obs2.mesh.load( r'c:\prj\mantaflow_mod\resources\spiral.obj' )
                 s = Vec3( self.res )
                 s.x *= 0.7
                 if self.b2D:
                     s.z = 4
                 self.obs2.mesh.scale( s )
-                self.obs2.mesh.offset( Vec3( 0., 0, -s.z/2 ) )
+                if self.b2D:
+                    self.obs2.mesh.offset( Vec3( 0., 0, -s.z/2 ) )
 
                 mesh_phi = self.sol.create( LevelsetGrid )
                 self.obs2.mesh.computeLevelset( mesh_phi, 2 )
@@ -479,6 +479,9 @@ class simulation:
                 self.obs.vel_vec = Vec3( 0, self.gravity*1, 0 )
                 self.obs.init( shape )
 
+                self.scene['type'] = 4
+                self.scene['name'] = 'spiral'
+
         elif 1: # compress
             # water
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.3, 0, 0) ), p1=self.gs*( Vec3(1, 0.3, 1) ) )
@@ -503,6 +506,9 @@ class simulation:
                 self.obs.force = Vec3( 0, 0, 0 )
                 self.obs.vel_vec = Vec3( 0, self.gravity*1, 0 )
                 self.obs.init( shape )
+
+            self.scene['type'] = 5
+            self.scene['name'] = 'compress'
 
         # common
         #self.phiObs.printGrid()
@@ -974,7 +980,8 @@ class simulation:
 
                 maxVel = self.vel.getMaxAbs()
                 print( '  - vel.MaxAbs=%0.2f' % maxVel )
-                speed_limit = 1.5/self.dt # 1, 1.5
+                #speed_limit = 1/self.dt
+                speed_limit = 21 # there's the splash to consider vs the compressed state
                 if maxVel > speed_limit:
                     if maxVel < 40:
                         print(  f'- scaling vel to speed_limit={speed_limit}' )
@@ -1075,8 +1082,6 @@ class simulation:
             # static obstacle
             if self.obs2.exists and self.obs2.part:
                 ret2 = mark_obstacle( flags=self.flags, obs=self.obs2.part, center=Vec3(0) )
-                if self.b_fixed_vol:
-                    assert( ret2 )
 
             # for narrowBand, before updating phi with the particles
             if self.b_fluid_mesh:
