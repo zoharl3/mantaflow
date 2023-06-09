@@ -237,7 +237,7 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.dim = 3 # 2, 3
+        self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
@@ -245,7 +245,7 @@ class simulation:
         self.b_fixed_vol = 1
         self.b_correct21 = 0
 
-        self.narrowBand = bool( 1 )
+        self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
 
         self.obs_shape = -1 # none:-1 box:0, sphere:1
@@ -863,6 +863,7 @@ class simulation:
         # measure
         f_measure = open( out + '_measure.txt', 'w' )
 
+        ##############################################################
         # loop
         ret = 0
         while 1:
