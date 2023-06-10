@@ -1223,7 +1223,7 @@ if __name__ == '__main__':
     #setDebugLevel( 10 )
 
     # init matlab
-    cmd = "%%close all;\n clear classes; clear java; dbclear all; clear all; pack; jheapcl(0); set(0, 'DefaultFigureWindowState', 'minimized');" + " cd c:/prj/test_data/relative/_tmp;" + " addpath( 'c:/prj/mantaflow_mod' );"
+    cmd = "%%close all;\n clear classes; clear java; dbclear all; clear all; pack; jheapcl(0); set(0, 'DefaultFigureWindowState', 'minimized');" + " cd c:/prj/test_data/relative/_tmp;" + " addpath( 'c:/prj/mantaflow_mod/matlab', 'c:/prj/fluid/matlab' );"
     matlab_eval( cmd )
             
     # test
