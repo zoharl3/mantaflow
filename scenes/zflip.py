@@ -225,6 +225,9 @@ class mesh_generator:
         fname = out + 'surface_%04d.bobj.gz' % it
         self.mesh.save( fname )
 
+# methods
+FLIP, FIXED_VOL, CORRECT21, DE_GOES22 = range( 4 )
+
 class simulation:
     def __init__( self ):
         # flags
@@ -240,10 +243,10 @@ class simulation:
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 32 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.b_fixed_vol = 1
-        self.b_correct21 = 0
+        # method
+        self.method = 0
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -305,7 +308,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 0: # dam
+        if 1: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -546,7 +549,7 @@ class simulation:
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
                 emphasize( '  - obstacle position is invalid; stopping the obstacle' )
-                assert( not self.b_fixed_vol or obs_naive )
+                assert( self.method != FIXED_VOL or obs_naive )
                 obs_stop = 1
 
         self.obs.increase_vel = 1
@@ -621,7 +624,7 @@ class simulation:
                     dv = self.sol.timestep * self.obs.force
                     self.obs.vel_vec += dv
                     max_y_speed = 7*self.gravity # 7, 10
-                    if self.b_fixed_vol and self.obs.vel_vec.y < max_y_speed:
+                    if self.method == FIXED_VOL and self.obs.vel_vec.y < max_y_speed:
                         print( f'    - limiting speed to {max_y_speed}' )
                         self.obs.vel_vec.y = max_y_speed
             else: # stay
@@ -641,7 +644,7 @@ class simulation:
                 self.splash = 0 # instantaneous
                 splash_scale = 1
                 if self.dim == 3:
-                    if self.b_fixed_vol:
+                    if self.method == FIXED_VOL:
                         splash_scale = 3
                         if self.obs.shape == 1: 
                             splash_scale *= 1.5
@@ -686,7 +689,7 @@ class simulation:
         if 1:
             self.flags.clear_obstacle()
             ret2 = mark_obstacle( flags=self.flags, obs=self.obs.part, center=self.obs.center )
-            if self.b_fixed_vol:
+            if self.method == FIXED_VOL:
                 assert( ret2 )
         elif 0:
             setObstacleFlags( flags=self.flags, phiObs=self.phiObs )
@@ -703,8 +706,7 @@ class simulation:
             self.obs.file.flush()
 
     def main( self ):
-        if self.b_correct21:
-            self.b_fixed_vol = 0
+        if self.method == CORRECT21:
             self.narrowBand = bool( 0 )
 
         combineBandWidth = self.narrowBandWidth - 1
@@ -743,7 +745,7 @@ class simulation:
         print()
         print( 'dim:', self.dim, ', res:', self.res, ', ppc:', ppc )
         print( 'narrowBand:', self.narrowBand, ', narrowBandWidth:', self.narrowBandWidth )
-        print( 'b_fixed_vol:', self.b_fixed_vol )
+        print( 'method:', self.method )
         print( 'gravity: %0.02f' % self.gravity )
         print( 'timestep:', self.dt )
 
@@ -769,9 +771,9 @@ class simulation:
         # create dir
         name = '[%d,%d,%d]' % ( self.gs.x, self.gs.y, self.gs.z )
 
-        if self.b_correct21:
+        if self.method == CORRECT21:
             name += ' cor21'
-        elif self.b_fixed_vol:
+        elif self.method == FIXED_VOL:
             if not self.narrowBand:
                 name += ' full'
         else:
@@ -820,7 +822,7 @@ class simulation:
                 mode = 1
             for i in range( mode ):
                 gui.nextMeshDisplay() # 0:full, 1:hide, 2:x-ray
-            if self.obs2:
+            if self.obs2.exists:
                 gui.setBackgroundMesh( self.obs2.mesh )
                 gui.nextMesh()
 
@@ -925,7 +927,7 @@ class simulation:
                 V0 = float( self.pp.pySize() ) / ppc # update volume
 
             # update flags; there's also flags.updateFromLevelset()
-            if not self.b_fixed_vol or it == 0:
+            if self.method != FIXED_VOL or it == 0:
                 #self.flags.printGrid()
                 print( '- markFluidCells (update flags)' )
                 markFluidCells( parts=self.pp, flags=self.flags ) # marks deep in narrowBand as empty; better for a moving obstacle?
@@ -1017,11 +1019,11 @@ class simulation:
             print( '- advect' )
             # advect particles
             self.pp.advectInGrid( flags=self.flags, vel=self.vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
-            if 1 and not self.b_fixed_vol and not self.b_correct21:
+            if 1 and self.method != FIXED_VOL and self.method != CORRECT21:
                 print( '- pushOutofObs' )
                 pushOutofObs( parts=self.pp, flags=self.flags, phiObs=self.phiObs ) # creates issues for correct21 and fixedVol; can push particles into walls
             # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5; it makes it worse for fixed_vol
-            if 1 and not self.b_fixed_vol:
+            if 1 and self.method != FIXED_VOL:
                 advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.phi, order=1 )
                 if 0:
                     self.flags.updateFromLevelset( self.phi ) # creates in 3D an extra layer of fluid without particles
@@ -1035,7 +1037,7 @@ class simulation:
             obs_naive = 0
             obs_stop = 0
             print( f'- obs_naive={obs_naive}' )
-            if self.b_fixed_vol:
+            if self.method == FIXED_VOL:
                 self.phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
                 #self.phi.printGrid()
 
@@ -1074,7 +1076,7 @@ class simulation:
             #self.flags.printGrid()
 
             # correct21
-            if self.b_correct21:
+            if self.method == CORRECT21:
                 if b_bad_pressure:
                     warn( "skipping correct21 due to bad pressure" )
                 else:
@@ -1108,7 +1110,7 @@ class simulation:
                     extrapolateLsSimple( phi=self.phi, distance=4, inside=True, include_walls=include_walls ) # 4
 
             # resample particles
-            if not self.b_fixed_vol:
+            if self.method != FIXED_VOL:
                 pVel.setSource( self.vel, isMAC=True ) # set source grids for resampling, used in adjustNumber
                 minParticles = ppc
                 maxParticles = 2*minParticles # 2, 1(exacerbates artifact in flip5 dam 128?)
@@ -1121,7 +1123,7 @@ class simulation:
                     adjustNumber( parts=self.pp, vel=self.vel, flags=self.flags, minParticles=minParticles, maxParticles=maxParticles, phi=self.phi, exclude=self.phiObs ) 
 
             # update and mark surface for measure
-            if not self.b_fixed_vol:
+            if self.method != FIXED_VOL:
                 print( '- markFluidCells (update flags)' )
                 markFluidCells( parts=self.pp, flags=self.flags )
                 self.flags.mark_surface()
