@@ -226,16 +226,17 @@ class mesh_generator:
         self.mesh.save( fname )
 
 # methods
+# 0       1          2          3
 FLIP, FIXED_VOL, CORRECT21, DE_GOES22 = range( 4 )
 
 class simulation:
     def __init__( self ):
         # flags
-        self.bScreenShot = 1
-        self.b_fluid_mesh       = 1
-        self.bSaveMesh   = 1 # .bobj.gz
-        self.bSaveVDB    = 0 # .vdb
-        self.bSaveUni    = 0 # .uni
+        self.bScreenShot  = 1
+        self.b_fluid_mesh = 1
+        self.bSaveMesh    = 1 # .bobj.gz
+        self.bSaveVDB     = 0 # .vdb
+        self.bSaveUni     = 0 # .uni
         if not self.b_fluid_mesh:
             self.bSaveMesh = 0
 
@@ -246,7 +247,7 @@ class simulation:
         self.res = 32 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         # method
-        self.method = 0
+        self.method = 3
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -274,6 +275,11 @@ class simulation:
         self.max_gs = max( [self.gs.x, self.gs.y, self.gs.z] )
 
         self.b2D = self.dim == 2
+
+        if 0: # sample in 1D; it also requires changing sampleLevelsetWithParticles()
+            self.ppc = self.part_per_cell_1d
+        else:
+            self.ppc = self.part_per_cell_1d**self.dim
 
         if self.dim == 2:
             self.gs.z = 1
@@ -530,6 +536,46 @@ class simulation:
                 setObstacleFlags( flags=self.flags, phiObs=self.phiObs, fractions=fractions )
         #self.phi.printGrid()
 
+    # fixed volume (my scheme)
+    def fixed_volume( self, pVel, obs_naive, include_walls, ret, it2, bfs ):
+        self.phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
+        #self.phi.printGrid()
+
+        pVel.setSource( self.vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()
+
+        dt_bound = 0
+        #dt_bound = dt/4
+        #dt_bound = self.sol.timestep/4
+        #dt_bound = max( dt_bound, dt/4 )
+
+        obs_vel_vec3 = Vec3(0) 
+        if not obs_naive and self.obs.exists:
+            obs_vel_vec3 = self.obs.vel_vec
+        obsp = None
+        if self.obs.exists:
+            obsp = self.obs.part
+            obsp.update_center( self.obs.center )
+
+        # obs_vel: it modifies it to either one or zero cell distance, staying in place and losing velocity (unlike particles)
+        
+        ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=self.ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs=obsp, obs_vel=obs_vel_vec3 )
+
+        if not ret2:
+            ret = -1
+        else:
+            self.sol.timestep = ret2[0]
+            if self.sol.timestep < 0:
+                ret = -1
+                self.sol.timestep = abs( self.sol.timestep )
+            if not obs_naive:
+                obs_stop = ret2[1]
+
+        # if using band
+        if 0 and self.narrowBand:
+            include_walls = true
+
+        return [ ret, obs_stop, include_walls ]
+
     def update_obstacle( self, obs_naive, obs_stop, it ):
         print( '- update_obstacle()' )
         # limit dt to one-cell movement
@@ -714,11 +760,6 @@ class simulation:
         if 0 or self.dim == 2:
             set_print_2D( True )
 
-        if 0: # sample 1D; requires changing sampleLevelsetWithParticles()
-            ppc = self.part_per_cell_1d
-        else:
-            ppc = self.part_per_cell_1d**self.dim
-
         vel2 = self.sol.create(MACGrid)
         velOld = self.sol.create(MACGrid)
         velParts = self.sol.create(MACGrid)
@@ -743,7 +784,7 @@ class simulation:
 
         # info
         print()
-        print( 'dim:', self.dim, ', res:', self.res, ', ppc:', ppc )
+        print( 'dim:', self.dim, ', res:', self.res, ', ppc:', self.ppc )
         print( 'narrowBand:', self.narrowBand, ', narrowBandWidth:', self.narrowBandWidth )
         print( 'method:', self.method )
         print( 'gravity: %0.02f' % self.gravity )
@@ -790,13 +831,13 @@ class simulation:
         radiusFactor = 1.0
 
         np = self.pp.pySize()
-        V0 = float( np ) / ppc
+        V0 = float( np ) / self.ppc
         #np_max = 2*np % for emitter
-        np_max = ppc * (self.res-2)**self.dim * 0.5
+        np_max = self.ppc * (self.res-2)**self.dim * 0.5
         print( f'# particles: {np}, np_max={np_max}' )
 
-        # phi is influenced by the walls for some reason
         # create a level set from particles
+        # phi is influenced by the walls for some reason
         gridParticleIndex( parts=self.pp, flags=self.flags, indexSys=pindex, index=gpi )
         unionParticleLevelset( self.pp, pindex, self.flags, gpi, phiParts, radiusFactor )
         self.phi.copyFrom( phiParts )
@@ -892,25 +933,6 @@ class simulation:
             else: # adaptive for flip5
                 self.sol.adaptTimestep( maxVel )
 
-            # map particle velocities to grid
-            print( '- mapPartsToMAC' )
-            if 1 and self.narrowBand:
-                # combine particles velocities with advected grid velocities; stores mapWeights; saves velOld
-                mapPartsToMAC( vel=velParts, flags=self.flags, velOld=velOld, parts=self.pp, partVel=pVel, weight=mapWeights )
-                # extrapolate velocities throughout the liquid region
-                extrapolateMACFromWeight( vel=velParts , distance=2, weight=mapWeights )
-                #vel.printGrid()
-                #velParts.printGrid()
-                combineGridVel( vel=velParts, weight=mapWeights, combineVel=self.vel, phi=self.phi, narrowBand=combineBandWidth, thresh=0 )
-                #limit_velocity( vel, pVel, 256 ) # 64:15, 128:?
-                velOld.copyFrom( self.vel ) # save before forces and pressure; like the end of mapPartsToMAC()
-                #print( '>> combine' )
-                #vel.printGrid()
-            elif 1:
-                # map particle velocities to grid
-                mapPartsToMAC( vel=self.vel, flags=self.flags, velOld=velOld, parts=self.pp, partVel=pVel, weight=mapWeights )
-                extrapolateMACFromWeight( vel=self.vel , distance=2, weight=mapWeights )
-
             # emit
             if 0 and self.pp.pySize() < np_max:
                 xi = self.gs * Vec3( 0.5, 0.9, 0.5 )
@@ -924,203 +946,193 @@ class simulation:
                         emit_particles( self.pp, pVel, self.flags, self.part_per_cell_1d, xi + Vec3(i, 0, j), v )
                         if self.dim == 2:
                             break
-                V0 = float( self.pp.pySize() ) / ppc # update volume
+                V0 = float( self.pp.pySize() ) / self.ppc # update volume
 
-            # update flags; there's also flags.updateFromLevelset()
-            if self.method != FIXED_VOL or it == 0:
-                #self.flags.printGrid()
-                print( '- markFluidCells (update flags)' )
-                markFluidCells( parts=self.pp, flags=self.flags ) # marks deep in narrowBand as empty; better for a moving obstacle?
-                #markFluidCells( parts=self.pp, flags=self.flags, phiObs=self.phiObs )
-                if self.narrowBand:
-                    update_fluid_from_phi( flags=self.flags, phi=self.phi, band_width=self.narrowBandWidth )
-                #self.flags.printGrid()
-
-            #self.vel.printGrid()
-            #self.flags.printGrid()
-            # forces
-            if 1:
-                print( '- forces' )
-                
-                # gravity
-                if 1:
-                    bscale = 0 # 1:adaptive to grid size; flip5
-                    g =  self.gravity*self.sol.timestep/1 # see addGravity(); assuming sol.mDt=1
-                    #g =  self.gravity
-                    addGravity( flags=self.flags, vel=self.vel, gravity=(0, g, 0), scale=bool(bscale) )
-
-                # vortex
-                if 0:
-                    #c = gs/2
-                    c = Vec3( res/2, 0.3*res, res/2 )
-                    vortex( pp=self.pp, dt=s.timestep, c=c, rad=0.1*res, h=0.9*res, pVel=pVel2 )
-                    mapPartsToMAC( vel=vel2, flags=self.flags, velOld=vel2, parts=self.pp, partVel=pVel2 )
-                    self.vel.add( vel2 )
-
-            # set velocity for obstacles
-            # there used to be another setWallBcs after the pressure solve, but it's not necessary: these are boundary conditions (must hold)
-            print( '- set wall boundary conditions' )
-            #self.obs.vel.printGrid()
-            #self.vel.printGrid()
-
-            #setWallBcs( flags=self.flags, vel=self.vel )
-            #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions )
-            #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions, phiObs=self.phiObs, obvel=self.obs.vel ) # calls KnSetWallBcsFrac, which doesn't work?
-            #setWallBcs( flags=self.flags, vel=self.vel, obvel=self.obs.vel ) # calls KnSetWallBcs
-            set_wall_bcs2( flags=self.flags, vel=self.vel, obvel=self.obs.vel )
-
-            if self.obs2.exists:
-                self.obs2.set_wall_bcs( self.flags, self.vel )
-
-            #self.vel.printGrid()
-            #self.flags.printGrid()
-
-            # pressure solve
-            b_bad_pressure = 0
-            if 1:
-                print( '- pressure' )
+            if self.method == DE_GOES22:
                 tic()
-                # Solving Poisson eq for the pressure, with Neumann BC on walls (given as velocity, where u = \nabla p) and Dirichlet on empty cells (p=0).
-                # If there's fluid caged in a solid with no empty cells, then there are only Neumann conditions. Then, need to fix one pressure cell (Dirichlet) to eliminate DOF. Setting the flag zeroPressureFixing won't help if there are empty cells in other parts of the domain.
-                solvePressure( flags=self.flags, vel=self.vel, pressure=pressure, phi=self.phi )
-                print( '  (pressure) ', end='' )
+                de_goes22( self.dt, self.res, self.part_per_cell_1d, self.gravity, it2, self.pp, pVel )
                 toc()
+            else:
+                # map particle velocities to grid
+                print( '- mapPartsToMAC' )
+                if 1 and self.narrowBand:
+                    # combine particles velocities with advected grid velocities; stores mapWeights; saves velOld
+                    mapPartsToMAC( vel=velParts, flags=self.flags, velOld=velOld, parts=self.pp, partVel=pVel, weight=mapWeights )
+                    # extrapolate velocities throughout the liquid region
+                    extrapolateMACFromWeight( vel=velParts , distance=2, weight=mapWeights )
+                    #vel.printGrid()
+                    #velParts.printGrid()
+                    combineGridVel( vel=velParts, weight=mapWeights, combineVel=self.vel, phi=self.phi, narrowBand=combineBandWidth, thresh=0 )
+                    #limit_velocity( vel, pVel, 256 ) # 64:15, 128:?
+                    velOld.copyFrom( self.vel ) # save before forces and pressure; like the end of mapPartsToMAC()
+                    #print( '>> combine' )
+                    #vel.printGrid()
+                elif 1:
+                    # map particle velocities to grid
+                    mapPartsToMAC( vel=self.vel, flags=self.flags, velOld=velOld, parts=self.pp, partVel=pVel, weight=mapWeights )
+                    extrapolateMACFromWeight( vel=self.vel , distance=2, weight=mapWeights )
 
-                maxVel = self.vel.getMaxAbs()
-                print( '  - vel.MaxAbs=%0.2f' % maxVel )
-                #speed_limit = 1/self.dt
-                speed_limit = 21 # there's the obs splash to consider vs the compressed scenes
-                if maxVel > speed_limit:
-                    if maxVel < 40:
-                        print(  f'- scaling vel to speed_limit={speed_limit}' )
-                        self.vel.multConst( Vec3(speed_limit/maxVel) )
-                    else:
-                        b_bad_pressure = 1
-                        warn( 'velocity blew up; fixing vel' )
-                        self.vel.clear()
-                        #self.vel.copyFrom( velOld )
+                # update flags; there's also flags.updateFromLevelset()
+                if self.method != FIXED_VOL or it == 0:
+                    #self.flags.printGrid()
+                    print( '- markFluidCells (update flags)' )
+                    markFluidCells( parts=self.pp, flags=self.flags ) # marks deep in narrowBand as empty; better for a moving obstacle?
+                    #markFluidCells( parts=self.pp, flags=self.flags, phiObs=self.phiObs )
+                    if self.narrowBand:
+                        update_fluid_from_phi( flags=self.flags, phi=self.phi, band_width=self.narrowBandWidth )
+                    #self.flags.printGrid()
 
-            dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
-            print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
-            extrapolateMACSimple( flags=self.flags, vel=self.vel, distance=dist, intoObs=False )
-            #self.flags.printGrid()
-            #self.vel.printGrid()
+                #self.vel.printGrid()
+                #self.flags.printGrid()
+                # forces
+                if 1:
+                    print( '- forces' )
+                    
+                    # gravity
+                    if 1:
+                        bscale = 0 # 1:adaptive to grid size; flip5
+                        g =  self.gravity*self.sol.timestep/1 # see addGravity(); assuming sol.mDt=1
+                        #g =  self.gravity
+                        addGravity( flags=self.flags, vel=self.vel, gravity=(0, g, 0), scale=bool(bscale) )
 
-            print( '- set particles\' pos0' )
-            set_particles_pos0( pp=self.pp )
+                    # vortex
+                    if 0:
+                        #c = gs/2
+                        c = Vec3( res/2, 0.3*res, res/2 )
+                        vortex( pp=self.pp, dt=s.timestep, c=c, rad=0.1*res, h=0.9*res, pVel=pVel2 )
+                        mapPartsToMAC( vel=vel2, flags=self.flags, velOld=vel2, parts=self.pp, partVel=pVel2 )
+                        self.vel.add( vel2 )
 
-            # FLIP velocity update
-            print( '- FLIP velocity update' )
-            alpha = .1 # 0, .1
-            flipVelocityUpdate( vel=self.vel, velOld=velOld, flags=self.flags, parts=self.pp, partVel=pVel, flipRatio=1 - alpha )
-            #self.vel.printGrid()
-            
-            # advect
-            print( '- advect' )
-            # advect particles
-            self.pp.advectInGrid( flags=self.flags, vel=self.vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
-            if 1 and self.method != FIXED_VOL and self.method != CORRECT21:
-                print( '- pushOutofObs' )
-                pushOutofObs( parts=self.pp, flags=self.flags, phiObs=self.phiObs ) # creates issues for correct21 and fixedVol; can push particles into walls
-            # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5; it makes it worse for fixed_vol
-            if 1 and self.method != FIXED_VOL:
-                advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.phi, order=1 )
-                if 0:
-                    self.flags.updateFromLevelset( self.phi ) # creates in 3D an extra layer of fluid without particles
-            # advect grid velocity
-            if self.narrowBand:
-                advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.vel, order=2 )
+                # set velocity for obstacles
+                # there used to be another setWallBcs after the pressure solve, but it's not necessary: these are boundary conditions (must hold)
+                print( '- set wall boundary conditions' )
+                #self.obs.vel.printGrid()
+                #self.vel.printGrid()
 
-            # fixed volume (my scheme)
-            #self.flags.printGrid()
-            include_walls = false
-            obs_naive = 0
-            obs_stop = 0
-            print( f'- obs_naive={obs_naive}' )
-            if self.method == FIXED_VOL:
-                self.phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
-                #self.phi.printGrid()
+                #setWallBcs( flags=self.flags, vel=self.vel )
+                #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions )
+                #setWallBcs( flags=self.flags, vel=self.vel, fractions=fractions, phiObs=self.phiObs, obvel=self.obs.vel ) # calls KnSetWallBcsFrac, which doesn't work?
+                #setWallBcs( flags=self.flags, vel=self.vel, obvel=self.obs.vel ) # calls KnSetWallBcs
+                set_wall_bcs2( flags=self.flags, vel=self.vel, obvel=self.obs.vel )
 
-                pVel.setSource( self.vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()
+                if self.obs2.exists:
+                    self.obs2.set_wall_bcs( self.flags, self.vel )
 
-                dt_bound = 0
-                #dt_bound = dt/4
-                #dt_bound = self.sol.timestep/4
-                #dt_bound = max( dt_bound, dt/4 )
+                #self.vel.printGrid()
+                #self.flags.printGrid()
 
-                obs_vel_vec3 = Vec3(0) 
-                if not obs_naive and self.obs.exists:
-                    obs_vel_vec3 = self.obs.vel_vec
-                obsp = None
-                if self.obs.exists:
-                    obsp = self.obs.part
-                    obsp.update_center( self.obs.center )
+                # pressure solve
+                b_bad_pressure = 0
+                if 1:
+                    print( '- pressure' )
+                    tic()
+                    # Solving Poisson eq for the pressure, with Neumann BC on walls (given as velocity, where u = \nabla p) and Dirichlet on empty cells (p=0).
+                    # If there's fluid caged in a solid with no empty cells, then there are only Neumann conditions. Then, need to fix one pressure cell (Dirichlet) to eliminate DOF. Setting the flag zeroPressureFixing won't help if there are empty cells in other parts of the domain.
+                    solvePressure( flags=self.flags, vel=self.vel, pressure=pressure, phi=self.phi )
+                    print( '  (pressure) ', end='' )
+                    toc()
 
-                # obs_vel: it modifies it to either one or zero cell distance, staying in place and losing velocity (unlike particles)
+                    maxVel = self.vel.getMaxAbs()
+                    print( '  - vel.MaxAbs=%0.2f' % maxVel )
+                    #speed_limit = 1/self.dt
+                    speed_limit = 21 # there's the obs splash to consider vs the compressed scenes
+                    if maxVel > speed_limit:
+                        if maxVel < 40:
+                            print(  f'- scaling vel to speed_limit={speed_limit}' )
+                            self.vel.multConst( Vec3(speed_limit/maxVel) )
+                        else:
+                            b_bad_pressure = 1
+                            warn( 'velocity blew up; fixing vel' )
+                            self.vel.clear()
+                            #self.vel.copyFrom( velOld )
+
+                dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
+                print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
+                extrapolateMACSimple( flags=self.flags, vel=self.vel, distance=dist, intoObs=False )
+                #self.flags.printGrid()
+                #self.vel.printGrid()
+
+                print( '- set particles\' pos0' )
+                set_particles_pos0( pp=self.pp )
+
+                # FLIP velocity update
+                print( '- FLIP velocity update' )
+                alpha = .1 # 0, .1
+                flipVelocityUpdate( vel=self.vel, velOld=velOld, flags=self.flags, parts=self.pp, partVel=pVel, flipRatio=1 - alpha )
+                #self.vel.printGrid()
                 
-                ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs=obsp, obs_vel=obs_vel_vec3 )
-
-                if not ret2:
-                    ret = -1
-                else:
-                    self.sol.timestep = ret2[0]
-                    if self.sol.timestep < 0:
-                        ret = -1
-                        self.sol.timestep = abs( self.sol.timestep )
-                    if not obs_naive:
-                        obs_stop = ret2[1]
-
-                # if using band
-                if 0 and self.narrowBand:
-                    include_walls = true
-            #self.flags.printGrid()
-
-            # correct21
-            if self.method == CORRECT21:
-                if b_bad_pressure:
-                    warn( "skipping correct21 due to bad pressure" )
-                else:
-                    correct21.main( self.sol, self.flags, self.pp, self.vel, pindex, gpi, self.phiObs )
-            
-            # moving obstacle
-            if self.obs.exists:
-                self.update_obstacle( obs_naive, obs_stop, it )
-                self.move_obstacle()
-
-            # static obstacle
-            if self.obs2.exists and self.obs2.part:
-                ret2 = mark_obstacle( flags=self.flags, obs=self.obs2.part, center=Vec3(0) )
-
-            # for narrowBand, before updating phi with the particles
-            if self.b_fluid_mesh:
-                mesh_gen.update_phi( self.phi )
-
-            # create level set from particles
-            if 1:
-                gridParticleIndex( parts=self.pp, flags=self.flags, indexSys=pindex, index=gpi )
-                unionParticleLevelset( self.pp, pindex, self.flags, gpi, phiParts, radiusFactor ) 
+                # advect
+                print( '- advect' )
+                # advect particles
+                self.pp.advectInGrid( flags=self.flags, vel=self.vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
+                if 1 and self.method != FIXED_VOL and self.method != CORRECT21:
+                    print( '- pushOutofObs' )
+                    pushOutofObs( parts=self.pp, flags=self.flags, phiObs=self.phiObs ) # creates issues for correct21 and fixedVol; can push particles into walls
+                # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5; it makes it worse for fixed_vol
+                if 1 and self.method != FIXED_VOL:
+                    advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.phi, order=1 )
+                    if 0:
+                        self.flags.updateFromLevelset( self.phi ) # creates in 3D an extra layer of fluid without particles
+                # advect grid velocity
                 if self.narrowBand:
-                    # combine level set of particles with grid level set
-                    self.phi.addConst( 1. ) # shrink slightly
-                    self.phi.join( phiParts )
-                    extrapolateLsSimple( phi=self.phi, distance=self.narrowBandWidth+2, inside=True, include_walls=include_walls )
-                else:
-                    # overwrite grid level set with level set of particles
-                    self.phi.copyFrom( phiParts )
-                    extrapolateLsSimple( phi=self.phi, distance=4, inside=True, include_walls=include_walls ) # 4
+                    advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.vel, order=2 )
 
-            # resample particles
-            if self.method != FIXED_VOL:
-                pVel.setSource( self.vel, isMAC=True ) # set source grids for resampling, used in adjustNumber
-                minParticles = ppc
-                maxParticles = 2*minParticles # 2, 1(exacerbates artifact in flip5 dam 128?)
-                if self.narrowBand:
-                    self.phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
-                    #self.phi.printGrid()
-                    # vel is used only to get the parent
-                    adjustNumber( parts=self.pp, vel=self.vel, flags=self.flags, minParticles=minParticles, maxParticles=maxParticles, phi=self.phi, narrowBand=self.narrowBandWidth, exclude=self.phiObs ) 
-                elif 0:
-                    adjustNumber( parts=self.pp, vel=self.vel, flags=self.flags, minParticles=minParticles, maxParticles=maxParticles, phi=self.phi, exclude=self.phiObs ) 
+                #self.flags.printGrid()
+                include_walls = false
+                obs_naive = 0
+                obs_stop = 0
+                print( f'- obs_naive={obs_naive}' )
+                # fixed volume (my scheme)
+                if self.method == FIXED_VOL:
+                    [ ret, obs_stop, include_walls ] = self.fixed_volume( pVel, obs_naive, include_walls, ret, it2, bfs )
+                #self.flags.printGrid()
+
+                # correct21
+                if self.method == CORRECT21:
+                    if b_bad_pressure:
+                        warn( "skipping correct21 due to bad pressure" )
+                    else:
+                        correct21.main( self.sol, self.flags, self.pp, self.vel, pindex, gpi, self.phiObs )
+                
+                # moving obstacle
+                if self.obs.exists:
+                    self.update_obstacle( obs_naive, obs_stop, it )
+                    self.move_obstacle()
+
+                # static obstacle
+                if self.obs2.exists and self.obs2.part:
+                    ret2 = mark_obstacle( flags=self.flags, obs=self.obs2.part, center=Vec3(0) )
+
+                # for narrowBand, before updating phi with the particles
+                if self.b_fluid_mesh:
+                    mesh_gen.update_phi( self.phi )
+
+                # create level set from particles
+                if 1:
+                    gridParticleIndex( parts=self.pp, flags=self.flags, indexSys=pindex, index=gpi )
+                    unionParticleLevelset( self.pp, pindex, self.flags, gpi, phiParts, radiusFactor ) 
+                    if self.narrowBand:
+                        # combine level set of particles with grid level set
+                        self.phi.addConst( 1. ) # shrink slightly
+                        self.phi.join( phiParts )
+                        extrapolateLsSimple( phi=self.phi, distance=self.narrowBandWidth+2, inside=True, include_walls=include_walls )
+                    else:
+                        # overwrite grid level set with level set of particles
+                        self.phi.copyFrom( phiParts )
+                        extrapolateLsSimple( phi=self.phi, distance=4, inside=True, include_walls=include_walls ) # 4
+
+                # resample particles
+                if self.method != FIXED_VOL:
+                    pVel.setSource( self.vel, isMAC=True ) # set source grids for resampling, used in adjustNumber
+                    minParticles = self.ppc
+                    maxParticles = 2*minParticles # 2, 1(exacerbates artifact in flip5 dam 128?)
+                    if self.narrowBand:
+                        self.phi.setBoundNeumann( 0 ) # make sure no particles are placed at outer boundary
+                        #self.phi.printGrid()
+                        # vel is used only to get the parent
+                        adjustNumber( parts=self.pp, vel=self.vel, flags=self.flags, minParticles=minParticles, maxParticles=maxParticles, phi=self.phi, narrowBand=self.narrowBandWidth, exclude=self.phiObs ) 
+                    elif 0:
+                        adjustNumber( parts=self.pp, vel=self.vel, flags=self.flags, minParticles=minParticles, maxParticles=maxParticles, phi=self.phi, exclude=self.phiObs ) 
 
             # update and mark surface for measure
             if self.method != FIXED_VOL:
@@ -1132,7 +1144,7 @@ class simulation:
 
             # measure
             if 1:
-                m = measure( self.pp, pVel, self.flags, self.gravity, ppc, V0, volume )
+                m = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
                 f_measure.write( f'{m[0]}\n' )
                 f_measure.flush()
                 #self.flags.printGrid()
