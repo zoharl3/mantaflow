@@ -987,7 +987,7 @@ class simulation:
                 maxVel = self.vel.getMaxAbs()
                 print( '  - vel.MaxAbs=%0.2f' % maxVel )
                 #speed_limit = 1/self.dt
-                speed_limit = 21 # there's the splash to consider vs the compressed state
+                speed_limit = 21 # there's the obs splash to consider vs the compressed scenes
                 if maxVel > speed_limit:
                     if maxVel < 40:
                         print(  f'- scaling vel to speed_limit={speed_limit}' )
