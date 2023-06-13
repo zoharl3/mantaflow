@@ -244,7 +244,7 @@ class simulation:
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
         self.it_max = 2400 # 300, 500, 1200, 1400, 2400
-        self.res = 32 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         # method
         self.method = 3
@@ -812,13 +812,17 @@ class simulation:
         # create dir
         name = '[%d,%d,%d]' % ( self.gs.x, self.gs.y, self.gs.z )
 
-        if self.method == CORRECT21:
-            name += ' cor21'
+        if self.method == FLIP:
+            name += ' flip'
         elif self.method == FIXED_VOL:
             if not self.narrowBand:
                 name += ' full'
+        if self.method == CORRECT21:
+            name += ' cor21'
+        if self.method == DE_GOES22:
+            name += ' deGoes22'
         else:
-            name += ' flip'
+            name += ' unknown'
         
         if self.narrowBand:
             name += f' band{self.narrowBandWidth}'
@@ -949,6 +953,7 @@ class simulation:
                 V0 = float( self.pp.pySize() ) / self.ppc # update volume
 
             if self.method == DE_GOES22:
+                assert( self.b2D )
                 tic()
                 de_goes22( self.dt, self.res, self.part_per_cell_1d, self.gravity, it2, self.pp, pVel )
                 toc()
@@ -1057,7 +1062,7 @@ class simulation:
 
                 # FLIP velocity update
                 print( '- FLIP velocity update' )
-                alpha = .1 # 0, .1
+                alpha = 0.1 # 0, .1
                 flipVelocityUpdate( vel=self.vel, velOld=velOld, flags=self.flags, parts=self.pp, partVel=pVel, flipRatio=1 - alpha )
                 #self.vel.printGrid()
                 
@@ -1165,8 +1170,6 @@ class simulation:
                 #self.pp.printParts()
                 #self.pp.writeParticlesText( out + 'particles_%04d.txt' % it )
             
-            print( '(iteration) ', end='' )
-
             # step; updates gui and when pause takes place
             print( '- step (%g)' % it )
             self.sol.step( int(it) )
