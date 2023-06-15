@@ -243,7 +243,7 @@ class simulation:
         # params
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.it_max = 2400 # 300, 500, 1200, 1400, 2400
+        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         # method
@@ -817,9 +817,9 @@ class simulation:
         elif self.method == FIXED_VOL:
             if not self.narrowBand:
                 name += ' full'
-        if self.method == CORRECT21:
+        elif self.method == CORRECT21:
             name += ' cor21'
-        if self.method == DE_GOES22:
+        elif self.method == DE_GOES22:
             name += ' deGoes22'
         else:
             name += ' unknown'
@@ -957,6 +957,8 @@ class simulation:
                 tic()
                 de_goes22( self.dt, self.res, self.part_per_cell_1d, self.gravity, it2, self.pp, pVel )
                 toc()
+
+            # the rest of the methods
             else:
                 # map particle velocities to grid
                 print( '- mapPartsToMAC' )
