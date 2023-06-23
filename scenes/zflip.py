@@ -247,7 +247,7 @@ class simulation:
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         # method
-        self.method = 3
+        self.method = 1
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -537,7 +537,7 @@ class simulation:
         #self.phi.printGrid()
 
     # fixed volume (my scheme)
-    def fixed_volume( self, pVel, obs_naive, include_walls, ret, it2, bfs ):
+    def fixed_volume( self, pVel, obs_naive, include_walls, ret, it2, bfs, stat ):
         self.phi.setBoundNeumann( 0 ) # make sure no new particles are placed at outer boundary
         #self.phi.printGrid()
 
@@ -569,6 +569,7 @@ class simulation:
                 self.sol.timestep = abs( self.sol.timestep )
             if not obs_naive:
                 obs_stop = ret2[1]
+            stat['lp_solve'] = ret2[2]
 
         # if using band
         if 0 and self.narrowBand:
@@ -802,12 +803,14 @@ class simulation:
         # setup scene
         self.setup_scene()
 
-        # setting file
+        # files
         f_set = open( out + '_settings.txt', 'w' )
         c = self.gs
         f_set.write( '%d %d %d\n' % ( c.x, c.y, c.z ) ) # gs
         f_set.write( f"{self.scene['type']}\n" )
         f_set.flush()
+
+        f_measure = open( out + '_measure.txt', 'w' )
 
         # create dir
         name = '[%d,%d,%d]' % ( self.gs.x, self.gs.y, self.gs.z )
@@ -907,8 +910,9 @@ class simulation:
             fname = out + 'fluid_data_%04d.vdb' % it
             save( name=fname, objects=objects ) # error in debug mode "string too long?"
 
-        # measure
-        f_measure = open( out + '_measure.txt', 'w' )
+        # stat
+        stat = {}
+        stat['np0'] = stat['np_avg'] = np
 
         ##############################################################
         # loop
@@ -927,6 +931,7 @@ class simulation:
 
             tic()
 
+            # time step
             maxVel = self.vel.getMaxAbs()
             if not b_adaptive_time_step:
                 self.sol.frameLength = self.dt
@@ -1037,7 +1042,11 @@ class simulation:
                     # If there's fluid caged in a solid with no empty cells, then there are only Neumann conditions. Then, need to fix one pressure cell (Dirichlet) to eliminate DOF. Setting the flag zeroPressureFixing won't help if there are empty cells in other parts of the domain.
                     solvePressure( flags=self.flags, vel=self.vel, pressure=pressure, phi=self.phi )
                     print( '  (pressure) ', end='' )
-                    toc()
+                    t = toc()
+                    if it2 == 0:
+                        stat['pressure'] = t
+                    else:
+                        stat['pressure'] = ( stat['pressure'] * it2 + t ) / ( it2 + 1 ) # average
 
                     maxVel = self.vel.getMaxAbs()
                     print( '  - vel.MaxAbs=%0.2f' % maxVel )
@@ -1084,6 +1093,7 @@ class simulation:
                 if self.narrowBand:
                     advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.vel, order=2 )
 
+                # fixed_vol
                 #self.flags.printGrid()
                 include_walls = false
                 obs_naive = 0
@@ -1091,7 +1101,7 @@ class simulation:
                 print( f'- obs_naive={obs_naive}' )
                 # fixed volume (my scheme)
                 if self.method == FIXED_VOL:
-                    [ ret, obs_stop, include_walls ] = self.fixed_volume( pVel, obs_naive, include_walls, ret, it2, bfs )
+                    [ ret, obs_stop, include_walls ] = self.fixed_volume( pVel, obs_naive, include_walls, ret, it2, bfs, stat )
                 #self.flags.printGrid()
 
                 # correct21
@@ -1108,7 +1118,7 @@ class simulation:
 
                 # static obstacle
                 if self.obs2.exists and self.obs2.part:
-                    ret2 = mark_obstacle( flags=self.flags, obs=self.obs2.part, center=Vec3(0) )
+                    mark_obstacle( flags=self.flags, obs=self.obs2.part, center=Vec3(0) )
 
                 # for narrowBand, before updating phi with the particles
                 if self.b_fluid_mesh:
@@ -1156,6 +1166,29 @@ class simulation:
                 f_measure.flush()
                 #self.flags.printGrid()
                 #volume.printGrid()
+
+            # stat
+            if 1:
+                stat['np_avg'] = ( stat['np_avg'] * it2 + self.pp.pySize() ) / ( it2 + 1 ) # average
+
+                f_stat = open( out + '_stat.csv', 'w' ) # rewrite
+
+                stat2 = stat.copy()
+                stat2['it'] = str( it )
+                stat2['it2'] = str( it2 )
+
+                # int to string
+                for key in stat2.keys():
+                    if not isinstance( stat2[key], str ):
+                        if isinstance( stat2[key], float ):
+                            stat2[key] = '%.1f' % stat2[key]
+                        else:
+                            stat2[key] = str( stat2[key] )
+
+                #print( stat2 )
+                f_stat.write( ','.join( stat2.keys() ) + '\n' )
+                f_stat.write( ','.join( stat2.values() ) )
+                f_stat.flush()
 
             # mesh
             if self.b_fluid_mesh:
