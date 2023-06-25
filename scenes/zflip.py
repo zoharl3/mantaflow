@@ -243,11 +243,11 @@ class simulation:
         # params
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
+        self.it_max = 3000 # 300, 500, 1000, 1500, 2500
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         # method
-        self.method = 1
+        self.method = 2
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -839,8 +839,11 @@ class simulation:
 
         np = self.pp.pySize()
         V0 = float( np ) / self.ppc
-        #np_max = 2*np % for emitter
-        np_max = self.ppc * (self.res-2)**self.dim * 0.5
+
+        # for emitter
+        #np_max = 2*np # twice as init
+        np_max = self.ppc * (self.res-2)**self.dim * 0.5 # half tank
+
         print( f'# particles: {np}, np_max={np_max}' )
 
         # create a level set from particles
@@ -884,7 +887,7 @@ class simulation:
             if 0 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 ) # drop
                 gui.setCamRot( 35, -30, 0 )
-            #gui.toggleHideGrids()
+            gui.toggleHideGrids()
             gui.show()
             #gui.pause()
         else:
@@ -943,7 +946,7 @@ class simulation:
                 self.sol.adaptTimestep( maxVel )
 
             # emit
-            if 0 and self.pp.pySize() < np_max:
+            if 1 and it > 1000 and self.pp.pySize() < np_max:
                 xi = self.gs * Vec3( 0.5, 0.9, 0.5 )
                 v = Vec3( 0, -3.0, 0 ) # -3
                 for i in range(-1, 2):
