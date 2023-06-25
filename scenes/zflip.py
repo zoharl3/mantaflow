@@ -247,7 +247,7 @@ class simulation:
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         # method
-        self.method = 2
+        self.method = 1
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -1165,6 +1165,9 @@ class simulation:
             # measure
             if 1:
                 m = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
+                if len(m) > 2:
+                    stat['measure_min'] = m[1]
+                    stat['measure_max'] = m[2]
                 f_measure.write( f'{m[0]}\n' )
                 f_measure.flush()
                 #self.flags.printGrid()
