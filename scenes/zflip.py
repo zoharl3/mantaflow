@@ -1,7 +1,7 @@
 
 # flip5 in the comments refers to the scene script flip05_nbflip.py
 
-import os, sys, math
+import os, sys, math, shutil
 import keyboard
 from pathlib import Path
 
@@ -222,7 +222,7 @@ class mesh_generator:
             self.mesh.scale( Vec3(1/self.upres) )
 
     def save( self, it ):
-        fname = out + 'surface_%04d.bobj.gz' % it
+        fname = self.out_dir + 'surface_%04d.bobj.gz' % it
         self.mesh.save( fname )
 
 # methods
@@ -243,14 +243,11 @@ class simulation:
         # params
         self.dim = 2 # 2, 3
         self.part_per_cell_1d = 1 # 3, 2(default), 1
-        self.it_max = 5 # 300, 500, 1000, 1500, 2500
+        self.it_max = 1500 # 300, 500, 1000, 1500, 2500
         self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        # method
-        self.method = method
-
         self.narrowBand = bool( 0 )
-        self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
+        self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8, default:6
 
         self.obs_shape = -1 # none:-1 box:0, sphere:1
         self.large_obs = 0 # sets to box
@@ -262,6 +259,9 @@ class simulation:
             self.gs = Vec3( self.res, self.res, self.res ) # iso
 
         ###
+
+        # method
+        self.method = method
 
         self.splash = 1
         # disable splash (else it's too fast for flip)
@@ -410,7 +410,7 @@ class simulation:
                 if self.b2D:
                     self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, ( 1 + fluid_h )/2, 0.5 ) # middle of the air
 
-                self.obs.file = open( out + '_obstacle.txt', 'w' )
+                self.obs.file = open( self.out_dir + '_obstacle.txt', 'w' )
                 self.obs.file.write( f'{self.obs.shape} {self.obs.rad/self.max_gs}\n' )
                 self.obs.file.flush()
 
@@ -805,15 +805,6 @@ class simulation:
         # setup scene
         self.setup_scene()
 
-        # files
-        f_set = open( out + '_settings.txt', 'w' )
-        c = self.gs
-        f_set.write( '%d %d %d\n' % ( c.x, c.y, c.z ) ) # gs
-        f_set.write( f"{self.scene['type']}\n" )
-        f_set.flush()
-
-        f_measure = open( out + '_measure.txt', 'w' )
-
         # create dir
         name = '[%d,%d,%d]' % ( self.gs.x, self.gs.y, self.gs.z )
 
@@ -834,8 +825,24 @@ class simulation:
 
         name += f", {self.scene['name']}"
 
-        self.out_dir = out + name
+        self.out_dir = out_dir_root + name + '/'
+        if os.path.exists( self.out_dir ):
+            error( f'path already exists: {self.out_dir}' )
+            self.out_dir = None
+            return
         os.mkdir( self.out_dir )
+
+        # copy video.bat
+        shutil.copy( out_dir_root + '../video.bat', self.out_dir )
+
+        # files
+        f_set = open( self.out_dir + '_settings.txt', 'w' )
+        c = self.gs
+        f_set.write( '%d %d %d\n' % ( c.x, c.y, c.z ) ) # gs
+        f_set.write( f"{self.scene['type']}\n" )
+        f_set.flush()
+
+        f_measure = open( self.out_dir + '_measure.txt', 'w' )
 
         # size of particles 
         radiusFactor = 1.0
@@ -903,17 +910,17 @@ class simulation:
             mesh_gen.save( it )
 
         if self.bScreenShot:
-            gui.screenshot( out + 'frame_%04d.png' % it ); # slow
+            gui.screenshot( self.out_dir + 'frame_%04d.png' % it ); # slow
 
         if self.bSaveUni:
-            pressure.save( out + 'ref_parts_0000.uni' )
-            self.pp.save( out + 'parts_%04d.uni' % it )
+            pressure.save( self.out_dir + 'ref_parts_0000.uni' )
+            self.pp.save( self.out_dir + 'parts_%04d.uni' % it )
 
         if self.bSaveVDB:
             self.phi.set_name( 'phi' )
             objects = [ self.flags, self.phi, self.pp ] # need the 3 of them for volumetric .vdb and they need to be named (bifrost looks for a channel by name)
             #objects = [ self.pp ]
-            fname = out + 'fluid_data_%04d.vdb' % it
+            fname = self.out_dir + 'fluid_data_%04d.vdb' % it
             save( name=fname, objects=objects ) # error in debug mode "string too long?"
 
         # stat
@@ -1180,7 +1187,7 @@ class simulation:
             if 1:
                 stat['np_avg'] = ( stat['np_avg'] * it2 + self.pp.pySize() ) / ( it2 + 1 ) # average
 
-                f_stat = open( out + '_stat.csv', 'w' ) # rewrite
+                f_stat = open( self.out_dir + '_stat.csv', 'w' ) # rewrite
 
                 stat2 = stat.copy()
                 stat2['it'] = str( it )
@@ -1212,7 +1219,7 @@ class simulation:
                 self.phiObs.printGrid()
 
                 #self.pp.printParts()
-                #self.pp.writeParticlesText( out + 'particles_%04d.txt' % it )
+                #self.pp.writeParticlesText( self.out_dir + 'particles_%04d.txt' % it )
             
             # step; updates gui and when pause takes place
             print( '- step (%g)' % it )
@@ -1229,27 +1236,27 @@ class simulation:
 
                 # screenshot
                 if self.bScreenShot:
-                    fname = out + 'frame_%04d.png' % int(it)
+                    fname = self.out_dir + 'frame_%04d.png' % int(it)
                     print( f'- saving: {fname}' )
                     gui.screenshot( fname ) # slow
 
                 # data
                 if self.bSaveUni:
                     # save particle data for flip03_gen.py surface generation scene
-                    self.pp.save( out + 'parts_%04d.uni' % it )
+                    self.pp.save( self.out_dir + 'parts_%04d.uni' % it )
 
                 if self.bSaveVDB:
                     # pdata fields must be before pp
                     objects = [ self.flags, self.phi, self.pp ]
                     #objects = [ self.pp ]
-                    save( name=out + 'fluid_data_%04d.vdb' % it, objects=objects )
+                    save( name=self.out_dir + 'fluid_data_%04d.vdb' % it, objects=objects )
 
                 if self.bSaveMesh:
                     mesh_gen.save( it )
                 
         # video
         if 1:
-            os.system( r'c:\prj-external-libs\mantaflow\out\video.bat > nul 2>&1' )
+            os.system( f'"{self.out_dir}/video.bat"' )
 
         # code not reached if quitting manta (with esc); pausing in run.py instead
         # pause
@@ -1260,22 +1267,15 @@ class simulation:
             print( '(zflip.py) press enter...' )
             input()
 
-# main
+# __main__
 if __name__ == '__main__':
+    assert( len(sys.argv) == 2 )
+    method = int( sys.argv[1] )
+
     # auto-flush
     sys.stdout.reconfigure( line_buffering=True )
 
-    out = r'c:/prj-external-libs/mantaflow/out/'
-
-    # del
-    for path in Path( out ).glob("*"):
-        if path.is_file():
-            path.unlink()
-        elif path.is_dir():
-            path.rmdir()
-
-    # copy
-    os.system( 'cp %s../video.bat %s' % (out, out) )
+    out_dir_root = r'c:/prj-external-libs/mantaflow/out/'
 
     # (debug) for consistent result; for large res, the step() hangs?
     if 0:
@@ -1290,24 +1290,9 @@ if __name__ == '__main__':
     # test
     #test_MAC()
 
-    methods = [0, 2]
-    #methods = []
+    # simulation
+    sim = simulation( method )
+    sim.main()
 
-    for method in methods:
-        # simulation
-        sim = simulation( method )
-        sim.main()
-
-        if len( methods ) == 1:
-            break
-
-        out_dir = sim.out_dir
-        sim = None
-
-        # move files
-        for path in Path( out ).glob("*"):
-            if path.is_file():
-                name = Path( out_dir ) / path.name
-                print( name )
-                path.rename( name )
+    os.system( f'copy_log.bat "{sim.out_dir}"' )
 

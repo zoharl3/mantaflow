@@ -1,40 +1,67 @@
 
 import os, sys, keyboard
+from pathlib import Path
 
-cmd = r'..\build\debug\manta zflip.py'
+methods = [0,2]
+#methods = []
+
+exe = r'../build/debug/manta'
 if 1: # release
-    cmd = r'..\build\RelWithDebInfo\manta zflip.py'
+    exe = r'../build/RelWithDebInfo/manta'
 
-# for cygwin
-cmd = cmd.replace( '\\', '/' )
+script = 'zflip.py'
+out_dir_root = r'c:/prj-external-libs/mantaflow/out/'
 
-os.system( 'rm _log.ans' )
+cmd_base = f'{exe} {script}'
 
-# shell redirection loses ascii color?
-# ConEmu supports it, but it's slow
-# https://stackoverflow.com/questions/3515208/can-colorized-output-be-captured-via-shell-redirect
-# https://stackoverflow.com/questions/12573574/redirect-command-prompt-output-to-gui-and-keep-color
-#cmd += r'> _log.ans'
-#cmd += r' 2>&1 | python \prj\python\tee.py _log.ans'
-cmd = f'script --flush --quiet --return _log.ans --command "{cmd}"'
+def run( method ):
+    cmd = f'{cmd_base} {method}'
 
-os.system( cmd )
+    os.system( 'rm _log.ans' )
 
-os.system( "copy_log.bat" )
+    # shell redirection loses ascii color?
+    # ConEmu supports it, but it's slow
+    # https://stackoverflow.com/questions/3515208/can-colorized-output-be-captured-via-shell-redirect
+    # https://stackoverflow.com/questions/12573574/redirect-command-prompt-output-to-gui-and-keep-color
+    #cmd += r'> _log.ans'
+    #cmd += r' 2>&1 | python \prj\python\tee.py _log.ans'
+    cmd = f'script --flush --quiet --return _log.ans --command "{cmd}"'
 
-print( 'run.py is done' )
+    os.system( cmd )
+
+def main():
+    # delete first level dirs
+    for path in Path( out_dir_root ).glob("*"):
+        if path.is_dir():
+            #print( f'Deleting "{path.name}"' )
+            for path2 in path.glob("*"):
+                if path2.is_file():
+                    path2.unlink()
+                else:
+                    print( f'Error "{path2.is_file()}" isn\'t a file' )
+                    return -1
+            path.rmdir()
+
+    # run
+    for method in methods:
+        run( method )
+
+    print( 'run.py is done' )
+    return 0
+
+ret = main()
 
 # pause
-if 0:
-    print( '\nPress esc, space, or enter...' )
-    while 1:
-        ch = keyboard.read_key()
-        if ch == 'esc' or ch == 'enter' or ch == 'space':
-            break
-elif 0:
-    print( '\nPress a key...' )
-    keyboard.read_key()
-elif 0:
-    print( '\nPress enter...' )
-    input()
-    
+if 0 or ret != 0:
+    if 1:
+        print( '\nPress esc, space, or enter...' )
+        while 1:
+            ch = keyboard.read_key()
+            if ch == 'esc' or ch == 'enter' or ch == 'space':
+                break
+    elif 0:
+        print( '\nPress a key...' )
+        keyboard.read_key()
+    elif 0:
+        print( '\nPress enter...' )
+        input()
