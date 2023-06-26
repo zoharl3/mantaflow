@@ -230,7 +230,7 @@ class mesh_generator:
 FLIP, FIXED_VOL, CORRECT21, DE_GOES22 = range( 4 )
 
 class simulation:
-    def __init__( self ):
+    def __init__( self, method ):
         # flags
         self.bScreenShot  = 1
         self.b_fluid_mesh = 1
@@ -242,12 +242,12 @@ class simulation:
 
         # params
         self.dim = 2 # 2, 3
-        self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.it_max = 3000 # 300, 500, 1000, 1500, 2500
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.part_per_cell_1d = 1 # 3, 2(default), 1
+        self.it_max = 5 # 300, 500, 1000, 1500, 2500
+        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         # method
-        self.method = 1
+        self.method = method
 
         self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8
@@ -309,6 +309,8 @@ class simulation:
         self.boundary_width = 0
 
         self.scene = {'type':0, 'name':'other'}
+
+        self.out_dir = None
 
     def setup_scene( self ):
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
@@ -823,7 +825,7 @@ class simulation:
         elif self.method == CORRECT21:
             name += ' cor21'
         elif self.method == DE_GOES22:
-            name += ' deGoes22'
+            name += ' power'
         else:
             name += ' unknown'
         
@@ -832,7 +834,8 @@ class simulation:
 
         name += f", {self.scene['name']}"
 
-        os.mkdir( out + name )
+        self.out_dir = out + name
+        os.mkdir( self.out_dir )
 
         # size of particles 
         radiusFactor = 1.0
@@ -946,7 +949,7 @@ class simulation:
                 self.sol.adaptTimestep( maxVel )
 
             # emit
-            if 1 and it > 1000 and self.pp.pySize() < np_max:
+            if 0 and it > 1000 and self.pp.pySize() < np_max:
                 xi = self.gs * Vec3( 0.5, 0.9, 0.5 )
                 v = Vec3( 0, -3.0, 0 ) # -3
                 for i in range(-1, 2):
@@ -1166,8 +1169,8 @@ class simulation:
             if 1:
                 m = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
                 if len(m) > 2:
-                    stat['measure_min'] = m[1]
-                    stat['measure_max'] = m[2]
+                    stat['measure_min'] = m[1]*100
+                    stat['measure_max'] = m[2]*100
                 f_measure.write( f'{m[0]}\n' )
                 f_measure.flush()
                 #self.flags.printGrid()
@@ -1287,6 +1290,24 @@ if __name__ == '__main__':
     # test
     #test_MAC()
 
-    # simulation
-    sim = simulation()
-    sim.main()
+    methods = [0, 2]
+    #methods = []
+
+    for method in methods:
+        # simulation
+        sim = simulation( method )
+        sim.main()
+
+        if len( methods ) == 1:
+            break
+
+        out_dir = sim.out_dir
+        sim = None
+
+        # move files
+        for path in Path( out ).glob("*"):
+            if path.is_file():
+                name = Path( out_dir ) / path.name
+                print( name )
+                path.rename( name )
+
