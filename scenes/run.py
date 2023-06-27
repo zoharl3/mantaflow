@@ -2,8 +2,9 @@
 import os, sys, keyboard, subprocess
 from pathlib import Path
 
+methods = [1]
 #methods = [0,1]
-methods = [0,2,1]
+#methods = [0,2,1]
 
 exe = r'../build/debug/manta'
 if 1: # release

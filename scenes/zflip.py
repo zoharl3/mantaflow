@@ -571,7 +571,8 @@ class simulation:
                 self.sol.timestep = abs( self.sol.timestep )
             if not obs_naive:
                 obs_stop = ret2[1]
-            stat['lp_solve'] = ret2[2]
+            stat['opt_time'] = ret2[2]
+            stat['push_time'] = ret2[3]
 
         # if using band
         if 0 and self.narrowBand:
@@ -822,6 +823,9 @@ class simulation:
         
         if self.narrowBand:
             name += f' band{self.narrowBandWidth}'
+
+        if self.part_per_cell_1d != 2:
+            name += f", {self.part_per_cell_1d}ppc"
 
         name += f", {self.scene['name']}"
         scene_name = name
