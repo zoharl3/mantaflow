@@ -1,9 +1,9 @@
 
-import os, sys, keyboard
+import os, sys, keyboard, subprocess
 from pathlib import Path
 
-methods = [0,2]
-#methods = []
+#methods = [0,1]
+methods = [0,2,1]
 
 exe = r'../build/debug/manta'
 if 1: # release
@@ -27,7 +27,8 @@ def run( method ):
     #cmd += r' 2>&1 | python \prj\python\tee.py _log.ans'
     cmd = f'script --flush --quiet --return _log.ans --command "{cmd}"'
 
-    os.system( cmd )
+    result = subprocess.run( cmd )
+    print( f'returncode={result.returncode}' )
 
 def main():
     # delete first level dirs
