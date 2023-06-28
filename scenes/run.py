@@ -43,10 +43,14 @@ def main():
                     print( f'Error "{path2.is_file()}" isn\'t a file' )
                     return -1
             path.rmdir()
+        if path.is_file():
+            path.unlink()
 
     # run
     for method in methods:
         run( method )
+
+    os.system( f'copy_log.bat "{out_dir_root}"' )
 
     print( 'run.py is done' )
     return 0

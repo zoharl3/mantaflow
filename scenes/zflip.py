@@ -573,6 +573,8 @@ class simulation:
                 obs_stop = ret2[1]
             stat['opt_time'] = ret2[2]
             stat['push_time'] = ret2[3]
+            stat['avg_num_particles'] = ret2[4]
+            stat['avg_nnz'] = ret2[5]
 
         # if using band
         if 0 and self.narrowBand:
