@@ -242,8 +242,8 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.dim = 2 # 2, 3
-        self.part_per_cell_1d = 3 # 3, 2(default), 1
+        self.part_per_cell_1d = 2 # 3, 2(default), 1
+        self.dim = 3 # 2, 3
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
         self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
@@ -358,7 +358,7 @@ class simulation:
             self.scene['name'] = 'drop'
             self.scene['cam'] = 3
 
-        elif 0: # basin--unused
+        elif 0: # basin--not selected
             # water
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0.6, 0) ), p1=self.gs*( Vec3(1, 0.9, 1) ) )
             self.phi = fluidbox.computeLevelset()

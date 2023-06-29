@@ -1,11 +1,7 @@
 
 - Code
-    - Hang bug: the app hangs after sol.step(). Stack trace:
-ntdll.dll!NtWaitForMultipleObjects()
-winmm.dll!timeThread()
-kernel32.dll!BaseThreadInitThunk()
-ntdll.dll!RtlUserThreadStart()
-    Possible culprit in updateQtGui(), gMainThread->sendAndWait().
+    - there's exit(0) that doesn't let the script finish
+    - Hang bug: the app hangs after sol.step(). Attaching the debugger and going to the qt thread using the threads window reveals updateQtGui(), gMainThread->sendAndWait().
     - LockedObjPainter::nextObject()
         - I patched it to view only named objects
     - python

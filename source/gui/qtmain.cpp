@@ -36,19 +36,20 @@ void MainThread::run() {
 }
 
 void MainThread::sendAndWait( int e ) {
+    QMutexLocker locker( &mMutex ); // zl
     //mMutex.lock();
-    bool locked = mMutex.tryLock( 5000 ); // zl
-    if ( !locked )
-        printf( "MainThread::sendAndWait(), can't lock mutex" );
     emit sendToGui( e );
-    if ( locked ) {
+	if ( 1 ) // zl
+		// "Releases the lockedMutex and waits on the wait condition... The lockedMutex will be returned to the same locked state. This function is provided to allow the atomic transition from the locked state to the wait state."
+		// the waking up is done in emit wakeMain()
+        mWait.wait( &mMutex );
+    else
         while ( !mWait.wait( &mMutex, 250 ) )
             if ( gGuiThread->getWindow()->closeRequest() ) {
-                mMutex.unlock();
+                //mMutex.unlock();
                 throw Error( "User interrupt" );
             }
-        mMutex.unlock();
-    }
+    //mMutex.unlock();
 }
 
 void MainThread::send(int e) {
@@ -133,9 +134,7 @@ void updateQtGui(bool full, int frame, float time, const string& curPlugin) {
 	
 	if (full && frame >= 0) 
 		gGuiThread->getWindow()->setStep(frame, time);
-//cout << "before sendAndWait" << endl;
 	gMainThread->sendAndWait(full ? (int)MainWnd::EventFullUpdate : (int)MainWnd::EventStepUpdate);
-//cout << "after sendAndWait" << endl;
 
 	if (gGuiThread->getWindow()->pauseRequest()) {
 		if (!curPlugin.empty()) {
