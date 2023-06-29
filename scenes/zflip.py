@@ -234,7 +234,7 @@ class simulation:
     def __init__( self, method ):
         # flags
         self.bScreenShot  = 1
-        self.b_fluid_mesh = 1
+        self.b_fluid_mesh = 1 # generate mesh for fluid
         self.bSaveMesh    = 1 # .bobj.gz
         self.bSaveVDB     = 0 # .vdb
         self.bSaveUni     = 0 # .uni
@@ -242,9 +242,9 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.dim = 3 # 2, 3
-        self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.it_max = 1500 # 300, 500, 1000, 1500, 2500
+        self.dim = 2 # 2, 3
+        self.part_per_cell_1d = 3 # 3, 2(default), 1
+        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
         self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 )
@@ -318,7 +318,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -345,7 +345,7 @@ class simulation:
             self.scene['name'] = 'dam'
             self.scene['cam'] = 3
 
-        elif 0: # falling drop
+        elif 1: # falling drop
             fluidBasin = Box( parent=self.sol, p0=self.gs*Vec3(0,0,0), p1=self.gs*Vec3(1.0,0.1,1.0)) # basin
             dropCenter = Vec3(0.5,0.3,0.5)
             dropRadius = 0.1
@@ -942,7 +942,8 @@ class simulation:
 
         # stat
         stat = {}
-        stat['np0'] = stat['np_avg'] = np
+        stat['np0'] = np
+        stat['np_avg'] = 0
 
         ##############################################################
         # loop
@@ -1203,7 +1204,9 @@ class simulation:
 
             # stat
             if 1:
-                stat['np_avg'] = ( stat['np_avg'] * it2 + self.pp.pySize() ) / ( it2 + 1 ) # average
+                if not self.narrowBand or it2 > 0:
+                    nIt = it2 if self.narrowBand else it2 + 1
+                    stat['np_avg'] = ( ( nIt - 1) * stat['np_avg'] + self.pp.pySize() ) / nIt # average
 
                 f_stat = open( self.out_dir + '_stat.csv', 'w' ) # rewrite
 
@@ -1276,7 +1279,7 @@ class simulation:
         if 1:
             os.system( f'"{self.out_dir}/video.bat"' )
 
-        # code not reached if quitting manta (with esc); pausing in run.py instead
+        # the following code is not reached if quitting manta (with esc)
         # pause
         if 0:
             print( '(zflip.py) press a key...' )

@@ -1,10 +1,10 @@
 
-import os, sys, keyboard, subprocess
+import os, sys, keyboard, subprocess, pathlib
 from pathlib import Path
 
-methods = [1]
+#methods = [0]
 #methods = [0,1]
-#methods = [0,2,1]
+methods = [0,2,1]
 
 exe = r'../build/debug/manta'
 if 1: # release
@@ -29,7 +29,8 @@ def run( method ):
     cmd = f'script --flush --quiet --return _log.ans --command "{cmd}"'
 
     result = subprocess.run( cmd )
-    print( f'returncode={result.returncode}' )
+    print()
+    #print( f'returncode={result.returncode}' )
 
 def main():
     # delete first level dirs
@@ -50,7 +51,18 @@ def main():
     for method in methods:
         run( method )
 
-    os.system( f'copy_log.bat "{out_dir_root}"' )
+        # check if there's a log in the latest dir, which means it ended gracefully
+        dirs = [ f for f in pathlib.Path(out_dir_root).iterdir() if f.is_dir() ]
+        if not dirs:
+            print( 'Error: no directories' )
+            os.system( f'copy_log.bat "{out_dir_root}"' )
+            break
+        latest_dir = max( dirs, key=os.path.getmtime )
+        log = latest_dir / '_log.ans'
+        if not log.exists():
+            print( f"log doesn't exist: '{log}'" )
+            os.system( f'copy_log.bat "{latest_dir.as_posix()}"' )
+            break
 
     print( 'run.py is done' )
     return 0

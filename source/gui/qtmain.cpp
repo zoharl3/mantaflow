@@ -35,15 +35,20 @@ void MainThread::run() {
 	runScript(mArgs);
 }
 
-void MainThread::sendAndWait(int e) {
-	mMutex.lock();
-	emit sendToGui(e);
-	while(!mWait.wait(&mMutex, 250))
-		if (gGuiThread->getWindow()->closeRequest()) {
-			mMutex.unlock();
-			throw Error("User interrupt");    
-		}
-	mMutex.unlock();
+void MainThread::sendAndWait( int e ) {
+    //mMutex.lock();
+    bool locked = mMutex.tryLock( 5000 ); // zl
+    if ( !locked )
+        printf( "MainThread::sendAndWait(), can't lock mutex" );
+    emit sendToGui( e );
+    if ( locked ) {
+        while ( !mWait.wait( &mMutex, 250 ) )
+            if ( gGuiThread->getWindow()->closeRequest() ) {
+                mMutex.unlock();
+                throw Error( "User interrupt" );
+            }
+        mMutex.unlock();
+    }
 }
 
 void MainThread::send(int e) {
@@ -126,7 +131,8 @@ void updateQtGui(bool full, int frame, float time, const string& curPlugin) {
 	if (!gGuiThread->getWindow()->isVisible()) return;
 	if (gGuiThread->getWindow()->closeRequest()) throw Error("User interrupt");    
 	
-	if (full && frame >= 0) gGuiThread->getWindow()->setStep(frame, time);
+	if (full && frame >= 0) 
+		gGuiThread->getWindow()->setStep(frame, time);
 //cout << "before sendAndWait" << endl;
 	gMainThread->sendAndWait(full ? (int)MainWnd::EventFullUpdate : (int)MainWnd::EventStepUpdate);
 //cout << "after sendAndWait" << endl;
