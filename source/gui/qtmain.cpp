@@ -44,6 +44,7 @@ void MainThread::sendAndWait( int e ) {
 		// the waking up is done in emit wakeMain()
         mWait.wait( &mMutex );
     else
+		// may be responsible for the hangs
         while ( !mWait.wait( &mMutex, 250 ) )
             if ( gGuiThread->getWindow()->closeRequest() ) {
                 //mMutex.unlock();
