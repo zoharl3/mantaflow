@@ -26,8 +26,10 @@ def run( method ):
     # https://stackoverflow.com/questions/12573574/redirect-command-prompt-output-to-gui-and-keep-color
     #cmd += r'> _log.ans'
     #cmd += r' 2>&1 | python \prj\python\tee.py _log.ans'
-    cmd = f'script --flush --quiet --return _log.ans --command "{cmd}"'
+    #cmd = f'script --flush --quiet --return _log.ans --command "{cmd}"' # if the console is terminated, the cmd still runs?
+    cmd += r' 2>&1 | mtee _log.ans'
 
+    print( cmd )
     result = subprocess.run( cmd )
     print()
     #print( f'returncode={result.returncode}' )
