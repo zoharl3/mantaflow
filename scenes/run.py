@@ -34,7 +34,7 @@ def run( method ):
 
 def main():
     # delete first level dirs
-    for path in Path( out_dir_root ).glob("*"):
+    for path in Path( out_dir_root ).glob('*'):
         if path.is_dir():
             #print( f'Deleting "{path.name}"' )
             for path2 in path.glob("*"):
