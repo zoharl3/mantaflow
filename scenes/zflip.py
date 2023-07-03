@@ -243,11 +243,11 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.dim = 3 # 2, 3
-        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
-        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.dim = 2 # 2, 3
+        self.it_max = 500 # 300, 500, 1000, 1500, 2500
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 1 )
+        self.narrowBand = bool( 0 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8, default:6
 
         self.obs_shape = -1 # none:-1 box:0, sphere:1
@@ -345,7 +345,7 @@ class simulation:
             self.scene['name'] = 'dam'
             self.scene['cam'] = 3
 
-        elif 1: # falling drop
+        elif 0: # falling drop
             fluidBasin = Box( parent=self.sol, p0=self.gs*Vec3(0,0,0), p1=self.gs*Vec3(1.0,0.1,1.0)) # basin
             dropCenter = Vec3(0.5,0.3,0.5)
             dropRadius = 0.1
@@ -381,7 +381,7 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 0 or self.obs_shape >= 0: # moving obstacle
+        elif 0 or self.obs_shape >= 0: # falling obstacle
             # water
             fluid_h = 0.6 # 0.6(default)
             if self.large_obs:
@@ -438,7 +438,35 @@ class simulation:
                 self.scene['type'] = 2 if self.obs.shape == 0 else 3
                 self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
 
-        elif 1: # spiral
+        elif 1: # compress
+            # water
+            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.3, 0, 0) ), p1=self.gs*( Vec3(1, 0.3, 1) ) )
+            self.phi = fluidbox.computeLevelset()
+            self.flags.updateFromLevelset( self.phi )
+
+            # moving obstacle
+            if 1:
+                self.obs.create()
+                self.obs.shape = 0
+                self.obs.rad = .1*self.res
+                self.obs.rad3 = self.res*Vec3( 0.5, self.obs.rad/self.res, 0.5 ) - Vec3( 1., 0, 0 ) # 1, 1.6
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.3 + (2 + self.obs.rad) /self.res, 0.5 ) - Vec3( 0., 0, 0 ) # 0, 0.6
+
+                p0 = self.obs.center - self.obs.rad3
+                p1 = self.obs.center + self.obs.rad3
+                if self.dim == 2:
+                    p0.z = p1.z = 0.5
+                shape = Box( parent=self.sol, p0=p0, p1=p1 )
+
+                # init
+                self.obs.force = Vec3( 0, 0, 0 )
+                self.obs.vel_vec = Vec3( 0, self.gravity*1, 0 )
+                self.obs.init( shape )
+
+            #self.scene['type'] = 4
+            self.scene['name'] = 'compress'
+
+        elif 0: # spiral
             # water
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.5, 0, 0) ), p1=self.gs*( Vec3(1, 0.7, 1) ) ) # tubes:0.6, spiral:0.4
             self.phi = fluidbox.computeLevelset()
@@ -492,36 +520,8 @@ class simulation:
                 self.obs.vel_vec = Vec3( 0, self.gravity*1, 0 )
                 self.obs.init( shape )
 
-                self.scene['type'] = 4
+                #self.scene['type'] = 5
                 self.scene['name'] = 'spiral'
-
-        elif 1: # compress
-            # water
-            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.3, 0, 0) ), p1=self.gs*( Vec3(1, 0.3, 1) ) )
-            self.phi = fluidbox.computeLevelset()
-            self.flags.updateFromLevelset( self.phi )
-
-            # moving obstacle
-            if 1:
-                self.obs.create()
-                self.obs.shape = 0
-                self.obs.rad = .1*self.res
-                self.obs.rad3 = self.res*Vec3( 0.5, self.obs.rad/self.res, 0.5 ) - Vec3( 1., 0, 0 ) # 1, 1.6
-                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.3 + (2 + self.obs.rad) /self.res, 0.5 ) - Vec3( 0., 0, 0 ) # 0, 0.6
-
-                p0 = self.obs.center - self.obs.rad3
-                p1 = self.obs.center + self.obs.rad3
-                if self.dim == 2:
-                    p0.z = p1.z = 0.5
-                shape = Box( parent=self.sol, p0=p0, p1=p1 )
-
-                # init
-                self.obs.force = Vec3( 0, 0, 0 )
-                self.obs.vel_vec = Vec3( 0, self.gravity*1, 0 )
-                self.obs.init( shape )
-
-            self.scene['type'] = 5
-            self.scene['name'] = 'compress'
 
         # common
         #self.phiObs.printGrid()
@@ -596,7 +596,7 @@ class simulation:
 
         # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
-        if 1 and not obs_stop:
+        if 0 and not obs_stop: # if disabled for flip, then you may want to disable pushOutofObs
             self.flags2.copyFrom( self.flags )
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
@@ -1080,13 +1080,15 @@ class simulation:
                     else:
                         stat['pressure'] = ( stat['pressure'] * it2 + t ) / ( it2 + 1 ) # average
 
+                    maxPVel = pVel.getMaxAbs()
                     maxVel = self.vel.getMaxAbs()
-                    print( '  - vel.MaxAbs=%0.2f' % maxVel )
+                    print( '  - vel.MaxAbs=%0.2f, pVel.MaxAbs=%0.2f' % ( maxVel, maxPVel ) )
                     #speed_limit = 1/self.dt
-                    speed_limit = 21 # there's the obs splash to consider vs the compressed scenes
+                    speed_limit = 10 # there's the obs splash (21) to consider vs the compressed scenes (10)
                     if maxVel > speed_limit:
-                        if maxVel < 40:
-                            print(  f'- scaling vel to speed_limit={speed_limit}' )
+                        print( f'maxVel is over the speed_limit({speed_limit})' )
+                        if 0 and maxVel < 40: # may want to use 0 for compressed scenes
+                            print(  f'  - scaling vel to speed_limit={speed_limit}' )
                             self.vel.multConst( Vec3(speed_limit/maxVel) )
                         else:
                             b_bad_pressure = 1
@@ -1289,7 +1291,7 @@ class simulation:
             input()
 
 # __main__
-if __name__ == '__main__':
+if 1 and __name__ == '__main__':
     assert( len(sys.argv) >= 2 )
     method = int( sys.argv[1] )
 
@@ -1315,5 +1317,6 @@ if __name__ == '__main__':
     sim = simulation( method )
     sim.main()
 
-    os.system( f'copy_log.bat "{sim.out_dir}"' )
+    if sim.out_dir:
+        os.system( f'copy_log.bat "{sim.out_dir}"' )
 

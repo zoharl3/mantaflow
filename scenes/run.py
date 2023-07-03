@@ -2,18 +2,18 @@
 import os, sys, keyboard, subprocess, pathlib
 from pathlib import Path
 
-#methods = [0]
+methods = [0]
 #methods = [0,1]
-methods = [0,2,1]
+#methods = [0,2,1]
 
-exe = r'../build/debug/manta'
+exe = r'..\build\debug\manta' # cmd can't execute ../
 if 1: # release
-    exe = r'../build/RelWithDebInfo/manta'
+    exe = r'..\build\RelWithDebInfo\manta'
 
 script = 'zflip.py'
 out_dir_root = r'c:/prj-external-libs/mantaflow/out/'
 
-cmd_base = f'{exe} {script}'
+cmd_base = f'"{exe}" {script}'
 
 def run( method ):
     cmd = f'{cmd_base} {method}'
@@ -27,12 +27,12 @@ def run( method ):
     #cmd += r'> _log.ans'
     #cmd += r' 2>&1 | python \prj\python\tee.py _log.ans'
     #cmd = f'script --flush --quiet --return _log.ans --command "{cmd}"' # if the console is terminated, the cmd still runs?
-    cmd += r' 2>&1 | mtee _log.ans'
+    cmd += r' 2>&1 | tee _log.ans'
 
     print( cmd )
-    result = subprocess.run( cmd )
+    #subprocess.run( cmd ) # runs a process instead of executing a shell command; an issue for tee
+    os.system( cmd )
     print()
-    #print( f'returncode={result.returncode}' )
 
 def main():
     # delete first level dirs
