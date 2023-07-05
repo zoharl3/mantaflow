@@ -100,6 +100,7 @@ class moving_obstacle:
         self.rad = 0 # radius (at least) in the y-axis
         self.rad3 = Vec3( 0 )
         self.vel_vec = Vec3( 0 )
+        self.terminal_speed = self.sim.gravity/3 # 3; terminal velocity
 
         self.phi_init = self.sol.create( LevelsetGrid )
 
@@ -241,11 +242,11 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.dim = 2 # 2, 3
-        self.it_max = 950 # 300, 500, 1000, 1500, 2500
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.dim = 3 # 2, 3
+        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
+        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 0 )
+        self.narrowBand = bool( 1 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8, default:6
 
         self.obs_shape = 0 # none:-1 box:0, sphere:1
@@ -255,7 +256,7 @@ class simulation:
 
         self.b2D = self.dim == 2
 
-        if 0 or ( self.obs_shape >= 0 and not self.b2D ):
+        if 1 or ( self.obs_shape >= 0 and not self.b2D ):
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else:
@@ -599,7 +600,7 @@ class simulation:
 
         # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
-        if 0 and not obs_stop: # if disabled for flip, then you may want to disable pushOutofObs
+        if 1 and not obs_stop: # if disabled for flip, then you may want to disable pushOutofObs
             self.flags2.copyFrom( self.flags )
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
@@ -608,7 +609,7 @@ class simulation:
                 obs_stop = 1
 
         self.obs.increase_vel = 1
-        print( f'  - obs: .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, stay={self.obs.stay}, start_h={self.obs.start_h}' )
+        print( f'  - obs({it}): .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, stay={self.obs.stay}, start_h={self.obs.start_h}' )
         if self.obs.state != 3: # still moving
             if not obs_stop: # not stopped
                 self.obs.stay = 0
@@ -617,17 +618,12 @@ class simulation:
                     if self.obs.state == 0: # move to state 2
                         self.obs.state = 2
                         emphasize2( f'  - new obs.state: {self.obs.state}' )
-                        if 1:
-                            #self.obs.force = Vec3(0)
-                            #self.obs.force /= 4
-                            self.obs.force.y = -2*self.gravity # 2; slow down
-                            print( '- slow down force in water:', self.obs.force )
-
-                water_speed = self.gravity/3 # 3; terminal velocity
-                if self.obs.state == 2 and self.obs.vel_vec.y > water_speed:
-                    self.obs.force = Vec3(0)
-                    self.obs.vel_vec.y = water_speed
-                    print( '- new velocity in water:', self.obs.vel_vec )
+                
+                if self.obs.state == 2 and self.obs.vel_vec.y < self.obs.terminal_speed:
+                    buoyancy = -2*self.gravity
+                    drag = -0.1*self.obs.vel_vec.y
+                    self.obs.force.y = buoyancy + drag + self.gravity
+                    print( f'  - buoyancy={buoyancy}, drag={drag}, .force={self.obs.force}' )
 
                 self.obs.center = obs_center2
 
@@ -651,8 +647,15 @@ class simulation:
                 if self.obs.increase_vel:
                     dv = self.sol.timestep * self.obs.force
                     self.obs.vel_vec += dv
+                    print( f'  - dv={dv}, .vel_vec={self.obs.vel_vec}' )
+
+                    if self.obs.state == 2 and self.obs.vel_vec.y > self.obs.terminal_speed:
+                        self.obs.force = Vec3(0)
+                        self.obs.vel_vec.y = self.obs.terminal_speed
+                        print( '    - terminal velocity in water:', self.obs.vel_vec )
+
                     max_y_speed = 7*self.gravity # 7, 10
-                    if self.method == FIXED_VOL and self.obs.vel_vec.y < max_y_speed:
+                    if self.obs.vel_vec.y < max_y_speed:
                         print( f'    - limiting speed to {max_y_speed}' )
                         self.obs.vel_vec.y = max_y_speed
             else: # stay
@@ -660,6 +663,7 @@ class simulation:
                 self.obs.vel_vec = Vec3( 0 )
                 self.obs.force = Vec3( 0 )
                 self.obs.state = 3
+                emphasize2( f'  - new obs.state: {self.obs.state}' )
         else:
             print( '- obstacle rests' )
 
@@ -693,6 +697,7 @@ class simulation:
 
         elif self.obs.state < 2:
             self.obs.state = 2
+            emphasize2( f'  - new obs.state: {self.obs.state}' )
             self.obs.vel.setConst( Vec3(0.) )
             self.obs.vel.setBound( value=Vec3(0.), boundaryWidth=self.boundary_width+1 )
 
@@ -817,8 +822,9 @@ class simulation:
             return
         os.mkdir( self.out_dir )
 
-        # copy video.bat
+        # copy
         shutil.copy( out_dir_root + '../video.bat', self.out_dir )
+        shutil.copy( out_dir_root + '../tweak_images.py', self.out_dir )
 
         # files
         f_set = open( self.out_dir + '_settings.txt', 'w' )
@@ -885,8 +891,8 @@ class simulation:
                 gui.nextVec3Display()
 
             # cam
-            if 1 and self.dim == 3: # camera
-                gui.setCamPos( 0, 0, -2.2 ) # drop
+            if 0 and self.dim == 3: # camera
+                gui.setCamPos( 0, 0, -2.2 )
                 gui.setCamRot( 35, -30, 0 )
             
             # grid
