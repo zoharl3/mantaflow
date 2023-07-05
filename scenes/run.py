@@ -2,8 +2,11 @@
 import os, sys, keyboard, subprocess, pathlib
 from pathlib import Path
 
-methods = [0]
+#methods = [0]
+#methods = [1]
+#methods = [2]
 #methods = [0,1]
+methods = [0,2]
 #methods = [0,2,1]
 
 exe = r'..\build\debug\manta' # cmd can't execute ../
@@ -62,7 +65,7 @@ def main():
         latest_dir = max( dirs, key=os.path.getmtime )
         log = latest_dir / '_log.ans'
         if not log.exists():
-            print( f"log doesn't exist: '{log}'" )
+            print( f"log doesn't exist (premature/forced/user exit): '{log}'" )
             os.system( f'copy_log.bat "{latest_dir.as_posix()}"' )
             break
 
