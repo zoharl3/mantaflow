@@ -620,8 +620,8 @@ class simulation:
                         emphasize2( f'  - new obs.state: {self.obs.state}' )
                 
                 if self.obs.state == 2 and abs( self.obs.force.y ) > 0 and self.obs.vel_vec.y < self.obs.terminal_speed:
-                    buoyancy = -2*self.gravity
-                    drag = -0.1*self.obs.vel_vec.y
+                    buoyancy = -1*self.gravity # -1
+                    drag = -0.3*self.obs.vel_vec.y # -0.3
                     self.obs.force.y = buoyancy + drag + self.gravity
                     print( f'  - buoyancy={buoyancy}, drag={drag}, .force={self.obs.force}' )
 
