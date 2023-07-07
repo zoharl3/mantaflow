@@ -73,19 +73,21 @@ def main():
     print( 'run.py is done' )
     return 0
 
-ret = main()
+# __main__
+if __name__ == "__main__":
+    ret = main()
 
-# pause
-if 0 or ret != 0:
-    if 1:
-        print( '\nPress esc, space, or enter...' )
-        while 1:
-            ch = keyboard.read_key()
-            if ch == 'esc' or ch == 'enter' or ch == 'space':
-                break
-    elif 0:
-        print( '\nPress a key...' )
-        keyboard.read_key()
-    elif 0:
-        print( '\nPress enter...' )
-        input()
+    # pause
+    if 0 or ret != 0:
+        if 1:
+            print( '\nPress esc, space, or enter...' )
+            while 1:
+                ch = keyboard.read_key()
+                if ch == 'esc' or ch == 'enter' or ch == 'space':
+                    break
+        elif 0:
+            print( '\nPress a key...' )
+            keyboard.read_key()
+        elif 0:
+            print( '\nPress enter...' )
+            input()
