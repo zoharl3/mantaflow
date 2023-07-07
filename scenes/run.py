@@ -58,7 +58,7 @@ def main():
         run( method )
 
         # check if there's a log in the latest dir, which means it ended gracefully
-        dirs = [ f for f in pathlib.Path(out_dir_root).iterdir() if f.is_dir() ]
+        dirs = [ f for f in Path(out_dir_root).iterdir() if f.is_dir() ]
         if not dirs:
             print( 'Error: no directories' )
             os.system( f'copy_log.bat "{out_dir_root}"' )

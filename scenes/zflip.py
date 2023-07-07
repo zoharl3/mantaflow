@@ -139,6 +139,13 @@ class moving_obstacle:
         self.part.create( self.center, self.rad3, self.shape, self.sim.gs )
         toc()
 
+    def write_pos( self ):
+        if self.exists and self.file:
+            c = self.center
+            c /= self.sim.gs
+            self.file.write( '%g %g %g\n' % ( c.x, c.y, c.z ) )
+            self.file.flush()
+
 class static_obstacle:
     def __init__( self, sol ):
         self.sol = sol
@@ -733,13 +740,6 @@ class simulation:
             setObstacleFlags( flags=self.flags, phiObs=self.phiObs, fractions=fractions )
         #self.flags.printGrid()
 
-        # write pos
-        if self.obs.file:
-            c = self.obs.center
-            c /= self.gs
-            self.obs.file.write( '%g %g %g\n' % ( c.x, c.y, c.z ) )
-            self.obs.file.flush()
-
     def main( self ):
         if self.method == CORRECT21:
             self.narrowBand = bool( 0 )
@@ -906,6 +906,12 @@ class simulation:
 
         it = 0
         it2 = 0
+
+        m = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
+        f_measure.write( f'{m[0]}\n' )
+        f_measure.flush()
+
+        self.obs.write_pos()
 
         if self.bSaveMesh:
             mesh_gen.save( it )
@@ -1178,15 +1184,10 @@ class simulation:
             toc()
 
             # measure
-            if 1:
-                m = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
-                if len(m) > 2:
-                    stat['measure_min'] = m[1]*100
-                    stat['measure_max'] = m[2]*100
-                f_measure.write( f'{m[0]}\n' )
-                f_measure.flush()
-                #self.flags.printGrid()
-                #volume.printGrid()
+            m = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
+            if len(m) > 2:
+                stat['measure_min'] = m[1]*100
+                stat['measure_max'] = m[2]*100
 
             # stat
             if 1:
@@ -1240,6 +1241,13 @@ class simulation:
             # save
             if 0 or abs( it - round(it) ) < 1e-7:
                 it = round( it )
+
+                # write measure
+                f_measure.write( f'{m[0]}\n' )
+                f_measure.flush()
+
+                # write obs pos
+                self.obs.write_pos()
 
                 # screenshot
                 if self.bScreenShot:
