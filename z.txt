@@ -24,6 +24,8 @@ glColor3f( 0, 0.3, 1 ); // light blue
     - particle color: in particlepainter.cpp, ParticlePainter::paintBasicSys()
 if(!bp->isActive(i) ) {
     glColor3f(1.0, 0., 0.); // deleted, red
+        - There's point size in that code area after
+if(!drewPoints)
     - The drawing is done in GridPainter<int|Real|Vec3>::paint()
     - color and vector modes
         - enum RealDisplayModes { RealDispOff=0, RealDispStd, RealDispLevelset, RealDispShadeVol, RealDispShadeSurf, NumRealDispModes }; 
