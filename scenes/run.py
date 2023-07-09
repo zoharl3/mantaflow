@@ -2,16 +2,16 @@
 import os, sys, keyboard, subprocess
 from pathlib import Path
 
-methods = [0]
-#methods = [1]
+#methods = [0]
+methods = [1]
 #methods = [2]
 #methods = [0,1]
 #methods = [0,2]
 #methods = [0,2,1]
 #methods = [1,0,2]
 
-exe = r'..\build\debug\manta' # cmd can't execute ../
-if 1: # release
+exe = r'..\build\debug\manta' # cmd can't execute "../"
+if 0: # release
     exe = r'..\build\RelWithDebInfo\manta'
 
 script = 'zflip.py'

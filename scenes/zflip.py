@@ -73,9 +73,12 @@ class Correct21:
         computeDeltaX( deltaX=self.deltaX, Lambda=self.Lambda, flags=self.flagsPos )
         max_deltaX = self.deltaX.getMaxAbs()
         print( f'    - max_deltaX.MaxAbs={max_deltaX}' )
-        if max_deltaX > 10: # 10
-            warn( 'deltaX blew up; skipping correction' )
-            return
+        if 1 and max_deltaX > 10: # 10
+            if 0:
+                warn( 'deltaX blew up; skipping correction' )
+                return
+            else:
+                warn( 'deltaX blew up; not handling' )
         mapMACToPartPositions( flags=self.flagsPos, deltaX=self.deltaX, parts=pp, dt=sol.timestep )
         
         # print
@@ -248,22 +251,22 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.part_per_cell_1d = 2 # 3, 2(default), 1
+        self.part_per_cell_1d = 1 # 3, 2(default), 1
         self.dim = 2 # 2, 3
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 30 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 0 )
+        self.narrowBand = bool( 1 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8, default:6
 
         self.obs_shape = 0 # none:-1 box:0, sphere:1
-        self.large_obs = 0
+        self.large_obs = 1
 
         ###
 
         self.b2D = self.dim == 2
 
-        if 1 or ( self.obs_shape >= 0 and not self.b2D ):
+        if 1:
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else:
@@ -322,7 +325,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -389,7 +392,7 @@ class simulation:
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
-                fluid_h = 0.3 # 0.3(large box)
+                fluid_h = 0.2 # 0.2(large box)
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, fluid_h, 1) ) )
             print( f'- water level h={fluid_h}*res={fluid_h*self.gs.y}' )
             self.phi = fluidbox.computeLevelset()
@@ -406,7 +409,7 @@ class simulation:
                 else: 
                     self.obs.rad = 0.15 # 0.1, 0.15
                 if self.large_obs: # large
-                    self.obs.rad *= 5.3 # 4, 5.3
+                    self.obs.rad *= 5.7 # 4, 5.7
                 self.obs.rad *= self.res
                 # shrink a bit if exactly cell size
                 if abs( self.obs.rad - round(self.obs.rad) ) < 1e-7:
@@ -417,8 +420,8 @@ class simulation:
                 self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.gs.y, 0.5 ) - Vec3( 0, 1, 0 ) # start from the ceiling
                 if 0 and self.b2D:
                     self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, ( 1 + fluid_h )/2, 0.5 ) # middle of the air
-                if 0:
-                    self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.1 + fluid_h + self.obs.rad/self.gs.y, 0.5 ) # near the surface
+                if 1:
+                    self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.02 + fluid_h + self.obs.rad/self.gs.y, 0.5 ) # near the surface
 
                 fluid_h2 = fluid_h
                 self.obs.start_h = fluid_h2*self.gs.y + 2 # must be soon enough to determine the impact speed with obs.vel when switching to state 1
@@ -435,7 +438,7 @@ class simulation:
                     shape = Sphere( parent=self.sol, center=self.obs.center, radius=self.obs.rad )
 
                 # init force and velocity
-                if 1:
+                if 0:
                     self.obs.force = Vec3( 0, self.gravity, 0 )
                     self.obs.vel_vec = Vec3( 0, -0, 0 )
                 else:
@@ -477,7 +480,7 @@ class simulation:
             self.scene['name'] = 'compress'
 
         elif 0: # spiral
-            # see if speed limit needs to be changed after solving for pressure
+            # see if speed_limit needs to be changed after solving for pressure
             # water
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.5, 0, 0) ), p1=self.gs*( Vec3(1, 0.7, 1) ) ) # tubes:0.6, spiral:0.4
             self.phi = fluidbox.computeLevelset()
@@ -607,7 +610,7 @@ class simulation:
 
         # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
-        if 1 and not obs_stop: # if disabled for flip, then you may want to disable pushOutofObs
+        if 0 and not obs_stop: # if disabled for flip, then you may want to disable pushOutofObs
             self.flags2.copyFrom( self.flags )
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
@@ -896,7 +899,7 @@ class simulation:
                 gui.setCamRot( 35, -30, 0 )
             
             # grid
-            if 1 and self.b2D:
+            if 0 and self.b2D:
                 gui.toggleHideGrids()
 
             gui.show()
@@ -907,6 +910,10 @@ class simulation:
         it = 0
         it2 = 0
 
+        # measure
+        print( '- markFluidCells (update flags) for measure' )
+        markFluidCells( parts=self.pp, flags=self.flags )
+        self.flags.mark_surface()
         m = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
         f_measure.write( f'{m[0]}\n' )
         f_measure.flush()
@@ -1075,7 +1082,7 @@ class simulation:
                     print( '  - vel.MaxAbs=%0.2f, pVel.MaxAbs=%0.2f' % ( maxVel, maxPVel ) )
                     #speed_limit = 1/self.dt
                     speed_limit = 21 # there's the obs splash (21) to consider vs the compressed scenes (10)
-                    if maxVel > speed_limit:
+                    if 1 and maxVel > speed_limit:
                         print( f'maxVel is over the speed_limit({speed_limit})' )
                         if 1 and maxVel < 40: # may want to use 0 for compressed scenes
                             print(  f'  - scaling vel to speed_limit={speed_limit}' )
