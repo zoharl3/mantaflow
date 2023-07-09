@@ -329,7 +329,7 @@ void ParticlePainter::paintBasicSys() {
 
 	// otherwise draw center
 	if(!drewPoints) {
-		glPointSize(1.5); // 1.5, 5.5
+		glPointSize(3); // 1.5, 3, 5.5
 		glBegin(GL_POINTS);
 
 		for(int i=0; i<(int)bp->size(); i++) {
