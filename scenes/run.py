@@ -11,7 +11,7 @@ methods = [1]
 #methods = [1,0,2]
 
 exe = r'..\build\debug\manta' # cmd can't execute "../"
-if 0: # release
+if 1: # release
     exe = r'..\build\RelWithDebInfo\manta'
 
 script = 'zflip.py'
