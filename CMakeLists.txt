@@ -654,7 +654,7 @@ if(NOT NOPYTHON)
                     COMMAND prep register ${SOURCES} ${PP_REGISTER}
                     DEPENDS prep ${PP_REGS} ${SOURCES}
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                    COMMENT "Ensuring registration functions are not removed by compiler")
+                    COMMENT "Ensuring registration functions are not removed by the compiler")
     list(APPEND SOURCES ${PP_REGISTER})
 endif()
 

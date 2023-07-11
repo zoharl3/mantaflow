@@ -251,13 +251,13 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.dim = 3 # 2, 3
+        self.part_per_cell_1d = 1 # 3, 2(default), 1
+        self.dim = 2 # 2, 3
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
         self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 )
-        self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8, default:6
+        self.narrowBandWidth = 3 # 32:5, 64:6, 96:6, 128:8, default:6
 
         self.obs_shape = 0 # none:-1 box:0, sphere:1
         self.large_obs = 1
@@ -1081,7 +1081,7 @@ class simulation:
                     maxVel = self.vel.getMaxAbs()
                     print( '  - vel.MaxAbs=%0.2f, pVel.MaxAbs=%0.2f' % ( maxVel, maxPVel ) )
                     #speed_limit = 1/self.dt
-                    speed_limit = 21 # there's the obs splash (21) to consider vs the compressed scenes (10)
+                    speed_limit = 10 # there's the obs splash (21) to consider vs the compressed scenes (10)
                     if 1 and maxVel > speed_limit:
                         print( f'maxVel is over the speed_limit({speed_limit})' )
                         if 1 and maxVel < 200: # 40, 200; may want to use 0 for compressed scenes
