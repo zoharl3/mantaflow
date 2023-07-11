@@ -251,10 +251,10 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.part_per_cell_1d = 1 # 3, 2(default), 1
-        self.dim = 2 # 2, 3
+        self.part_per_cell_1d = 2 # 3, 2(default), 1
+        self.dim = 3 # 2, 3
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
-        self.res = 20 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 )
         self.narrowBandWidth = 3 # 32:5, 64:6, 96:6, 128:8, default:6
@@ -409,7 +409,7 @@ class simulation:
                 else: 
                     self.obs.rad = 0.15 # 0.1, 0.15
                 if self.large_obs: # large
-                    self.obs.rad *= 1. # 4, res50:5.7
+                    self.obs.rad *= 5.7 # 4, res50:5.7
                 self.obs.rad *= self.res
                 # shrink a bit if exactly cell size
                 if abs( self.obs.rad - round(self.obs.rad) ) < 1e-7:
@@ -420,7 +420,7 @@ class simulation:
                 self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.gs.y, 0.5 ) - Vec3( 0, 1, 0 ) # start from the ceiling
                 if 0 and self.b2D:
                     self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, ( 1 + fluid_h )/2, 0.5 ) # middle of the air
-                if 1:
+                if 0:
                     self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.02 + fluid_h + self.obs.rad/self.gs.y, 0.5 ) # near the surface
 
                 fluid_h2 = fluid_h
@@ -889,7 +889,7 @@ class simulation:
 
             # field
             gui.setRealGridDisplay( 0 ) # 0:none, 1:volume
-            gui.setVec3GridDisplay( 1 ) # 0:none, 1:vel
+            gui.setVec3GridDisplay( 0 ) # 0:none, 1:vel
             for i in range( 0 ): # 0:center, 1:wall, 2:color, 3:none
                 gui.nextVec3Display()
 
