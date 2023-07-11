@@ -257,7 +257,7 @@ class simulation:
         self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 )
-        self.narrowBandWidth = 3 # 32:5, 64:6, 96:6, 128:8, default:6
+        self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8, default:6
 
         self.obs_shape = 0 # none:-1 box:0, sphere:1
         self.large_obs = 1
