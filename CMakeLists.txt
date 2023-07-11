@@ -273,8 +273,8 @@ set(NOPP_HEADERS
 # zl
 if(1)
     include( c:/prj/mantaflow_mod/mantaflow_mod.cmake )
-    message( "sources2: " ${pp_sources2} )
-    message( "headers2: " ${pp_headers2} )
+    #message( "sources2: ${pp_sources2}" )
+    #message( "headers2: ${pp_headers2}" )
     list(APPEND PP_SOURCES ${pp_sources2})
     list(APPEND PP_HEADERS ${pp_headers2})
 endif()
@@ -565,7 +565,10 @@ if(TRUE)
     # default: build from own sources
     list(APPEND SILENT_SOURCES dependencies/cnpy/cnpy.cpp)
 
-    set(CNPY_ADDFLAGS "-std=c++11")
+    if(NOT WIN32)
+        set(CNPY_ADDFLAGS "-std=c++11")
+    endif()
+    
     set_source_files_properties(dependencies/cnpy/cnpy.cpp PROPERTIES COMPILE_FLAGS "${CNPY_ADDFLAGS}")
 
     list(APPEND INCLUDE_PATHS dependencies/cnpy)
