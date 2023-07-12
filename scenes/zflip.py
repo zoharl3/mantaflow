@@ -251,8 +251,8 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.part_per_cell_1d = 1 # 3, 2(default), 1
-        self.dim = 2 # 2, 3
+        self.part_per_cell_1d = 2 # 3, 2(default), 1
+        self.dim = 3 # 2, 3
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
@@ -575,6 +575,7 @@ class simulation:
 
         # obs_vel: it modifies it to either one or zero cell distance, staying in place and losing velocity (unlike particles)
         
+        # there are flags in the beginning of fixed_vol::main() (c++) that determine the method and are described in c:\prj-external-libs\mantaflow\z.txt
         ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=self.ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs=obsp, obs_vel=obs_vel_vec3 )
 
         if not ret2:
