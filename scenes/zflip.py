@@ -251,10 +251,10 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.dim = 3 # 2, 3
+        self.part_per_cell_1d = 1 # 3, 2(default), 1
+        self.dim = 2 # 2, 3
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
-        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 )
         self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8, default:6
@@ -409,7 +409,8 @@ class simulation:
                 else: 
                     self.obs.rad = 0.15 # 0.1, 0.15
                 if self.large_obs: # large
-                    self.obs.rad *= 5.7 # 4, res50:5.7
+                    #self.obs.rad *= 5.7 # 4, res50:5.7
+                    self.obs.rad = 0.5 - 2/self.res
                 self.obs.rad *= self.res
                 # shrink a bit if exactly cell size
                 if abs( self.obs.rad - round(self.obs.rad) ) < 1e-7:
