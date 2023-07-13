@@ -187,6 +187,8 @@ public:
 	PYTHON() Grid<T>& safeDivide( const Grid<T>& a);
 	//! clamp content to range (for vec3, clamps each component separately)
 	PYTHON() void clamp(Real min, Real max);
+	// zl clamp L2 norm
+	PYTHON() void clamp_norm(Real val);
 	//! reduce small values to zero
 	PYTHON() void stomp(const T& threshold);
 	//! permute grid axes, e.g. switch y with z (0,2,1)

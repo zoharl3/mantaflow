@@ -302,6 +302,20 @@ template<class T> void Grid<T>::mult(const Grid<T>& a) {
 template<class T> void Grid<T>::clamp(Real min, Real max) {
 	knGridClamp<T> (*this, T(min), T(max) );
 }
+
+KERNEL( idx )
+template <class T>
+void knGridClampNorm( Grid<T> &me, Real val ) {
+    Real n = sqrt( normSquare( me[idx] ) );
+	if ( n > val )
+	    me[idx] *= val / n;
+}
+
+template <class T>
+void Grid<T>::clamp_norm( Real val ) {
+    knGridClampNorm<T>( *this, val );
+}
+
 template<class T> void Grid<T>::stomp(const T& threshold) {
 	knGridStomp<T>(*this, threshold);
 }

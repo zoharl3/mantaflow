@@ -103,7 +103,7 @@ class moving_obstacle:
         self.rad = 0 # radius (at least) in the y-axis
         self.rad3 = Vec3( 0 )
         self.vel_vec = Vec3( 0 )
-        self.terminal_speed = self.sim.gravity/3 # 3; terminal velocity
+        self.terminal_speed = self.sim.gravity/3 # 1, 3; terminal velocity
 
         self.phi_init = self.sol.create( LevelsetGrid )
 
@@ -113,7 +113,7 @@ class moving_obstacle:
         self.state = 0
         self.force = Vec3( 0 )
         self.increase_vel = 1
-        self.stay = 0
+        self.n_stay = 0
         self.stay_last_it = 0
 
         self.mesh = self.sol.create( Mesh, name='mov_obs_mesh' )
@@ -252,7 +252,7 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.dim = 3 # 2, 3
+        self.dim = 2 # 2, 3
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
@@ -616,15 +616,15 @@ class simulation:
             self.flags2.copyFrom( self.flags )
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
-                emphasize( '  - obstacle position is invalid; stopping the obstacle' )
+                emphasize( '  - obstacle position is invalid; stopping the obstacle (obs_stop=1)' )
                 assert( self.method != FIXED_VOL or obs_naive )
                 obs_stop = 1
 
         self.obs.increase_vel = 1
-        print( f'  - obs({it}): .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, stay={self.obs.stay}, start_h={self.obs.start_h}' )
+        print( f'  - obs({it}): .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, n_stay={self.obs.n_stay}, start_h={self.obs.start_h}' )
         if self.obs.state != 3: # still moving
             if not obs_stop: # not stopped
-                self.obs.stay = 0
+                self.obs.n_stay = 0
 
                 if self.obs.state < 2 and self.obs.center.y - self.obs.rad <= self.obs.start_h:
                     if self.obs.state == 0: # move to state 2
@@ -641,11 +641,12 @@ class simulation:
 
             else: # was stopped
                 self.obs.increase_vel = 0
+                self.obs.vel_vec = Vec3( 0 )
                 if int(it) > self.obs.stay_last_it:
                     self.obs.stay_last_it = int(it)
-                    self.obs.stay += 1
-                if 0 and self.obs.stay > 50: # 50
-                    print( f'  - no obstacle progress (stay={self.obs.stay}); stopping it' )
+                    self.obs.n_stay += 1
+                if 0 and self.obs.n_stay > 50: # 50
+                    print( f'  - no obstacle progress (n_stay={self.obs.n_stay}); stopping it' )
                     self.obs.vel_vec = Vec3( 0 )
                     self.obs.force = Vec3( 0 )
                     self.obs.state = 3
@@ -670,12 +671,14 @@ class simulation:
                     if self.obs.vel_vec.y < max_y_speed:
                         print( f'    - limiting speed to {max_y_speed}' )
                         self.obs.vel_vec.y = max_y_speed
+
             else: # stay
                 print( '  - obstacle reached the bottom' )
                 self.obs.vel_vec = Vec3( 0 )
                 self.obs.force = Vec3( 0 )
                 self.obs.state = 3
                 emphasize2( f'  - new obs.state: {self.obs.state}' )
+
         else:
             print( '- obstacle rests' )
 
@@ -1085,15 +1088,22 @@ class simulation:
                     #speed_limit = 1/self.dt
                     speed_limit = 10 # there's the obs splash (21) to consider vs the compressed scenes (10)
                     if 1 and maxVel > speed_limit:
-                        print( f'maxVel is over the speed_limit({speed_limit})' )
-                        if 1 and maxVel < 200: # 40, 200; may want to use 0 for compressed scenes
-                            print(  f'  - scaling vel to speed_limit={speed_limit}' )
-                            self.vel.multConst( Vec3(speed_limit/maxVel) )
+                        print( f'  - maxVel is over the speed_limit({speed_limit})' )
+                        if 1 and maxVel < 5000: # 40, 200, 5000; may want to use 0 for compressed scenes
+                            if 0:
+                                print(  f'    - scaling vel to speed_limit={speed_limit}' )
+                                self.vel.multConst( Vec3(speed_limit/maxVel) )
+                            else:
+                                print(  f'    - clamping vel (norm) to speed_limit={speed_limit}' )
+                                self.vel.clamp_norm( speed_limit )
                         else:
                             b_bad_pressure = 1
-                            warn( 'velocity blew up; clearing vel' )
-                            self.vel.clear()
-                            #self.vel.copyFrom( velOld )
+                            if 1:
+                                warn( 'velocity blew up; clearing vel' )
+                                self.vel.clear()
+                            else:
+                                warn( 'velocity blew up; reverting to old one' )
+                                self.vel.copyFrom( velOld )
 
                 dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
                 print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
@@ -1190,6 +1200,7 @@ class simulation:
                 markFluidCells( parts=self.pp, flags=self.flags )
                 self.flags.mark_surface()
 
+            print( '  (the whole iteration) ', end='' )
             toc()
 
             # measure
