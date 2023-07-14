@@ -257,7 +257,7 @@ class simulation:
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 )
-        self.narrowBandWidth = 6 # 32:5, 64:6, 96:6, 128:8, default:6
+        self.narrowBandWidth = 3 # 32:5, 64:6, 96:6, 128:8, default:6
 
         self.obs_shape = 0 # none:-1 box:0, sphere:1
         self.large_obs = 1
@@ -560,31 +560,22 @@ class simulation:
 
         pVel.setSource( self.vel, isMAC=True ) # set source grid for resampling, used in insertBufferedParticles()
 
-        dt_bound = 0
-        #dt_bound = dt/4
-        #dt_bound = self.sol.timestep/4
-        #dt_bound = max( dt_bound, dt/4 )
-
         obs_vel_vec3 = Vec3(0) 
         if not obs_naive and self.obs.exists:
             obs_vel_vec3 = self.obs.vel_vec
-        obsp = None
+        obs_part = None
         if self.obs.exists:
-            obsp = self.obs.part
-            obsp.update_center( self.obs.center )
+            obs_part = self.obs.part
+            obs_part.update_center( self.obs.center )
 
-        # obs_vel: it modifies it to either one or zero cell distance, staying in place and losing velocity (unlike particles)
-        
-        # there are flags in the beginning of fixed_vol::main() (c++) that determine the method and are described in c:\prj-external-libs\mantaflow\z.txt
-        ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dt_bound=dt_bound, dim=self.dim, ppc=self.ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs=obsp, obs_vel=obs_vel_vec3 )
+        # there are flags in the beginning of fixed_vol::main() (c++) that determine the method for controlling the band interface and are described in c:\prj-external-libs\mantaflow\z.txt
+        ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dim=self.dim, ppc=self.ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs=obs_part, obs_vel=obs_vel_vec3 )
 
         if not ret2:
             ret = -1
         else:
-            self.sol.timestep = ret2[0]
-            if self.sol.timestep < 0:
+            if ret2[0] < 0:
                 ret = -1
-                self.sol.timestep = abs( self.sol.timestep )
             if not obs_naive:
                 obs_stop = ret2[1]
             stat['opt_time'] = ret2[2]
@@ -1111,7 +1102,7 @@ class simulation:
                 #self.flags.printGrid()
                 #self.vel.printGrid()
 
-                print( '- set particles\' pos0' )
+                print( '- save particle positions in .pos0' )
                 set_particles_pos0( pp=self.pp )
 
                 # FLIP velocity update
@@ -1135,6 +1126,9 @@ class simulation:
                 # advect grid velocity
                 if self.narrowBand:
                     advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.vel, order=2 )
+
+                # updates pp
+                self.sol.timestep = limit_to_one_cell_movement( pp, self.sol.timestep )
 
                 # fixed_vol
                 #self.flags.printGrid()
