@@ -70,7 +70,7 @@ def main():
         if not log.exists():
             print( f"log doesn't exist (premature/forced/user exit): '{log}'" )
             os.system( f'copy_log.bat "{latest_dir.as_posix()}"' )
-            ret = -1
+            #ret = -1
             break
 
     print( 'run.py is done' )
