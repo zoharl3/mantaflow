@@ -39,6 +39,8 @@ def run( method ):
     print()
 
 def main():
+    ret = 0
+    
     # delete first level dirs
     for path in Path( out_dir_root ).glob('*'):
         if path.is_dir():
@@ -68,10 +70,11 @@ def main():
         if not log.exists():
             print( f"log doesn't exist (premature/forced/user exit): '{log}'" )
             os.system( f'copy_log.bat "{latest_dir.as_posix()}"' )
+            ret = -1
             break
 
     print( 'run.py is done' )
-    return 0
+    return ret
 
 # __main__
 if __name__ == "__main__":

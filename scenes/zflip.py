@@ -251,10 +251,10 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.part_per_cell_1d = 2 # 3, 2(default), 1
-        self.dim = 3 # 2, 3
+        self.part_per_cell_1d = 2 # 1, 2(default), 3
+        self.dim = 2 # 2, 3
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 30 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 )
         self.narrowBandWidth = 3 # 32:5, 64:6, 96:6, 128:8, default:6
@@ -1128,7 +1128,7 @@ class simulation:
                     advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.vel, order=2 )
 
                 # updates pp
-                self.sol.timestep = limit_to_one_cell_movement( pp, self.sol.timestep )
+                self.sol.timestep = limit_to_one_cell_movement( self.pp, self.sol.timestep )
 
                 # fixed_vol
                 #self.flags.printGrid()
