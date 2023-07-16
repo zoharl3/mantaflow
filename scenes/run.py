@@ -1,6 +1,9 @@
 
 import os, sys, keyboard, subprocess
 from pathlib import Path
+import FileLock
+
+lock = FileLock.FileLock('/tmp/manta_run.py.lock')
 
 #methods = [0]
 methods = [1]

@@ -138,7 +138,7 @@ class moving_obstacle:
         self.vel.setBound( value=Vec3(0.), boundaryWidth=self.sim.boundary_width+1 )
 
         # fill obstacle with particles
-        tic()
+        tic( 'obs part' )
         self.part.create( self.center, self.rad3, self.shape, self.sim.gs )
         toc()
 
@@ -509,7 +509,7 @@ class simulation:
 
                 # obs particles
                 self.obs2.part = self.sol.create( obs_particles )
-                tic()
+                tic( 'obs part' )
                 #self.obs2.part.create_from_levelset( mesh_phi )
                 self.obs2.part.create_from_mesh( self.obs2.mesh )
                 toc()
@@ -954,7 +954,7 @@ class simulation:
             if not it < self.it_max:
                 break
 
-            tic()
+            tic( 'the whole iteration' )
 
             # time step
             maxVel = self.vel.getMaxAbs()
@@ -984,7 +984,7 @@ class simulation:
 
             if self.method == DE_GOES22:
                 assert( self.b2D )
-                tic()
+                tic( 'de_goes22' )
                 de_goes22( self.dt, self.res, self.part_per_cell_1d, self.gravity, it2, self.pp, pVel )
                 toc()
 
@@ -1062,11 +1062,10 @@ class simulation:
                 b_bad_pressure = 0
                 if 1:
                     print( '- pressure' )
-                    tic()
+                    tic( 'pressure' )
                     # Solving Poisson eq for the pressure, with Neumann BC on walls (given as velocity, where u = \nabla p) and Dirichlet on empty cells (p=0).
                     # If there's fluid caged in a solid with no empty cells, then there are only Neumann conditions. Then, need to fix one pressure cell (Dirichlet) to eliminate DOF. Setting the flag zeroPressureFixing won't help if there are empty cells in other parts of the domain.
                     solvePressure( flags=self.flags, vel=self.vel, pressure=pressure, phi=self.phi )
-                    print( '  (pressure) ', end='' )
                     t = toc()
                     if it2 == 0:
                         stat['pressure'] = t
@@ -1194,8 +1193,7 @@ class simulation:
                 markFluidCells( parts=self.pp, flags=self.flags )
                 self.flags.mark_surface()
 
-            print( '  (the whole iteration) ', end='' )
-            toc()
+            toc() # iter
 
             # measure
             m = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
@@ -1230,7 +1228,7 @@ class simulation:
 
             # mesh
             if self.b_fluid_mesh:
-                tic()
+                tic( 'mesh_gen' )
                 mesh_gen.generate( self.pp )
                 toc()
 
