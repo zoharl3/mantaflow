@@ -341,7 +341,7 @@ PYTHON() void extrapolateMACSimple (FlagGrid& flags, MACGrid& vel, int distance 
 	int dim = (flags.is3D() ? 3:2);
 
 	for(int c=0; c<dim; ++c) {
-		Vec3i dir = 0;
+		Vec3i dir( 0 );
 		dir[c] = 1;
 		tmp.clear();
 
@@ -412,7 +412,7 @@ PYTHON() void extrapolateMACFromWeight ( MACGrid& vel, Grid<Vec3>& weight, int d
 	const int dim = (vel.is3D() ? 3:2);
 
 	for(int c=0; c<dim; ++c) {
-		Vec3i dir = 0;
+		Vec3i dir( 0 );
 		dir[c] = 1;
 
 		// reset weight values to 0 (uninitialized), and 1 (initialized inner values)

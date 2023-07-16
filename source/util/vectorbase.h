@@ -76,8 +76,8 @@ public:
 	//! Copy-Constructor
 	inline Vector3D ( const Vector3D<S> &v ) : x(v.x), y(v.y), z(v.z) {}
 
-        //! Copy-Constructor
-        inline Vector3D ( const int * v) : x((S)v[0]), y((S)v[1]), z((S)v[2]) {}
+    //! Copy-Constructor
+    inline Vector3D ( const int * v) : x((S)v[0]), y((S)v[1]), z((S)v[2]) {}
 
 	//! Copy-Constructor
 	inline Vector3D ( const float * v) : x((S)v[0]), y((S)v[1]), z((S)v[2]) {}
@@ -85,8 +85,11 @@ public:
 	//! Copy-Constructor
 	inline Vector3D ( const double * v) : x((S)v[0]), y((S)v[1]), z((S)v[2]) {}
 	
+	// zl I added explicit for it, else functions that expect Vec3i and get an int by mistake wouldn't give a compilation error (the int would be cast to Vec3i)
 	//! Construct a vector from one S
-	inline Vector3D ( S v) : x(v), y(v), z(v) {}
+    inline explicit Vector3D( int v ) : x( v ), y( v ), z( v ) {}
+    inline Vector3D( double v ) : x( v ), y( v ), z( v ) {}
+    inline Vector3D( float v ) : x( v ), y( v ), z( v ) {}
 		
 	//! Construct a vector from three Ss
 	inline Vector3D ( S vx, S vy, S vz) : x(vx), y(vy), z(vz) {}

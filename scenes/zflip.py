@@ -252,9 +252,9 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 2 # 2, 3
+        self.dim = 3 # 2, 3
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
-        self.res = 30 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 )
         self.narrowBandWidth = 3 # 32:5, 64:6, 96:6, 128:8, default:6
@@ -421,7 +421,7 @@ class simulation:
                 self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 1 - self.obs.rad/self.gs.y, 0.5 ) - Vec3( 0, 1, 0 ) # start from the ceiling
                 if 0 and self.b2D:
                     self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, ( 1 + fluid_h )/2, 0.5 ) # middle of the air
-                if 1:
+                if 0:
                     self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, 0.02 + fluid_h + self.obs.rad/self.gs.y, 0.5 ) # near the surface
 
                 fluid_h2 = fluid_h
