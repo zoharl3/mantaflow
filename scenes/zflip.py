@@ -252,12 +252,13 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 3 # 2, 3
+        self.dim = 2 # 2, 3
         self.it_max = 1500 # 300, 500, 1000, 1500, 2500
-        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 200 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 )
-        self.narrowBandWidth = 3 # 32:5, 64:6, 96:6, 128:8, default:6
+        self.narrowBandWidth = 3 # 3, 6
+        self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
 
         self.obs_shape = 0 # none:-1 box:0, sphere:1
         self.large_obs = 1
@@ -449,6 +450,8 @@ class simulation:
 
                 self.scene['type'] = 2 if self.obs.shape == 0 else 3
                 self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
+                if self.large_obs:
+                    self.scene['name'] = 'large ' + self.scene['name']
                 self.scene['cam'] = 2
 
         elif 0: # compress
@@ -568,8 +571,7 @@ class simulation:
             obs_part = self.obs.part
             obs_part.update_center( self.obs.center )
 
-        # there are flags in the beginning of fixed_vol::main() (c++) that determine the method for controlling the band interface and are described in c:\prj-external-libs\mantaflow\z.txt
-        ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dim=self.dim, ppc=self.ppc, phi=self.phi, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, bfs=bfs, obs=obs_part, obs_vel=obs_vel_vec3 )
+        ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dim=self.dim, ppc=self.ppc, phi=self.phi, bfs=bfs, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, inter_control_method=self.inter_control_method, obs=obs_part, obs_vel=obs_vel_vec3 )
 
         if not ret2:
             ret = -1
@@ -773,7 +775,7 @@ class simulation:
         # info
         print()
         print( 'dim:', self.dim, ', res:', self.res, ', ppc:', self.ppc )
-        print( 'narrowBand:', self.narrowBand, ', narrowBandWidth:', self.narrowBandWidth )
+        print( 'narrowBand:', self.narrowBand, ', narrowBandWidth:', self.narrowBandWidth, ', inter_control_method:', self.inter_control_method )
         print( 'method:', self.method )
         print( 'gravity: %0.02f' % self.gravity )
         print( 'timestep:', self.dt )

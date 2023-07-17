@@ -1,6 +1,5 @@
 
 - fixed_volume
-    - Set b_solve_twice to switch between push_particles() and band_interface_constr2().
 
 - base code
     - there's exit(0) that doesn't let the script finish
