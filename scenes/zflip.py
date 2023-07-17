@@ -253,8 +253,8 @@ class simulation:
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 3 # 2, 3
-        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.it_max = 1500 # 300, 500, 1000, 1500, 2500
+        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 )
         self.narrowBandWidth = 3 # 32:5, 64:6, 96:6, 128:8, default:6
@@ -262,15 +262,15 @@ class simulation:
         self.obs_shape = 0 # none:-1 box:0, sphere:1
         self.large_obs = 1
 
-        ###
-
-        self.b2D = self.dim == 2
-
-        if 1:
+        if 0:
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else:
             self.gs = Vec3( self.res, self.res, self.res ) # iso
+
+        ###
+
+        self.b2D = self.dim == 2
 
         # method
         self.method = method
@@ -325,7 +325,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 0: # dam
+        if 1: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -890,7 +890,7 @@ class simulation:
                 gui.nextVec3Display()
 
             # cam
-            if 0 and self.dim == 3: # camera
+            if 1 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 )
                 gui.setCamRot( 35, -30, 0 )
             
