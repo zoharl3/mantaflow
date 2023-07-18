@@ -852,7 +852,7 @@ class simulation:
         #np_max = 2*np # twice as init
         np_max = self.ppc * (self.res-2)**self.dim * 0.5 # half tank
 
-        print( f'# particles: {np}, np_max={np_max}' )
+        print( f'# particles: {np} (np_max={np_max})' )
 
         # create a level set from particles
         # phi is influenced by the walls for some reason
@@ -1313,6 +1313,10 @@ if 1 and __name__ == '__main__':
     # (debug) for consistent result; for large res, the step() hangs?
     if 0:
         limit_to_one_core()
+
+    # for kernels not to hog the cpu
+    if 1:
+        limit_tbb_cores( 4 )
 
     #setDebugLevel( 10 )
 

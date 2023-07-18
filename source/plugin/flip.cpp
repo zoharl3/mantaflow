@@ -362,6 +362,64 @@ PYTHON() void unionParticleLevelset( const BasicParticleSystem &parts, const Par
     phi.setBound( 0.5, 0 );
 }
 
+// zl
+void ComputeAveragedLevelsetWeight_ijk( int i, int j, int k, const BasicParticleSystem &parts,
+                                    const Grid<int> &index, const ParticleIndexSystem &indexSys,
+                                    LevelsetGrid &phi, const Real radius,
+                                    const ParticleDataImpl<int> *ptype, const int exclude,
+                                    Grid<Vec3> *save_pAcc = NULL, Grid<Real> *save_rAcc = NULL ) {
+    const Vec3 gridPos = Vec3( i, j, k ) + Vec3( 0.5 ); // shifted by half cell
+    Real phiv = radius * 1.0; // outside
+
+    // loop over neighborhood, similar to ComputeUnionLevelsetPindex
+    const Real sradiusInv = 1. / ( 4. * radius * radius );
+    int r = int( 1. * radius ) + 1;
+    int rZ = phi.is3D() ? r : 0;
+    // accumulators
+    Real wacc = 0.;
+    Vec3 pacc = Vec3( 0. );
+    Real racc = 0.;
+
+    for ( int zj = k - rZ; zj <= k + rZ; zj++ )
+        for ( int yj = j - r; yj <= j + r; yj++ )
+            for ( int xj = i - r; xj <= i + r; xj++ ) {
+                if ( !phi.isInBounds( Vec3i( xj, yj, zj ) ) )
+                    continue;
+
+                IndexInt isysIdxS = index.index( xj, yj, zj );
+                IndexInt pStart = index( isysIdxS ), pEnd = 0;
+                if ( phi.isInBounds( isysIdxS + 1 ) )
+                    pEnd = index( isysIdxS + 1 );
+                else
+                    pEnd = indexSys.size();
+                for ( IndexInt p = pStart; p < pEnd; ++p ) {
+                    IndexInt psrc = indexSys[p].sourceIndex;
+                    if ( ptype && ( ( *ptype )[psrc] & exclude ) )
+                        continue;
+
+                    Vec3 pos = parts[psrc].pos;
+                    Real s = normSquare( gridPos - pos ) * sradiusInv;
+                    // Real  w = std::max(0., cubed(1.-s) );
+                    Real w = std::max( 0., ( 1. - s ) ); // a bit smoother
+                    wacc += w;
+                    racc += radius * w;
+                    pacc += pos * w;
+                }
+            }
+
+    if ( wacc > VECTOR_EPSILON ) {
+        racc /= wacc;
+        pacc /= wacc;
+        phiv = fabs( norm( gridPos - pacc ) ) - racc;
+
+        if ( save_pAcc )
+            ( *save_pAcc )( i, j, k ) = pacc;
+        if ( save_rAcc )
+            ( *save_rAcc )( i, j, k ) = racc;
+    }
+    phi( i, j, k ) = phiv;
+}
+
 //! kernel for computing averaged particle level set weights
 KERNEL()
 void ComputeAveragedLevelsetWeight(const BasicParticleSystem& parts,
@@ -370,79 +428,49 @@ void ComputeAveragedLevelsetWeight(const BasicParticleSystem& parts,
 				   const ParticleDataImpl<int>* ptype, const int exclude,
 				   Grid<Vec3>* save_pAcc = NULL, Grid<Real>* save_rAcc = NULL)
 {
-	const Vec3 gridPos = Vec3(i,j,k) + Vec3(0.5); // shifted by half cell
-	Real phiv = radius * 1.0; // outside 
-
-	// loop over neighborhood, similar to ComputeUnionLevelsetPindex
-	const Real sradiusInv = 1. / (4. * radius * radius) ;
-	int   r = int(1. * radius) + 1;
-	int   rZ = phi.is3D() ? r : 0;
-	// accumulators
-	Real  wacc = 0.;
-	Vec3  pacc = Vec3(0.);
-	Real  racc = 0.;
-
-	for(int zj=k-rZ; zj<=k+rZ; zj++) 
-	for(int yj=j-r ; yj<=j+r ; yj++) 
-	for(int xj=i-r ; xj<=i+r ; xj++) {
-		if (! phi.isInBounds(Vec3i(xj,yj,zj)) ) continue;
-
-		IndexInt isysIdxS = index.index(xj,yj,zj);
-		IndexInt pStart = index(isysIdxS), pEnd=0;
-		if(phi.isInBounds(isysIdxS+1)) pEnd = index(isysIdxS+1);
-		else                           pEnd = indexSys.size();
-		for(IndexInt p=pStart; p<pEnd; ++p) {
-			IndexInt   psrc = indexSys[p].sourceIndex;
-			if(ptype && ((*ptype)[psrc] & exclude)) continue;
-
-			Vec3  pos  = parts[psrc].pos; 
-			Real  s    = normSquare(gridPos-pos) * sradiusInv;
-			//Real  w = std::max(0., cubed(1.-s) );
-			Real  w = std::max(0., (1.-s)); // a bit smoother
-			wacc += w;
-			racc += radius * w;
-			pacc += pos    * w;
-		} 
-	}
-
-	if(wacc > VECTOR_EPSILON) {
-		racc /= wacc;
-		pacc /= wacc;
-		phiv = fabs( norm(gridPos-pacc) )-racc;
-
-		if (save_pAcc) (*save_pAcc)(i, j, k) = pacc;
-		if (save_rAcc) (*save_rAcc)(i, j, k) = racc;
-	}
-	phi(i,j,k) = phiv;
+    ComputeAveragedLevelsetWeight_ijk( i, j, k, parts, index, indexSys, phi, radius, ptype, exclude, save_pAcc, save_rAcc );
 }
 
 template<class T> T smoothingValue(const Grid<T> val, int i, int j, int k, T center) {
 	return val(i,j,k);
 }
 
+// zl
+template <class T>
+void SmoothGrid_ijk( int i, int j, int k, const Grid<T> &me, Grid<T> &tmp, Real factor ) {
+    T val = me( i, j, k ) +
+            me( i + 1, j, k ) + me( i - 1, j, k ) +
+            me( i, j + 1, k ) + me( i, j - 1, k );
+    if ( me.is3D() ) {
+        val += me( i, j, k + 1 ) + me( i, j, k - 1 );
+    }
+    tmp( i, j, k ) = val * factor;
+}
+
 // smoothing, and  
-KERNEL(bnd=1) template<class T> 
+KERNEL(bnd=1) template<class T>
 void knSmoothGrid(const Grid<T>& me, Grid<T>& tmp, Real factor) {
-	T val = me(i,j,k) + 
-			me(i+1,j,k) + me(i-1,j,k) + 
-			me(i,j+1,k) + me(i,j-1,k) ;
-	if(me.is3D()) {
-		val += me(i,j,k+1) + me(i,j,k-1);
-	}
-	tmp(i,j,k) = val * factor;
+    SmoothGrid_ijk( i, j, k, me, tmp, factor );
+}
+
+template <class T>
+void SmoothGridNeg_ijk( int i, int j, int k, const Grid<T> &me, Grid<T> &tmp, Real factor ) {
+    T val = me( i, j, k ) +
+            me( i + 1, j, k ) + me( i - 1, j, k ) +
+            me( i, j + 1, k ) + me( i, j - 1, k );
+    if ( me.is3D() ) {
+        val += me( i, j, k + 1 ) + me( i, j, k - 1 );
+    }
+    val *= factor;
+    if ( val < tmp( i, j, k ) )
+        tmp( i, j, k ) = val;
+    else
+        tmp( i, j, k ) = me( i, j, k );
 }
 
 KERNEL(bnd=1) template<class T> 
 void knSmoothGridNeg(const Grid<T>& me, Grid<T>& tmp, Real factor) {
-	T val = me(i,j,k) + 
-			me(i+1,j,k) + me(i-1,j,k) + 
-			me(i,j+1,k) + me(i,j-1,k) ;
-	if(me.is3D()) {
-		val += me(i,j,k+1) + me(i,j,k-1);
-	}
-	val *= factor;
-	if(val<tmp(i,j,k)) tmp(i,j,k) = val;
-	else               tmp(i,j,k) = me(i,j,k);
+    SmoothGridNeg_ijk( i, j, k, me, tmp, factor );
 }
 
 //! Zhu & Bridson particle level set creation 
@@ -518,22 +546,38 @@ PYTHON() void improvedParticleLevelset(const BasicParticleSystem& parts, const P
 	Grid<Real> save_rAcc(flags.getParent());
 
 	const Real radius = 0.5 * calculateRadiusFactor(phi, radiusFactor); // use half a cell diagonal as base radius
-	ComputeAveragedLevelsetWeight(parts, index, indexSys, phi, radius, ptype, exclude, &save_pAcc, &save_rAcc);
+
+	if ( 1 ) // zl kernel hogs cpu; without it, it's x4 slower
+	    ComputeAveragedLevelsetWeight(parts, index, indexSys, phi, radius, ptype, exclude, &save_pAcc, &save_rAcc);
+    else
+		FOR_IJK( index )
+            ComputeAveragedLevelsetWeight_ijk( i, j, k, parts, index, indexSys, phi, radius, ptype, exclude, &save_pAcc, &save_rAcc );
+
 	correctLevelset(phi, save_pAcc, save_rAcc, radius, t_low, t_high);
 
 	// post-process level-set
 	for (int i = 0; i<std::max(smoothen, smoothenNeg); ++i) {
 		LevelsetGrid tmp(flags.getParent());
-		if (i<smoothen) {
-			knSmoothGrid    <Real>(phi, tmp, 1. / (phi.is3D() ? 7. : 5.));
-			phi.swap(tmp);
-		}
-		if (i<smoothenNeg) {
-			knSmoothGridNeg <Real>(phi, tmp, 1. / (phi.is3D() ? 7. : 5.));
-			phi.swap(tmp);
-		}
-	}
-	phi.setBound(0.5, 0);
+        Real factor = 1. / ( phi.is3D() ? 7. : 5. );
+        bool bUseKernel = 1; // zl this kernel doesn't hog the cpu
+        if ( i < smoothen ) {
+            if ( bUseKernel )
+                knSmoothGrid<Real>( phi, tmp, factor );
+            else
+                FOR_IJK_BND( phi, 1 )
+                    SmoothGrid_ijk( i, j, k, phi, tmp, factor );
+            phi.swap( tmp );
+        }
+        if ( i < smoothenNeg ) {
+            if ( bUseKernel )
+                knSmoothGridNeg<Real>( phi, tmp, factor );
+            else
+                FOR_IJK_BND( phi, 1 )
+                    SmoothGridNeg_ijk( i, j, k, phi, tmp, factor );
+            phi.swap( tmp );
+        }
+    }
+    phi.setBound( 0.5, 0 );
 }
 
 
