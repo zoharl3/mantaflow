@@ -253,8 +253,8 @@ class simulation:
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 3 # 2, 3
-        self.it_max = 1500 # 300, 500, 1000, 1500, 2500
-        self.res = 200 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.it_max = 500 # 300, 500, 1000, 1500, 2500
+        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 )
         self.narrowBandWidth = 3 # 3, 6
