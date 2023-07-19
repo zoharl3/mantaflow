@@ -253,11 +253,11 @@ class simulation:
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 3 # 2, 3
-        self.it_max = 500 # 300, 500, 1000, 1500, 2500
+        self.it_max = 2000 # 300, 500, 1000, 1500, 2500
         self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 1 )
-        self.narrowBandWidth = 3 # 3, 6
+        self.narrowBand = bool( 1 ) # there's an override in main() for some methods
+        self.narrowBandWidth = 6 # 3(default), 6
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
 
         self.obs_shape = 0 # none:-1 box:0, sphere:1
@@ -742,7 +742,7 @@ class simulation:
         #self.flags.printGrid()
 
     def main( self ):
-        if self.method == CORRECT21:
+        if self.method in [ FLIP, CORRECT21 ]:
             self.narrowBand = bool( 0 )
 
         combineBandWidth = self.narrowBandWidth - 1
@@ -956,7 +956,7 @@ class simulation:
             if not it < self.it_max:
                 break
 
-            tic( 'the whole iteration' )
+            tic( 'loop iteration' )
 
             # time step
             maxVel = self.vel.getMaxAbs()
@@ -1002,7 +1002,6 @@ class simulation:
                     #vel.printGrid()
                     #velParts.printGrid()
                     combineGridVel( vel=velParts, weight=mapWeights, combineVel=self.vel, phi=self.phi, narrowBand=combineBandWidth, thresh=0 )
-                    #limit_velocity( vel, pVel, 256 ) # 64:15, 128:?
                     velOld.copyFrom( self.vel ) # save before forces and pressure; like the end of mapPartsToMAC()
                     #print( '>> combine' )
                     #vel.printGrid()
@@ -1076,9 +1075,11 @@ class simulation:
 
                     maxPVel = pVel.getMaxAbs()
                     maxVel = self.vel.getMaxAbs()
-                    print( '  - vel.MaxAbs=%0.2f, pVel.MaxAbs=%0.2f' % ( maxVel, maxPVel ) )
                     #speed_limit = 1/self.dt
-                    speed_limit = 10 # there's the obs splash (21) to consider vs the compressed scenes (10)
+                    speed_limit = 7 # there's the obs splash (21) to consider vs the compressed scenes (7)
+                    print( '  - vel.MaxAbs=%0.2f, pVel.MaxAbs=%0.2f, speed_limit=%g' % ( maxVel, maxPVel, speed_limit ) )
+
+                    # limit vel
                     if 1 and maxVel > speed_limit:
                         print( f'  - maxVel is over the speed_limit({speed_limit})' )
                         if 1 and maxVel < 5000: # 40, 200, 5000; may want to use 0 for compressed scenes
@@ -1112,6 +1113,10 @@ class simulation:
                 flipVelocityUpdate( vel=self.vel, velOld=velOld, flags=self.flags, parts=self.pp, partVel=pVel, flipRatio=1 - alpha )
                 #self.vel.printGrid()
                 
+                # limit pVel
+                if 1:
+                    limit_particle_velocity( pVel, speed_limit )
+
                 # advect
                 print( '- advect' )
                 # advect particles
@@ -1129,7 +1134,7 @@ class simulation:
                     advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.vel, order=2 )
 
                 # updates pp
-                self.sol.timestep = limit_to_one_cell_movement( self.pp, self.sol.timestep )
+                self.sol.timestep = limit_time_step_to_one_cell_movement( self.pp, self.sol.timestep )
 
                 # fixed_vol
                 #self.flags.printGrid()

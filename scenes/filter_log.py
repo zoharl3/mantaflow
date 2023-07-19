@@ -17,23 +17,28 @@ while i < len( lines ):
     #print ( f'i={i}: { line }' )
     
     ss = [
-        'push time:',
-        'gurobi optimize:'
+        'vel.MaxAbs',
+        #'push time:',
+        #'gurobi optimize:'
         ]
     
     prn = 0
+    
+    # print next
     if print_next > 0:
         prn = 1
         print_next -= 1
         
+    # time
     elif re.search( '^- time:', line ):
         print()
         emphasize( line )
         
-    elif re.search( '- push_particles', line ):
+    elif 0 and re.search( '- push_particles', line ):
         prn = 1
         print_next = 1
         
+    # ss
     elif any( s in line for s in ss ):
         prn = 1
         

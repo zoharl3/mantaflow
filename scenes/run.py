@@ -11,8 +11,8 @@ lock = FileLock.FileLock('/tmp/manta_run.py.lock')
 #methods = [1]
 #methods = [2]
 #methods = [0,1]
-methods = [2,0]
-#methods = [0,2,1]
+#methods = [2,0]
+methods = [0,2,1]
 #methods = [1,0,2]
 
 exe = r'..\build\debug\manta' # cmd can't execute "../"
