@@ -946,7 +946,7 @@ class simulation:
         while 1:
             emphasize( '\n-----------------\n- time: %g(/%d; it2=%d)' % ( it, self.it_max, it2 ) )
             print( f'- scene: {scene_name}' )
-            print( '- np=%d, np_max=%d' % ( self.pp.pySize(), np_max ) )
+            print( '- np=%d (np_max=%d)' % ( self.pp.pySize(), np_max ) )
 
             if 1 and ret != 0:
                 error( f'Error: ret={ret}' )
