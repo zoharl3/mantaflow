@@ -966,7 +966,7 @@ void FlagGrid::mark_surface()
 }
 
 void FlagGrid::clear_obstacle( bool include_boundary ) {
-    printf( "- FlagGrid::clear_obstacle( include_boundary=%d )\n", include_boundary );
+    //printf( "  - FlagGrid::clear_obstacle( include_boundary=%d )\n", include_boundary );
     FOR_IJK( *this ) {
         auto i2 = Vec3i( i, j, k );
         if ( !isObstacle( i2 ) )

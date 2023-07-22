@@ -41,9 +41,9 @@ def test_MAC():
     #print( f'v.getAtMACX(1, 1)={v.getAtMACX(1, 1, 0)}' ) # boundary
     print( f'v.getAtMACY(0, 1)={v.getAtMACY(0, 1, 0)}' )
 
-# correct21 (position solver, Thuerey21)
+# correct19 (position solver, Thuerey19)
 # The band requires fixing, probably identifying non-band fluid cells as full. In the paper, it's listed as future work.
-class Correct21:
+class Correct19:
     def __init__( self, dim, s, part_per_cell_1d, pp ):
         self.density = s.create(RealGrid, name='')
         self.Lambda = s.create(RealGrid)
@@ -56,7 +56,7 @@ class Correct21:
             self.gCnt = s.create(IntGrid)
 
     def main( self, sol, flags, pp, vel, pindex, gpi, phiObs ):
-        print( '- Correct21.main()' )
+        print( '- Correct19.main()' )
         copyFlagsToFlags(flags, self.flagsPos)
         mapMassToGrid(flags=self.flagsPos, density=self.density, parts=pp, source=self.pMass, deltaX=self.deltaX, phiObs=phiObs, dt=sol.timestep, particleMass=self.mass, noDensityClamping=self.resampleParticles)
         
@@ -237,7 +237,7 @@ class mesh_generator:
 
 # methods
 # 0       1          2          3
-FLIP, FIXED_VOL, CORRECT21, DE_GOES22 = range( 4 )
+FLIP, FIXED_VOL, CORRECT19, DE_GOES22 = range( 4 )
 
 class simulation:
     def __init__( self, method ):
@@ -252,16 +252,16 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 3 # 2, 3
-        self.it_max = 2000 # 300, 500, 1000, 1500, 2500
-        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.dim = 2 # 2, 3
+        self.it_max = 600 # 300, 500, 1000, 1500, 2500
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 1 ) # there's an override in main() for some methods
-        self.narrowBandWidth = 6 # 3(default), 6
+        self.narrowBand = bool( 0 ) # there's an override in main() for some methods
+        self.narrowBandWidth = 3 # 3(default), 6
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
 
-        self.obs_shape = 0 # none:-1 box:0, sphere:1
-        self.large_obs = 1
+        self.obs_shape = -1 # none:-1 box:0, sphere:1
+        self.large_obs = 0
 
         if 0:
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
@@ -326,7 +326,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -454,7 +454,7 @@ class simulation:
                     self.scene['name'] = 'large ' + self.scene['name']
                 self.scene['cam'] = 2
 
-        elif 0: # compress
+        elif 1: # compress
             # water
             h = 0.4
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.5, 0, 0) ), p1=self.gs*( Vec3(1, h, 1) ) )
@@ -605,7 +605,7 @@ class simulation:
 
         # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
-        if 0 and not obs_stop: # if disabled for flip, then you may want to disable pushOutofObs
+        if 1 and not obs_stop: # if disabled for flip, then you may want to disable pushOutofObs
             self.flags2.copyFrom( self.flags )
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
@@ -742,8 +742,9 @@ class simulation:
         #self.flags.printGrid()
 
     def main( self ):
-        if self.method in [ FLIP, CORRECT21 ]:
+        if 1 and self.method in [ FLIP, CORRECT19 ]:
             self.narrowBand = bool( 0 )
+            self.narrowBandWidth = -1
 
         combineBandWidth = self.narrowBandWidth - 1
 
@@ -770,7 +771,7 @@ class simulation:
         pindex = self.sol.create(ParticleIndexSystem)
         gpi = self.sol.create(IntGrid)
 
-        correct21 = Correct21( self.dim, self.sol, self.part_per_cell_1d, self.pp )
+        correct19 = Correct19( self.dim, self.sol, self.part_per_cell_1d, self.pp )
 
         # info
         print()
@@ -800,8 +801,8 @@ class simulation:
         elif self.method == FIXED_VOL:
             if not self.narrowBand:
                 name += ' full'
-        elif self.method == CORRECT21:
-            name += ' cor21'
+        elif self.method == CORRECT19:
+            name += ' idp'
         elif self.method == DE_GOES22:
             name += ' power'
         else:
@@ -897,7 +898,7 @@ class simulation:
                 gui.setCamRot( 35, -30, 0 )
             
             # grid
-            if 0 and self.b2D:
+            if 1 and self.b2D:
                 gui.toggleHideGrids()
 
             gui.show()
@@ -1121,9 +1122,9 @@ class simulation:
                 print( '- advect' )
                 # advect particles
                 self.pp.advectInGrid( flags=self.flags, vel=self.vel, integrationMode=IntEuler, deleteInObstacle=False, stopInObstacle=False ) # IntEuler, IntRK2, IntRK4
-                if 0 and self.method != FIXED_VOL and self.method != CORRECT21:
+                if 0 and self.method != FIXED_VOL and self.method != CORRECT19:
                     print( '- pushOutofObs' )
-                    pushOutofObs( parts=self.pp, flags=self.flags, phiObs=self.phiObs ) # creates issues for correct21 and fixedVol; can push particles into walls; pushes outside domain
+                    pushOutofObs( parts=self.pp, flags=self.flags, phiObs=self.phiObs ) # creates issues for correct19 and fixedVol; can push particles into walls; pushes outside domain
                 # advect phi; why? the particles should determine phi, which should flow on its own; disabling this creates artifacts in flip5; it makes it worse for fixed_vol
                 if 1 and self.method != FIXED_VOL:
                     advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.phi, order=1 )
@@ -1147,12 +1148,12 @@ class simulation:
                     [ ret, obs_stop, include_walls ] = self.fixed_volume( pVel, obs_naive, include_walls, ret, it2, bfs, stat )
                 #self.flags.printGrid()
 
-                # correct21
-                if self.method == CORRECT21:
+                # correct19
+                if self.method == CORRECT19:
                     if b_bad_pressure:
-                        warn( "skipping correct21 due to bad pressure" )
+                        warn( "skipping correct19 due to bad pressure" )
                     else:
-                        correct21.main( self.sol, self.flags, self.pp, self.vel, pindex, gpi, self.phiObs )
+                        correct19.main( self.sol, self.flags, self.pp, self.vel, pindex, gpi, self.phiObs )
                 
                 # moving obstacle
                 if self.obs.exists:
