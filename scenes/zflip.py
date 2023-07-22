@@ -252,18 +252,18 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 2 # 2, 3
-        self.it_max = 600 # 300, 500, 1000, 1500, 2500
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.dim = 3 # 2, 3
+        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
+        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 0 ) # there's an override in main() for some methods
+        self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default), 6
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
 
-        self.obs_shape = -1 # none:-1 box:0, sphere:1
+        self.obs_shape = 0 # none:-1 box:0, sphere:1
         self.large_obs = 0
 
-        if 0:
+        if 1:
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else:
@@ -389,7 +389,7 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 0 or self.obs_shape >= 0: # falling obstacle
+        elif 1: # falling obstacle
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
@@ -446,6 +446,7 @@ class simulation:
                 else:
                     self.obs.force = Vec3( 0, 0, 0 )
                     self.obs.vel_vec = Vec3( 0, self.gravity, 0 )
+                    self.obs.state = 4 # constant speed
                 self.obs.init( shape )
 
                 self.scene['type'] = 2 if self.obs.shape == 0 else 3
@@ -454,7 +455,7 @@ class simulation:
                     self.scene['name'] = 'large ' + self.scene['name']
                 self.scene['cam'] = 2
 
-        elif 1: # compress
+        elif 0: # compress
             # water
             h = 0.4
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.5, 0, 0) ), p1=self.gs*( Vec3(1, h, 1) ) )
@@ -478,6 +479,7 @@ class simulation:
                 # init
                 self.obs.force = Vec3( 0, 0, 0 )
                 self.obs.vel_vec = Vec3( 0, self.gravity*.5, 0 )
+                self.obs.state = 4 # constant speed
                 self.obs.init( shape )
 
             #self.scene['type'] = 4
@@ -536,6 +538,7 @@ class simulation:
                 # init
                 self.obs.force = Vec3( 0, 0, 0 )
                 self.obs.vel_vec = Vec3( 0, self.gravity*1, 0 )
+                self.obs.state = 4 # constant speed
                 self.obs.init( shape )
 
                 #self.scene['type'] = 5
@@ -615,7 +618,7 @@ class simulation:
 
         self.obs.increase_vel = 1
         print( f'  - obs({it}): .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, n_stay={self.obs.n_stay}, start_h={self.obs.start_h}' )
-        if self.obs.state != 3: # still moving
+        if self.obs.state != 7: # still moving
             if not obs_stop: # not stopped
                 self.obs.n_stay = 0
 
@@ -632,7 +635,7 @@ class simulation:
 
                 self.obs.center = obs_center2
 
-            else: # was stopped
+            elif self.obs.state != 4: # was stopped and doesn't have constant speed
                 self.obs.increase_vel = 0
                 self.obs.vel_vec = Vec3( 0 )
                 if int(it) > self.obs.stay_last_it:
@@ -642,12 +645,12 @@ class simulation:
                     print( f'  - no obstacle progress (n_stay={self.obs.n_stay}); stopping it' )
                     self.obs.vel_vec = Vec3( 0 )
                     self.obs.force = Vec3( 0 )
-                    self.obs.state = 3
+                    self.obs.state = 7
                     emphasize2( f'  - new obs.state: {self.obs.state}' )
 
     def move_obstacle( self ):
         print( '- move_obstacle()' )
-        if self.obs.state != 3:
+        if self.obs.state != 7:
             if self.obs.center.y - self.obs.rad + self.obs.vel_vec.y*self.dt > 1.1: # move
                 print( '  - obstacle still moves' )
                 if self.obs.increase_vel:
@@ -669,7 +672,7 @@ class simulation:
                 print( '  - obstacle reached the bottom' )
                 self.obs.vel_vec = Vec3( 0 )
                 self.obs.force = Vec3( 0 )
-                self.obs.state = 3
+                self.obs.state = 7
                 emphasize2( f'  - new obs.state: {self.obs.state}' )
 
         else:
@@ -703,9 +706,10 @@ class simulation:
             
             #self.obs.vel.printGrid()
 
-        elif self.obs.state < 2:
-            self.obs.state = 2
-            emphasize2( f'  - new obs.state: {self.obs.state}' )
+        else:
+            if self.obs.state < 2:
+                self.obs.state = 2
+                emphasize2( f'  - new obs.state: {self.obs.state}' )
             self.obs.vel.setConst( Vec3(0.) )
             self.obs.vel.setBound( value=Vec3(0.), boundaryWidth=self.boundary_width+1 )
 
@@ -1076,8 +1080,7 @@ class simulation:
 
                     maxPVel = pVel.getMaxAbs()
                     maxVel = self.vel.getMaxAbs()
-                    #speed_limit = 1/self.dt
-                    speed_limit = 7 # there's the obs splash (21) to consider vs the compressed scenes (7)
+                    speed_limit = 7
                     print( '  - vel.MaxAbs=%0.2f, pVel.MaxAbs=%0.2f, speed_limit=%g' % ( maxVel, maxPVel, speed_limit ) )
 
                     # limit vel

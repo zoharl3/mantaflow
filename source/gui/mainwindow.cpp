@@ -167,14 +167,23 @@ bool MainWnd::event(QEvent* e) {
 	if (e->type() == (QEvent::Type)EventGuiShow) {
 		if (!mRequestClose) {
 			//this->show();
+
 			this->showMaximized();
-			emit painterEvent(Painter::UpdateFull);
+            //this->setWindowState( Qt::WindowMaximized );
+
+			//int screen_height = QApplication::desktop()->screenGeometry().height();
+            //int screen_width = QApplication::desktop()->screenGeometry().width();
+            //this->setMinimumSize( screen_width - 10, screen_height - 10 );
+
+            this->showMinimized();
+
+			emit painterEvent( Painter::UpdateFull );
 			mGlWidget->updateGL();
 		}
 		emit wakeMain();
 		return true;
 	}
-	else if (e->type() == (QEvent::Type)EventFullUpdate) {        
+	else if (e->type() == (QEvent::Type)EventFullUpdate) {
 		if (!mRequestClose) {
 			emit painterEvent(Painter::UpdateFull);
 			mGlWidget->updateGL();
@@ -332,13 +341,24 @@ void MainWnd::setCamPos(float x, float y, float z) {
 void MainWnd::setCamRot(float x, float y, float z) {
 	mGlWidget->setCamRot( Vec3(x, y, z) );
 }
+
+void MainWnd::setPlane( int plane ) {
+    mGlWidget->setPlane( plane );
+}
+
 void MainWnd::windowSize(int w, int h) {
 	mGlWidget->setMinimumSize( w,h );
 	mGlWidget->setMaximumSize( w,h );
 	mGlWidget->resize( w,h );
 }
-void MainWnd::setPlane(int plane) {
-	mGlWidget->setPlane(plane);
+
+void MainWnd::showEvent( QShowEvent *event ) {
+    QMainWindow::showEvent( event );
+	static int count = 0;
+	// first time it's minimized on EventGuiShow
+	// no good: opengl sets the point size based on the window size which needs to be maximized
+    if ( 0&& ++count == 2 )
+        this->showMaximized();
 }
 
 MainWnd::~MainWnd() {

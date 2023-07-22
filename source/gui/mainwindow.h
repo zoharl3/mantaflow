@@ -67,8 +67,10 @@ public slots:
 
 	void setCamPos(float x, float y, float z);
 	void setCamRot(float x, float y, float z);
-	void windowSize(int w, int h);
 	void setPlane(int plane);
+
+	void windowSize( int w, int h );
+    void showEvent( QShowEvent* event );
 
 	void set_2D( bool b2D ) {
         mGlWidget->set_2D( b2D );
