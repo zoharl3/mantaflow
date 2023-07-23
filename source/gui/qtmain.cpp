@@ -89,6 +89,8 @@ void GuiThread::exitApp() {
 void guiMain(int argc, char* argv[]) {
 	QApplication app(argc, argv);
 	
+    app.setWindowIcon( QIcon( ":/manta-ray2.ico" ) ); // zl from .qrc; doesn't work
+
 	// parse arguments
 	vector<string> args;
 	for (int i=1;i<argc;i++) args.push_back(argv[i]);

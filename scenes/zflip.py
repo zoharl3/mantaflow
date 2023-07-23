@@ -261,7 +261,7 @@ class simulation:
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
 
         self.obs_shape = 0 # none:-1 box:0, sphere:1
-        self.large_obs = 0
+        self.large_obs = 1
 
         if 1:
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
@@ -608,7 +608,7 @@ class simulation:
 
         # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
-        if 1 and not obs_stop: # if disabled for flip, then you may want to disable pushOutofObs
+        if 0 and not obs_stop: # if disabled for flip, then you may want to disable pushOutofObs
             self.flags2.copyFrom( self.flags )
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
