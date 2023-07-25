@@ -70,7 +70,7 @@ public slots:
 	void setPlane(int plane);
 
 	void windowSize( int w, int h );
-    void showEvent( QShowEvent* event );
+    void showEvent_( QShowEvent* event );
 
 	void set_2D( bool b2D ) {
         mGlWidget->set_2D( b2D );

@@ -175,10 +175,11 @@ bool MainWnd::event(QEvent* e) {
             //int screen_width = QApplication::desktop()->screenGeometry().width();
             //this->setMinimumSize( screen_width - 10, screen_height - 10 );
 
-            this->showMinimized();
+            emit painterEvent( Painter::UpdateFull );
+            mGlWidget->updateGL();
 
-			emit painterEvent( Painter::UpdateFull );
-			mGlWidget->updateGL();
+			// if happens before the paint then I get "QOpenGLContext::swapBuffers() called with non-exposed window, behavior is undefined?"
+			this->showMinimized();
 		}
 		emit wakeMain();
 		return true;
@@ -352,11 +353,11 @@ void MainWnd::windowSize(int w, int h) {
 	mGlWidget->resize( w,h );
 }
 
-void MainWnd::showEvent( QShowEvent *event ) {
+void MainWnd::showEvent_( QShowEvent *event ) {
     QMainWindow::showEvent( event );
 	static int count = 0;
-	// first time it's minimized on EventGuiShow
-	// no good: opengl sets the point size based on the window size which needs to be maximized
+	// zl first time it's minimized on EventGuiShow
+	// no good: opengl sets the point size based on the window size which needs to be maximized; disabling the function for now
     if ( 0&& ++count == 2 )
         this->showMaximized();
 }
