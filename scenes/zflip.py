@@ -253,8 +253,8 @@ class simulation:
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 2 # 2, 3
-        self.it_max = 1500 # 300, 500, 1000, 1500, 2500
-        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.it_max = 3000 # 300, 500, 1000, 1500, 2500
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 6 # 3(default), 6
@@ -746,9 +746,10 @@ class simulation:
         #self.flags.printGrid()
 
     def main( self ):
-        if 0 and self.method in [ FLIP, CORRECT19 ]:
-            self.narrowBand = bool( 0 )
-            self.narrowBandWidth = -1
+        if self.method != FIXED_VOL:
+            if 0 or self.method != FLIP:
+                self.narrowBand = bool( 0 )
+                self.narrowBandWidth = -1
 
         combineBandWidth = self.narrowBandWidth - 1
 
@@ -975,20 +976,23 @@ class simulation:
                 self.sol.adaptTimestep( maxVel )
 
             # emit
-            if 0 and it > 1000 and self.pp.pySize() < np_max:
+            if 1 and it > 1000 and self.pp.pySize() < np_max: # 1000
                 xi = self.gs * Vec3( 0.5, 0.9, 0.5 )
                 v = Vec3( 0, -3.0, 0 ) # -3
-                for i in range(-1, 2):
-                    for j in range(-1, 2):
-                        if self.pp.pySize() >= np_max:
+                n_emitted = 0
+                for i in range( -1, 2 ):
+                    for j in range( -1, 2 ):
+                        if V0 >= float( np_max ) / self.ppc:
                             break
                         if self.dim == 2:
                             j = 0
-                        emit_particles( self.pp, pVel, self.flags, self.part_per_cell_1d, xi + Vec3(i, 0, j), v )
+                        emit_particles( self.pp, pVel, self.flags, self.part_per_cell_1d, xi + Vec3( i, 0, j ), v )
+                        n_emitted += self.part_per_cell_1d
                         if self.dim == 2:
                             break
-                V0 = float( self.pp.pySize() ) / self.ppc # update volume
-
+                V0 += float( n_emitted ) / self.ppc # update volume
+                print( f'- emitted {n_emitted} partices, new V0={V0}' )
+                
             if self.method == DE_GOES22:
                 assert( self.b2D )
                 tic( 'de_goes22' )
@@ -1201,7 +1205,7 @@ class simulation:
             # update and mark surface for measure
             if self.method != FIXED_VOL:
                 print( '- markFluidCells (update flags)' )
-                if self.narrowBand:
+                if 1 and self.narrowBand:
                     self.flags.updateFromLevelset( self.phi )
                 else:
                     markFluidCells( parts=self.pp, flags=self.flags )
@@ -1299,6 +1303,13 @@ class simulation:
                 if self.bSaveMesh:
                     mesh_gen.save( it )
                 
+        # crop
+        if 1:
+            cwd = os.getcwd()
+            os.chdir( self.out_dir )
+            os.system( 'python tweak_images.py' )
+            os.chdir( cwd )
+
         # video
         if 1:
             os.system( f'"{self.out_dir}/video.bat"' )
