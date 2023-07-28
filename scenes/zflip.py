@@ -19,6 +19,10 @@ logging.basicConfig(
 )
 #logging.info('') # example
 
+def init_matlab():
+    cmd = "%%close all;\n clear classes; clear java; dbclear all; clear all; pack; jheapcl(0); set(0, 'DefaultFigureWindowState', 'minimized');" + " cd c:/prj/test_data/relative/_tmp;" + " addpath( 'c:/prj/mantaflow_mod/matlab', 'c:/prj/fluid/matlab' );"
+    matlab_eval( cmd )
+
 def toVec3( c ):
     assert( len(c) == 3 )
     return Vec3( c[0], c[1], c[2] )
@@ -258,7 +262,7 @@ class simulation:
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 6 # 3(default), 6
-        self.inter_control_method = 1 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
+        self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
 
         self.obs_shape = 0 # box:0, sphere:1
         self.large_obs = 0
@@ -747,7 +751,7 @@ class simulation:
 
     def main( self ):
         if self.method != FIXED_VOL:
-            if 0 or self.method != FLIP:
+            if 1 or self.method != FLIP:
                 self.narrowBand = bool( 0 )
                 self.narrowBandWidth = -1
 
@@ -976,7 +980,7 @@ class simulation:
                 self.sol.adaptTimestep( maxVel )
 
             # emit
-            if 1 and it > 1000 and self.pp.pySize() < np_max: # 1000
+            if 1 and it > 1e3 and self.pp.pySize() < np_max: # 1000
                 xi = self.gs * Vec3( 0.5, 0.9, 0.5 )
                 v = Vec3( 0, -3.0, 0 ) # -3
                 n_emitted = 0
@@ -995,8 +999,17 @@ class simulation:
                 
             if self.method == DE_GOES22:
                 assert( self.b2D )
+                it3 = it2
+                # restart matlab
+                if 1 and ( it2 + 1 ) % 500 == 0:
+                    emphasize( 'restart matlab' )
+                    matlab_eval( 'kill_matlab()', False, False )
+                    restart_matlab()
+                    init_matlab()
+                    it3 = 0
                 tic( 'de_goes22' )
-                de_goes22( self.dt, self.res, self.part_per_cell_1d, self.gravity, it2, self.pp, pVel )
+                speed_factor = 0.4 # the matlab interface (and de Goes22) is twice as fast?
+                de_goes22( speed_factor*self.dt, self.res, self.part_per_cell_1d, self.gravity, it3, self.pp, pVel )
                 toc()
 
             # the rest of the methods
@@ -1344,9 +1357,8 @@ if 1 and __name__ == '__main__':
     #setDebugLevel( 10 )
 
     # init matlab
-    cmd = "%%close all;\n clear classes; clear java; dbclear all; clear all; pack; jheapcl(0); set(0, 'DefaultFigureWindowState', 'minimized');" + " cd c:/prj/test_data/relative/_tmp;" + " addpath( 'c:/prj/mantaflow_mod/matlab', 'c:/prj/fluid/matlab' );"
-    matlab_eval( cmd )
-            
+    init_matlab()
+
     # test
     #test_MAC()
 
