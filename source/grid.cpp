@@ -926,43 +926,49 @@ void FlagGrid::fillGrid(int type) {
 	}
 }
 
-void FlagGrid::mark_surface() 
-{
-	bool bDiagonals = 1;
+void FlagGrid::mark_surface() {
+    bool bDiagonals = 1;
     static vector<Vec3i> dir = FlagGrid::get_ne_directions( mParent->is2D(), 0, bDiagonals );
     int nd = dir.size();
-	int n_marked = 0;
+    int n_marked = 0;
 
     FOR_IJK( *this ) {
-		Vec3i idx( i, j, k );
-        mData[ index(idx) ] &= ~TypeSurface;
-        if ( mData[ index( idx ) ] & TypeFluid ) {
+        Vec3i idx( i, j, k );
+        mData[index( idx )] &= ~TypeSurface;
+        if ( mData[index( idx )] & TypeFluid ) {
 //cout << "  - mark_surface(), checking: " << idx << endl;
-			// check neighbors
+            // check neighbors
             int d = 0;
-            for ( ; d < nd; ++d ) { // dir
+            for ( ; d < nd; ++d ) {
+                // dir
                 Vec3i idx2 = idx + dir[d];
-				if ( !isInBounds( idx2 ) )
-					break;
+                if ( !isInBounds( idx2 ) )
+                    break;
 
-                // to be consistent with the level set
-                if ( 0&& mData[index( idx2 )] & TypeObstacle )
-					continue;
-				if ( is_boundary( idx2 ) ) // to distinguish from a moving obstacle
-					continue;
+                // The level set marks fluid touching obstacle as surface.
+                // For the logic of fixed_vol, to give the obstacle freedom to move down, fluid touching it needs to be surface.
+                // There's a bug in the surface extraction if the fluid is on top of a large obstacle using the band method. The surface is extracted as two parts, which the deep is interpreted as air.
+                // Possible fix: if the fluid touches the obstacle from the top, then it's not a surface. This creates empty bubbles, maybe due to a sudden jump in the bfs when the obstacle moves?
+				// The issue might be with improvedParticleLevelset()
+                if ( 0&& dir[d].y < 0 && mData[index( idx2 )] & TypeObstacle )
+                    continue;
+                if ( 0 && mData[index( idx2 )] & TypeObstacle )
+                    continue;
+                if ( is_boundary( idx2 ) ) // to distinguish from a moving obstacle
+                    continue;
 
-                if ( !( mData[ index(idx2) ] & TypeFluid ) )
-					break;
+                if ( !( mData[index( idx2 )] & TypeFluid ) )
+                    break;
             }
             if ( d != nd ) {
-//cout << "    marking interface" << endl;
+//cout << "    marking surface" << endl;
                 mData[index( idx )] |= TypeSurface;
-				++n_marked;
+                ++n_marked;
             }
         }
     }
 
-	printf( "- mark_surface(), nd=%d, n_marked=%d\n", nd, n_marked );
+    printf( "- mark_surface(), nd=%d, n_marked=%d\n", nd, n_marked );
 }
 
 void FlagGrid::clear_obstacle( bool include_boundary ) {

@@ -181,6 +181,7 @@ class mesh_generator:
     def __init__( self, dim, gs, sol_main, narrowBand, out_dir ):
         self.upres = 2 # 1, 2; scale resolution
 
+        self.union_method = 2
         self.bScale = self.upres != 1
         self.narrowBand = narrowBand
         self.gs0 = gs
@@ -216,11 +217,16 @@ class mesh_generator:
         self.phi.setBound( value=0., boundaryWidth=1 )
         gridParticleIndex( parts=pp , flags=self.flags, indexSys=self.pindex, index=self.gpi )
 
-        print( '  - union particle level sets' )
+        print( f'  - union particle level sets (union_method={self.union_method})' )
         # similar to flip03_gen.py
-        #unionParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phiParts, radiusFactor )
-        #averagedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phiParts, radiusFactor , 1, 1 )
-        improvedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phiParts, radiusFactor, 1, 1, 0.4, 3.5 )
+        if self.union_method == 0:
+            unionParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phiParts, radiusFactor )
+        elif self.union_method == 1:
+            averagedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phiParts, radiusFactor , 1, 1 )
+        elif self.union_method == 2:
+            improvedParticleLevelset( pp, self.pindex, self.flags, self.gpi, self.phiParts, radiusFactor, 1, 1, 0.4, 3.5 )
+        else:
+            assert( 0 )
 
         if self.narrowBand:
             self.phi.addConst( 1. )
@@ -256,18 +262,18 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 2 # 2, 3
-        self.it_max = 3000 # 300, 500, 1000, 1500, 2500
+        self.dim = 3 # 2, 3
+        self.it_max = 1200 # 300, 500, 1000, 1500, 2500
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
-        self.narrowBandWidth = 6 # 3(default), 6
+        self.narrowBandWidth = 3 # 3(default), 6
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
 
         self.obs_shape = 0 # box:0, sphere:1
-        self.large_obs = 0
+        self.large_obs = 1
 
-        if 0: # tall tank
+        if 1: # tall tank
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else: # square tank
@@ -330,7 +336,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -393,7 +399,7 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 0: # falling obstacle
+        elif 1: # falling obstacle
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
@@ -458,6 +464,30 @@ class simulation:
                 if self.large_obs:
                     self.scene['name'] = 'large ' + self.scene['name']
                 self.scene['cam'] = 2
+
+        elif 0: # fluid on top of obstacle--trying to reproduce the surface extraction bug
+            # water
+            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0.7, 0) ), p1=self.gs*( Vec3(1, 0.9, 1) ) )
+            self.phi = fluidbox.computeLevelset()
+            self.flags.updateFromLevelset( self.phi )
+
+            # obstacle
+            if 1:
+                self.obs.create()
+                self.obs.rad = 0.5 - 1/self.res
+                self.obs.rad *= self.res
+                self.obs.rad3 = Vec3( self.obs.rad )
+
+                # center0
+                self.obs.center0 = self.obs.center = self.gs*Vec3( 0.5, self.obs.rad/self.gs.y, 0.5 ) + Vec3( 0, 1, 0 ) # on the floor
+
+                # shape
+                p0 = self.obs.center - Vec3(self.obs.rad)
+                p1 = self.obs.center + Vec3(self.obs.rad)
+                if self.dim == 2:
+                    p0.z = p1.z = 0.5
+                shape = Box( parent=self.sol, p0=p0, p1=p1 )
+                self.obs.init( shape )
 
         elif 0: # compress
             # water
@@ -580,6 +610,7 @@ class simulation:
 
         ret2 = fixed_volume_advection( pp=self.pp, pVel=pVel, flags=self.flags, dt=self.sol.timestep, dim=self.dim, ppc=self.ppc, phi=self.phi, bfs=bfs, it=it2, use_band=self.narrowBand, band_width=self.narrowBandWidth, inter_control_method=self.inter_control_method, obs=obs_part, obs_vel=obs_vel_vec3 )
 
+        obs_stop = 0
         if not ret2:
             ret = -1
         else:
@@ -878,6 +909,10 @@ class simulation:
         # after initializing particles and before gui
         if self.b_fluid_mesh:
             mesh_gen = mesh_generator( self.dim, self.gs, self.sol, self.narrowBand, self.out_dir )
+            # to resolve the surface extraction bug
+            if self.large_obs and self.narrowBand:
+                mesh_gen.union_method = 1
+                emphasize( f'setting mesh_gen.union_method={mesh_gen.union_method} due to large obs' )
             mesh_gen.update_phi( self.phi )
             mesh_gen.generate( self.pp )
 
@@ -902,12 +937,12 @@ class simulation:
                 gui.nextVec3Display()
 
             # cam
-            if 1 and self.dim == 3: # camera
+            if 0 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 )
                 gui.setCamRot( 35, -30, 0 )
             
             # grid
-            if 1 and self.b2D:
+            if 0 and self.b2D:
                 gui.toggleHideGrids()
 
             gui.show()
@@ -943,12 +978,14 @@ class simulation:
             objects = [ self.flags, self.phi, self.pp ] # need the 3 of them for volumetric .vdb and they need to be named (bifrost looks for a channel by name)
             #objects = [ self.pp ]
             fname = self.out_dir + 'fluid_data_%04d.vdb' % it
-            save( name=fname, objects=objects ) # error in debug mode "string too long?"
+            save( name=fname, objects=objects ) # error in debug mode "string too long"?
 
         # stat
         stat = {}
         stat['np0'] = np
         stat['np_avg'] = 0
+
+        measu = []
 
         ##############################################################
         # loop
@@ -980,13 +1017,13 @@ class simulation:
                 self.sol.adaptTimestep( maxVel )
 
             # emit
-            if 1 and it > 1e3 and self.pp.pySize() < np_max: # 1000
+            if 0 and it > 1e3 and self.pp.pySize() < np_max and ( not measu or measu[0] / self.res**self.dim < 0.9 ): # 1000
                 xi = self.gs * Vec3( 0.5, 0.9, 0.5 )
                 v = Vec3( 0, -3.0, 0 ) # -3
                 n_emitted = 0
                 for i in range( -1, 2 ):
                     for j in range( -1, 2 ):
-                        if V0 >= float( np_max ) / self.ppc:
+                        if self.pp.pySize() >= np_max:
                             break
                         if self.dim == 2:
                             j = 0
@@ -995,7 +1032,7 @@ class simulation:
                         if self.dim == 2:
                             break
                 V0 += float( n_emitted ) / self.ppc # update volume
-                print( f'- emitted {n_emitted} partices, new V0={V0}' )
+                print( f'- emitted {n_emitted} partices, new V0={V0}, fluid_vol/res^{self.dim}={measu[0] / self.res**self.dim}' )
                 
             if self.method == DE_GOES22:
                 assert( self.b2D )
@@ -1227,10 +1264,10 @@ class simulation:
             toc() # iter
 
             # measure
-            m = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
-            if len(m) > 2:
-                stat['measure_min'] = m[1]*100
-                stat['measure_max'] = m[2]*100
+            measu = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
+            if len( measu ) > 2:
+                stat['measure_min'] = measu[1]*100
+                stat['measure_max'] = measu[2]*100
 
             # stat
             if 1:
@@ -1296,7 +1333,7 @@ class simulation:
                 it = round( it )
 
                 # write measure
-                f_measure.write( f'{m[0]}\n' )
+                f_measure.write( f'{ measu[0] }\n' )
                 f_measure.flush()
 
                 # write obs pos

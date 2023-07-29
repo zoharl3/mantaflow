@@ -327,90 +327,91 @@ void LevelsetGrid::fillHoles(int maxDepth, int boundaryWidth) {
 }
 
 //! run marching cubes to create a mesh for the 0-levelset
-void LevelsetGrid::createMesh(Mesh& mesh) {
-	assertMsg(is3D(), "Only 3D grids supported so far");
-	
-	mesh.clear();
-		
-	const Real invalidTime = invalidTimeValue();
-	const Real isoValue = 1e-4;
-	
-	// create some temp grids
-	Grid<int> edgeVX(mParent);
-	Grid<int> edgeVY(mParent);
-	Grid<int> edgeVZ(mParent);
-	
-	for(int k=0; k<mSize.z-1; k++)
-	for(int j=0; j<mSize.y-1; j++)
-	for(int i=0; i<mSize.x-1; i++) {
-		 Real value[8] = { get(i,j,k),   get(i+1,j,k),   get(i+1,j+1,k),   get(i,j+1,k),
-						   get(i,j,k+1), get(i+1,j,k+1), get(i+1,j+1,k+1), get(i,j+1,k+1) };
-		
-		// build lookup index, check for invalid times
-		bool skip = false;
-		int cubeIdx = 0;
-		for (int l=0;l<8;l++) {
-			value[l] *= -1;
-			if (-value[l] <= invalidTime)
-				skip = true;
-			if (value[l] < isoValue) 
-				cubeIdx |= 1<<l;
-		}
-		if (skip || (mcEdgeTable[cubeIdx] == 0)) continue;
-		
-		// where to look up if this point already exists
-		int triIndices[12];
-		int *eVert[12] = { &edgeVX(i,j,k),   &edgeVY(i+1,j,k),   &edgeVX(i,j+1,k),   &edgeVY(i,j,k), 
-						   &edgeVX(i,j,k+1), &edgeVY(i+1,j,k+1), &edgeVX(i,j+1,k+1), &edgeVY(i,j,k+1), 
-						   &edgeVZ(i,j,k),   &edgeVZ(i+1,j,k),   &edgeVZ(i+1,j+1,k), &edgeVZ(i,j+1,k) };
-		
-		const Vec3 pos[9] = { Vec3(i,j,k),   Vec3(i+1,j,k),   Vec3(i+1,j+1,k),   Vec3(i,j+1,k),
-						Vec3(i,j,k+1), Vec3(i+1,j,k+1), Vec3(i+1,j+1,k+1), Vec3(i,j+1,k+1) };
-		
-		for (int e=0; e<12; e++) {
-			if (mcEdgeTable[cubeIdx] & (1<<e)) {
-				// vertex already calculated ?
-				if (*eVert[e] == 0) {
-					// interpolate edge
-					const int e1 = mcEdges[e*2  ];
-					const int e2 = mcEdges[e*2+1];
-					const Vec3 p1 = pos[ e1  ];    // scalar field pos 1
-					const Vec3 p2 = pos[ e2  ];    // scalar field pos 2
-					const float valp1  = value[ e1  ];  // scalar field val 1
-					const float valp2  = value[ e2  ];  // scalar field val 2
-					const float mu = (isoValue - valp1) / (valp2 - valp1);
+void LevelsetGrid::createMesh( Mesh &mesh ) {
+    assertMsg( is3D(), "Only 3D grids supported so far" );
 
-					// init isolevel vertex
-					Node vertex;
-					vertex.pos = p1 + (p2-p1)*mu + Vec3(Real(0.5));
-					vertex.normal = getNormalized( 
-										getGradient( *this, i+cubieOffsetX[e1], j+cubieOffsetY[e1], k+cubieOffsetZ[e1]) * (1.0-mu) +
-										getGradient( *this, i+cubieOffsetX[e2], j+cubieOffsetY[e2], k+cubieOffsetZ[e2]) * (    mu)) ;
-					
-					triIndices[e] = mesh.addNode(vertex) + 1;
-					
-					// store vertex 
-					*eVert[e] = triIndices[e];
-				} else {
-					// retrieve  from vert array
-					triIndices[e] = *eVert[e];
-				}
-			}
-		}
-		
-		// Create the triangles... 
-		for(int e=0; mcTriTable[cubeIdx][e]!=-1; e+=3) {
-			mesh.addTri( Triangle( triIndices[ mcTriTable[cubeIdx][e+0]] - 1,
-										triIndices[ mcTriTable[cubeIdx][e+1]] - 1,
-										triIndices[ mcTriTable[cubeIdx][e+2]] - 1));
-		}
-	}
-	
-	//mesh.rebuildCorners();
-	//mesh.rebuildLookup();
+    mesh.clear();
 
-	// Update mdata fields
-	mesh.updateDataFields();
+    const Real invalidTime = invalidTimeValue();
+    const Real isoValue = 1e-4;
+
+    // create some temp grids
+    Grid<int> edgeVX( mParent );
+    Grid<int> edgeVY( mParent );
+    Grid<int> edgeVZ( mParent );
+
+    for ( int k = 0; k < mSize.z - 1; k++ )
+        for ( int j = 0; j < mSize.y - 1; j++ )
+            for ( int i = 0; i < mSize.x - 1; i++ ) {
+                Real value[8] = {get( i, j, k ), get( i + 1, j, k ), get( i + 1, j + 1, k ), get( i, j + 1, k ),
+                                 get( i, j, k + 1 ), get( i + 1, j, k + 1 ), get( i + 1, j + 1, k + 1 ), get( i, j + 1, k + 1 )};
+
+                // build lookup index, check for invalid times
+                bool skip = false;
+                int cubeIdx = 0;
+                for ( int l = 0; l < 8; l++ ) {
+                    value[l] *= -1;
+                    if ( -value[l] <= invalidTime )
+                        skip = true;
+                    if ( value[l] < isoValue )
+                        cubeIdx |= 1 << l;
+                }
+                if ( skip || ( mcEdgeTable[cubeIdx] == 0 ) )
+                    continue;
+
+                // where to look up if this point already exists
+                int triIndices[12];
+                int *eVert[12] = {&edgeVX( i, j, k ), &edgeVY( i + 1, j, k ), &edgeVX( i, j + 1, k ), &edgeVY( i, j, k ),
+                                  &edgeVX( i, j, k + 1 ), &edgeVY( i + 1, j, k + 1 ), &edgeVX( i, j + 1, k + 1 ), &edgeVY( i, j, k + 1 ),
+                                  &edgeVZ( i, j, k ), &edgeVZ( i + 1, j, k ), &edgeVZ( i + 1, j + 1, k ), &edgeVZ( i, j + 1, k )};
+
+                const Vec3 pos[9] = {Vec3( i, j, k ), Vec3( i + 1, j, k ), Vec3( i + 1, j + 1, k ), Vec3( i, j + 1, k ),
+                                     Vec3( i, j, k + 1 ), Vec3( i + 1, j, k + 1 ), Vec3( i + 1, j + 1, k + 1 ), Vec3( i, j + 1, k + 1 )};
+
+                for ( int e = 0; e < 12; e++ ) {
+                    if ( mcEdgeTable[cubeIdx] & ( 1 << e ) ) {
+                        // vertex already calculated ?
+                        if ( *eVert[e] == 0 ) {
+                            // interpolate edge
+                            const int e1 = mcEdges[e * 2];
+                            const int e2 = mcEdges[e * 2 + 1];
+                            const Vec3 p1 = pos[e1]; // scalar field pos 1
+                            const Vec3 p2 = pos[e2]; // scalar field pos 2
+                            const float valp1 = value[e1]; // scalar field val 1
+                            const float valp2 = value[e2]; // scalar field val 2
+                            const float mu = ( isoValue - valp1 ) / ( valp2 - valp1 );
+
+                            // init isolevel vertex
+                            Node vertex;
+                            vertex.pos = p1 + ( p2 - p1 ) * mu + Vec3( Real( 0.5 ) );
+                            vertex.normal = getNormalized(
+                                getGradient( *this, i + cubieOffsetX[e1], j + cubieOffsetY[e1], k + cubieOffsetZ[e1] ) * ( 1.0 - mu ) +
+                                getGradient( *this, i + cubieOffsetX[e2], j + cubieOffsetY[e2], k + cubieOffsetZ[e2] ) * ( mu ) );
+
+                            triIndices[e] = mesh.addNode( vertex ) + 1;
+
+                            // store vertex 
+                            *eVert[e] = triIndices[e];
+                        } else {
+                            // retrieve  from vert array
+                            triIndices[e] = *eVert[e];
+                        }
+                    }
+                }
+
+                // Create the triangles... 
+                for ( int e = 0; mcTriTable[cubeIdx][e] != -1; e += 3 ) {
+                    mesh.addTri( Triangle( triIndices[mcTriTable[cubeIdx][e + 0]] - 1,
+                                           triIndices[mcTriTable[cubeIdx][e + 1]] - 1,
+                                           triIndices[mcTriTable[cubeIdx][e + 2]] - 1 ) );
+                }
+            }
+
+    //mesh.rebuildCorners();
+    //mesh.rebuildLookup();
+
+    // Update mdata fields
+    mesh.updateDataFields();
 }
 
 
