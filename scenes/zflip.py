@@ -459,7 +459,7 @@ class simulation:
                     self.obs.state = 4 # constant speed
                 self.obs.init( shape )
 
-                self.scene['type'] = 2 if self.obs.shape == 0 else 3
+                self.scene['type'] = 2 + int( self.large_obs )
                 self.scene['name'] = 'obs box' if self.obs.shape == 0 else 'obs ball'
                 if self.large_obs:
                     self.scene['name'] = 'large ' + self.scene['name']
