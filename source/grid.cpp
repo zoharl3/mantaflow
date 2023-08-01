@@ -947,12 +947,10 @@ void FlagGrid::mark_surface() {
 
                 // The level set marks fluid touching obstacle as surface.
                 // For the logic of fixed_vol, to give the obstacle freedom to move down, fluid touching it needs to be surface.
-                // There's a bug in the surface extraction if the fluid is on top of a large obstacle using the band method. The surface is extracted as two parts, which the deep is interpreted as air.
-                // Possible fix: if the fluid touches the obstacle from the top, then it's not a surface. This creates empty bubbles, maybe due to a sudden jump in the bfs when the obstacle moves?
-				// The issue might be with improvedParticleLevelset()
-                if ( 0&& dir[d].y < 0 && mData[index( idx2 )] & TypeObstacle )
+				if ( 0&& mData[index( idx2 )] & TypeObstacle )
                     continue;
-                if ( 0 && mData[index( idx2 )] & TypeObstacle )
+				// If the fluid touches the obstacle from the top, then it's not a surface. Not really needed. This creates empty bubbles, maybe due to a sudden jump in the bfs when the obstacle moves?
+                if ( 0&& dir[d].y < 0 && mData[index( idx2 )] & TypeObstacle )
                     continue;
                 if ( is_boundary( idx2 ) ) // to distinguish from a moving obstacle
                     continue;

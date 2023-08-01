@@ -643,7 +643,7 @@ class simulation:
 
         # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
-        if 1 and not obs_stop: # if disabled for flip, then you may want to disable pushOutofObs
+        if 0 and not obs_stop: # (if disabled for flip, then you may want to disable pushOutofObs--already disabled by default)
             self.flags2.copyFrom( self.flags )
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
@@ -911,8 +911,9 @@ class simulation:
             mesh_gen = mesh_generator( self.dim, self.gs, self.sol, self.narrowBand, self.out_dir )
             # to resolve the surface extraction bug
             if self.large_obs and self.narrowBand:
-                mesh_gen.union_method = 1
-                emphasize( f'setting mesh_gen.union_method={mesh_gen.union_method} due to large obs' )
+                mesh_gen.upres = 1 # likely the culprit
+                mesh_gen.union_method = 0 # might not be needed, just for good measure
+                emphasize( f'setting mesh_gen.upres={mesh_gen.upres} (and mesh_gen.union_method={mesh_gen.union_method}) due to large obs' )
             mesh_gen.update_phi( self.phi )
             mesh_gen.generate( self.pp )
 
