@@ -643,7 +643,7 @@ class simulation:
 
         # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
-        if 0 and not obs_stop: # (if disabled for flip, then you may want to disable pushOutofObs--already disabled by default)
+        if 0 and not obs_stop: # (if disabled for flip, then you may want to disable pushOutofObs--it's already disabled by default)
             self.flags2.copyFrom( self.flags )
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
