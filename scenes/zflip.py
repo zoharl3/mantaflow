@@ -262,18 +262,19 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 3 # 2, 3
-        self.it_max = 1300 # 300, 500, 1000, 1500, 2500
+        self.dim = 2 # 2, 3
+        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 1 ) # there's an override in main() for some methods
+        self.narrowBand = bool( 0 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default), 6
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
 
         self.obs_shape = 0 # box:0, sphere:1
         self.large_obs = 1
+        self.b_test_collision_detection = 1 # enable naive test of collision detection
 
-        if 1: # tall tank
+        if 0: # tall tank
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else: # square tank
@@ -336,7 +337,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 0: # dam
+        if 1: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -399,7 +400,7 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 1: # falling obstacle
+        elif 0: # falling obstacle
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
@@ -643,7 +644,7 @@ class simulation:
 
         # collision detection: test obstacle position
         print( '  - obs_stop=%d' % obs_stop )
-        if 0 and not obs_stop: # (if disabled for flip, then you may want to disable pushOutofObs--it's already disabled by default)
+        if self.b_test_collision_detection and not obs_stop: # (if disabled for flip, then you may want to disable pushOutofObs--it's already disabled by default)
             self.flags2.copyFrom( self.flags )
             self.flags2.clear_obstacle()
             if not mark_obstacle( flags=self.flags2, obs=self.obs.part, center=obs_center2 ):
@@ -1120,6 +1121,7 @@ class simulation:
                 #self.flags.printGrid()
 
                 # pressure solve
+                speed_limit = 7
                 b_bad_pressure = 0
                 if 1:
                     print( '- pressure' )
@@ -1135,7 +1137,6 @@ class simulation:
 
                     maxPVel = pVel.getMaxAbs()
                     maxVel = self.vel.getMaxAbs()
-                    speed_limit = 7
                     print( '  - vel.MaxAbs=%0.2f, pVel.MaxAbs=%0.2f, speed_limit=%g' % ( maxVel, maxPVel, speed_limit ) )
 
                     # limit vel
@@ -1198,7 +1199,7 @@ class simulation:
                 # fixed_vol
                 #self.flags.printGrid()
                 include_walls = false
-                obs_naive = 0
+                obs_naive = 0 # specifically for fixed_vol
                 obs_stop = 0
                 print( f'- obs_naive={obs_naive}' )
                 # fixed volume (my scheme)

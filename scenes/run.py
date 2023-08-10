@@ -8,11 +8,11 @@ import FileLock
 lock = FileLock.FileLock('/tmp/manta_run.py.lock')
 
 #methods = [0]
-#methods = [1]
+methods = [1]
 #methods = [2]
 #methods = [3]
 #methods = [0,1]
-methods = [2,0]
+#methods = [2,0]
 #methods = [2,1]
 #methods = [0,2,1]
 #methods = [1,0,2]
