@@ -263,7 +263,7 @@ class simulation:
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 2 # 2, 3
-        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
+        self.it_max = 15 # 300, 500, 1000, 1500, 2500
         self.res = 20 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 0 ) # there's an override in main() for some methods
@@ -1355,15 +1355,14 @@ class simulation:
                 if self.bSaveMesh:
                     mesh_gen.save( it )
                 
-        # crop
-        if 1:
+        if 0:
+            # crop
             cwd = os.getcwd()
             os.chdir( self.out_dir )
             os.system( 'python tweak_images.py' )
             os.chdir( cwd )
 
-        # video
-        if 1:
+            # video
             os.system( f'"{self.out_dir}/video.bat"' )
 
         # the following code is not reached if quitting manta (with esc)
