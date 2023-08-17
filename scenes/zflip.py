@@ -261,10 +261,10 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.part_per_cell_1d = 2 # 1, 2(default), 3
+        self.part_per_cell_1d = 1 # 1, 2(default), 3
         self.dim = 2 # 2, 3
-        self.it_max = 15 # 300, 500, 1000, 1500, 2500
-        self.res = 20 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.it_max = 2 # 300, 500, 1000, 1500, 2500
+        self.res = 7 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 0 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default), 6
