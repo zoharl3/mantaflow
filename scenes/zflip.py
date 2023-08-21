@@ -1036,6 +1036,7 @@ class simulation:
                 V0 += float( n_emitted ) / self.ppc # update volume
                 print( f'- emitted {n_emitted} partices, new V0={V0}, fluid_vol/res^{self.dim}={measu[0] / self.res**self.dim}' )
                 
+            # DE_GOES22
             if self.method == DE_GOES22:
                 assert( self.b2D )
                 it3 = it2
