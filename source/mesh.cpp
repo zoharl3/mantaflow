@@ -330,6 +330,7 @@ void Mesh::load_pos() {
 }
 
 void Mesh::scale(Vec3 s) {
+//cout << "Mesh::scale(): " << s << endl;
 	for (size_t i=0; i<mNodes.size(); i++)
 		mNodes[i].pos *= s;
 }

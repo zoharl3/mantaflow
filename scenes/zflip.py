@@ -178,8 +178,8 @@ class static_obstacle:
         set_wall_bcs2( flags=self.flags, vel=vel, obvel=self.vel )
 
 class mesh_generator:
-    def __init__( self, dim, gs, sol_main, narrowBand, out_dir ):
-        self.upres = 2 # 1, 2; scale resolution
+    def __init__( self, dim, gs, sol_main, narrowBand, out_dir, upres=2 ):
+        self.upres = upres # 1, 2; scale resolution
 
         self.union_method = 2
         self.bScale = self.upres != 1
@@ -209,7 +209,7 @@ class mesh_generator:
 
     def generate( self, pp ):
         print( '- mesh_generator::generate()' )
-        radiusFactor = 2.5 # 1, 2, 2.5
+        radiusFactor = 2.5 # 1, 2, (default)2.5
 
         if self.bScale:
             pp.transformPositions( self.gs0, self.gs )
@@ -239,7 +239,7 @@ class mesh_generator:
 
         if self.bScale:
             pp.transformPositions( self.gs, self.gs0 )
-            self.mesh.scale( Vec3(1/self.upres) )
+            self.mesh.scale( Vec3(1.0/self.upres) )
 
     def save( self, it ):
         fname = self.out_dir + 'surface_%04d.bobj.gz' % it
@@ -261,14 +261,14 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.part_per_cell_1d = 1 # 1, 2(default), 3
-        self.dim = 2 # 2, 3
-        self.it_max = 2 # 300, 500, 1000, 1500, 2500
-        self.res = 7 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.part_per_cell_1d = 2 # 1, 2(default), 3
+        self.dim = 3 # 2, 3
+        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 0 ) # there's an override in main() for some methods
+        self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default), 6
-        self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
+        self.inter_control_method = 1 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
 
         self.obs_shape = 0 # box:0, sphere:1
         self.large_obs = 1
@@ -910,9 +910,9 @@ class simulation:
         # after initializing particles and before gui
         if self.b_fluid_mesh:
             mesh_gen = mesh_generator( self.dim, self.gs, self.sol, self.narrowBand, self.out_dir )
-            # to resolve the surface extraction bug
-            if self.large_obs and self.narrowBand:
-                mesh_gen.upres = 1 # likely the culprit
+            # to resolve the surface extraction bug where the surface becomes separated on obs; upres=1 is likely the solution
+            if self.obs.exists and self.large_obs and self.narrowBand:
+                mesh_gen = mesh_generator( self.dim, self.gs, self.sol, self.narrowBand, self.out_dir, 1 )
                 mesh_gen.union_method = 0 # might not be needed, just for good measure
                 emphasize( f'setting mesh_gen.upres={mesh_gen.upres} (and mesh_gen.union_method={mesh_gen.union_method}) due to large obs' )
             mesh_gen.update_phi( self.phi )
@@ -1385,7 +1385,7 @@ if 1 and __name__ == '__main__':
 
     out_dir_root = r'c:/prj-external-libs/mantaflow/out/'
 
-    # (debug) for consistent result; for large res, the step() hangs?
+    # (debug) for a consistent result; for large res, the step() hangs?
     if 0:
         limit_to_one_core()
 
