@@ -272,9 +272,9 @@ class simulation:
 
         self.obs_shape = 0 # box:0, sphere:1
         self.large_obs = 1
-        self.b_test_collision_detection = 1 # enable naive test of collision detection
+        self.b_test_collision_detection = 1 # enable naive test of collision detection for other methods
 
-        if 0: # tall tank
+        if 1: # tall tank
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else: # square tank
@@ -337,7 +337,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -400,7 +400,7 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 0: # falling obstacle
+        elif 1: # falling obstacle
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
