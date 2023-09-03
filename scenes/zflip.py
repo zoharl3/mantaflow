@@ -262,12 +262,12 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 2 # 2, 3
+        self.dim = 3 # 2, 3
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
         self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
-        self.narrowBandWidth = 3 # 3(default), 6
+        self.narrowBandWidth = 6 # 3(large obs), 6(dam)
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: fully=0, one-sided=1, revert=2, push=3
 
         self.obs_shape = 0 # box:0, sphere:1
@@ -939,7 +939,7 @@ class simulation:
                 gui.nextVec3Display()
 
             # cam
-            if 0 and self.dim == 3: # camera
+            if 1 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 )
                 gui.setCamRot( 35, -30, 0 )
             
