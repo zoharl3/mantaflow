@@ -17,8 +17,8 @@ while i < len( lines ):
     #print ( f'i={i}: { line }' )
     
     ss = [
-        'vel.MaxAbs',
-        #'push time:',
+        #'vel.MaxAbs',
+        'push time:',
         #'gurobi optimize:'
         ]
     
@@ -47,4 +47,5 @@ while i < len( lines ):
         
     i += 1
 
+print( '\nEnter...' )
 input()
