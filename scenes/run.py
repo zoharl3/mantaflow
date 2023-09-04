@@ -59,7 +59,11 @@ def main():
                 else:
                     print( f'Error "{path2.is_file()}" isn\'t a file' )
                     return -1
-            path.rmdir()
+            try:
+                path.rmdir()
+            except:
+                print( f"Can't delete {path}" )
+                return -1
         if path.is_file():
             path.unlink()
 
