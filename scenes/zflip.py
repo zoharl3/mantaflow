@@ -264,7 +264,7 @@ class simulation:
         self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 3 # 2, 3
         self.it_max = 2000 # 300, 500, 1000, 1500, 2500
-        self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 6 # 3(large obs), 6(dam)
@@ -1389,7 +1389,7 @@ if 1 and __name__ == '__main__':
     if 0:
         limit_to_one_core()
 
-    # for kernels not to hog the cpu
+    # so kernels won't to hog the cpu
     if 1:
         limit_tbb_cores( 4 )
 
