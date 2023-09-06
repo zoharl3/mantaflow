@@ -18,10 +18,9 @@ while i < len( lines ):
     
     ss = [
         #'vel.MaxAbs',
-        #'gurobi optimize:'
+        'gurobi optimize:',
         #'q_stat',
-        #'push time:',
-        'seeded (filled band air pockets)',
+        'push time:',
         ]
     
     prn = 0
