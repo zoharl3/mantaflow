@@ -274,7 +274,7 @@ class simulation:
         self.large_obs = 0
         self.b_test_collision_detection = 1 # enable naive test of collision detection for other methods
 
-        if 1: # tall tank
+        if 0: # tall tank
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else: # square tank
@@ -364,7 +364,7 @@ class simulation:
             self.scene['name'] = 'dam'
             self.scene['cam'] = 3
 
-        elif 0: # falling drop
+        elif 1: # falling drop
             fluidBasin = Box( parent=self.sol, p0=self.gs*Vec3(0,0,0), p1=self.gs*Vec3(1.0,0.1,1.0)) # basin
             dropCenter = Vec3(0.5,0.3,0.5)
             dropRadius = 0.1
@@ -400,7 +400,7 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 1: # falling obstacle
+        elif 0: # falling obstacle
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
@@ -939,7 +939,7 @@ class simulation:
                 gui.nextVec3Display()
 
             # cam
-            if 0 and self.dim == 3: # camera
+            if 1 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 )
                 gui.setCamRot( 35, -30, 0 )
             
@@ -1389,7 +1389,7 @@ if 1 and __name__ == '__main__':
     if 0:
         limit_to_one_core()
 
-    # so kernels won't to hog the cpu
+    # so kernels won't hog the cpu
     if 1:
         limit_tbb_cores( 4 )
 
