@@ -926,6 +926,7 @@ void FlagGrid::fillGrid(int type) {
 	}
 }
 
+// requires fluid and obstacle markings
 void FlagGrid::mark_surface() {
     bool bDiagonals = 1;
     static vector<Vec3i> dir = FlagGrid::get_ne_directions( mParent->is2D(), 0, bDiagonals );
@@ -952,7 +953,8 @@ void FlagGrid::mark_surface() {
 				// If the fluid touches the obstacle from the top, then it's not a surface. Not really needed. This creates empty bubbles, maybe due to a sudden jump in the bfs when the obstacle moves?
                 if ( 0&& dir[d].y < 0 && mData[index( idx2 )] & TypeObstacle )
                     continue;
-                if ( is_boundary( idx2 ) ) // to distinguish from a moving obstacle
+                // to distinguish from a moving obstacle; I should have separated the obstacle markings to static and dynamic; this only concerns the spiral scene, where I use resolution of tunnel of a cell wide, which doesn't matter
+                if ( is_boundary( idx2 ) )
                     continue;
 
                 if ( !( mData[index( idx2 )] & TypeFluid ) )

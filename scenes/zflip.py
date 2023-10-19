@@ -262,11 +262,11 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 3 # 2, 3
+        self.dim = 2 # 2, 3
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 1 ) # there's an override in main() for some methods
+        self.narrowBand = bool( 0 ) # there's an override in main() for some methods
         self.narrowBandWidth = 6 # 3(large obs), 6(dam)
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1, revert=2, push=3
 
@@ -337,7 +337,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -520,7 +520,7 @@ class simulation:
             #self.scene['type'] = 4
             self.scene['name'] = 'compress'
 
-        elif 0: # spiral
+        elif 1: # spiral
             # see if speed_limit needs to be changed after solving for pressure
             # water
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0.5, 0, 0) ), p1=self.gs*( Vec3(1, 0.7, 1) ) ) # tubes:0.6, spiral:0.4
