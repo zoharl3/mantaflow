@@ -948,12 +948,10 @@ void FlagGrid::mark_surface() {
 
                 // The level set marks fluid touching obstacle as surface.
                 // For the logic of fixed_vol, to give the obstacle freedom to move down, fluid touching it needs to be surface.
-				if ( 0&& mData[index( idx2 )] & TypeObstacle )
-                    continue;
+				//if ( 0&& mData[index( idx2 )] & TypeObstacle ) continue;
 				// If the fluid touches the obstacle from the top, then it's not a surface. Not really needed. This creates empty bubbles, maybe due to a sudden jump in the bfs when the obstacle moves?
-                if ( 0&& dir[d].y < 0 && mData[index( idx2 )] & TypeObstacle )
-                    continue;
-                // to distinguish from a moving obstacle; I should have separated the obstacle markings to static and dynamic; this only concerns the spiral scene, where I use resolution of tunnel of a cell wide, which doesn't matter
+                //if ( 0&& dir[d].y < 0 && mData[index( idx2 )] & TypeObstacle ) continue;
+                // to distinguish from a moving obstacle; I should have separated the obstacle markings to static and dynamic; this only concerns the spiral scene, where I use resolution of tunnel of a cell wide
                 if ( is_boundary( idx2 ) )
                     continue;
 
