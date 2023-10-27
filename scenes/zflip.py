@@ -266,7 +266,7 @@ class simulation:
         self.it_max = 1000 # 300, 500, 1000, 1500, 2500
         self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 0 ) # there's an override in main() for some methods
+        self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 6 # 3(large obs), 6(dam)
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1, revert=2, push=3
 
