@@ -20,7 +20,8 @@ while i < len( lines ):
         #'vel.MaxAbs',
         'gurobi optimize:',
         #'q_stat',
-        'push time:',
+        #'push time:',
+        'avg_opt_time',
         ]
     
     prn = 0
