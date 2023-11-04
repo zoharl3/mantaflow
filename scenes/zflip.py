@@ -263,7 +263,7 @@ class simulation:
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 3 # 2, 3
-        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
+        self.it_max = 1300 # 300, 500, 1000, 1500, 2500
         self.res = 100 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
@@ -271,7 +271,7 @@ class simulation:
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1, revert=2, push=3
 
         self.obs_shape = 0 # box:0, sphere:1
-        self.large_obs = 0
+        self.large_obs = 1
         self.b_test_collision_detection = 1 # enable naive test of collision detection for other methods
 
         if 1: # tall tank
