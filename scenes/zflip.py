@@ -262,9 +262,9 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 3 # 2, 3
-        self.it_max = 1000 # 300, 500, 1000, 1500, 2500
-        self.res = 150 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.dim = 2 # 2, 3
+        self.it_max = 3000 # 300, 500, 1000, 1500, 2500
+        self.res = 30 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
@@ -274,7 +274,7 @@ class simulation:
         self.large_obs = 1
         self.b_test_collision_detection = 1 # enable naive test of collision detection for other methods
 
-        if 1: # tall tank
+        if 0: # tall tank
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else: # square tank
@@ -337,7 +337,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 0: # dam
+        if 1: # dam
             # my dam
             #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
@@ -400,7 +400,7 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 1: # falling obstacle
+        elif 0: # falling obstacle
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
@@ -421,8 +421,10 @@ class simulation:
                 else: 
                     self.obs.rad = 0.15 # 0.1, 0.15
                 if self.large_obs: # large
-                    #self.obs.rad *= 5.7 # 4, res50:5.7
-                    self.obs.rad = 0.5 - 2/self.res
+                    #margin = 2 / self.res # margin = boundary (1 cell) + side path (between obs and tank); using one-cell wide side path for hi-res results in no progress
+                    #margin = 2 / 50 # fixed margin (and obs width), one-cell wide side path for res50; hi-res is faster than res50
+                    margin = ( 1 + self.res / 50 ) / self.res # side path changes with res
+                    self.obs.rad = 0.5 - margin
                 self.obs.rad *= self.res
                 # shrink a bit if exactly cell size
                 if abs( self.obs.rad - round(self.obs.rad) ) < 1e-7:
@@ -938,13 +940,13 @@ class simulation:
             for i in range( 0 ): # 0:center, 1:wall, 2:color, 3:none
                 gui.nextVec3Display()
 
-            # cam angled
-            if 1 and self.dim == 3: # camera
+            # angle cam
+            if 0 and self.dim == 3: # camera
                 gui.setCamPos( 0, 0, -2.2 )
                 gui.setCamRot( 35, -30, 0 )
             
-            # grid
-            if 0 and self.b2D:
+            # hide grid
+            if 1 and self.b2D:
                 gui.toggleHideGrids()
 
             gui.show()
@@ -1019,7 +1021,7 @@ class simulation:
                 self.sol.adaptTimestep( maxVel )
 
             # emit
-            if 0 and it > 1e3 and self.pp.pySize() < np_max and ( not measu or measu[0] / self.res**self.dim < 0.9 ): # 1000
+            if 1 and it > 1e3 and self.pp.pySize() < np_max and ( not measu or measu[0] / self.res**self.dim < 0.9 ): # 1000
                 xi = self.gs * Vec3( 0.5, 0.9, 0.5 )
                 v = Vec3( 0, -3.0, 0 ) # -3
                 n_emitted = 0
@@ -1047,6 +1049,9 @@ class simulation:
                     restart_matlab()
                     init_matlab()
                     it3 = 0
+
+                matlab_eval( rf"mlogn( '\n-----------------\n- time: {it}' );" )
+
                 tic( 'de_goes22' )
                 speed_factor = 0.4 # the matlab interface (and de Goes22) is twice as fast?
                 de_goes22( speed_factor*self.dt, self.res, self.part_per_cell_1d, self.gravity, it3, self.pp, pVel )
@@ -1356,7 +1361,7 @@ class simulation:
                 if self.bSaveMesh:
                     mesh_gen.save( it )
                 
-        if 0:
+        if 1:
             # crop
             cwd = os.getcwd()
             os.chdir( self.out_dir )
@@ -1396,7 +1401,7 @@ if 1 and __name__ == '__main__':
     #setDebugLevel( 10 )
 
     # init matlab
-    if 0:
+    if 1:
         init_matlab()
 
     # test
