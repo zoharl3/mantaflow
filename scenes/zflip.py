@@ -264,7 +264,7 @@ class simulation:
         self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 2 # 2, 3
         self.it_max = 3000 # 300, 500, 1000, 1500, 2500
-        self.res = 50 # 32, 48/50, 64(default), 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
@@ -1053,7 +1053,7 @@ class simulation:
                 matlab_eval( rf"mlogn( '\n-----------------\n- time: {it}' );" )
 
                 tic( 'de_goes22' )
-                speed_factor = 0.4 # the matlab interface (and de Goes22) is twice as fast?
+                speed_factor = 1 # de Goes22 is faster?
                 de_goes22( speed_factor*self.dt, self.res, self.part_per_cell_1d, self.gravity, it3, self.pp, pVel )
                 toc()
 
