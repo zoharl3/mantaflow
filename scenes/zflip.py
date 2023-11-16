@@ -107,7 +107,7 @@ class moving_obstacle:
         self.rad = 0 # radius (at least) in the y-axis
         self.rad3 = Vec3( 0 )
         self.vel_vec = Vec3( 0 )
-        self.terminal_speed = self.sim.gravity/3 # 1, 3; terminal velocity
+        self.terminal_speed = 5*self.sim.gravity/3 # 1, 3; terminal velocity
 
         self.phi_init = self.sol.create( LevelsetGrid )
 
@@ -246,14 +246,14 @@ class mesh_generator:
         self.mesh.save( fname )
 
 # methods
-# 0       1          2          3
-FLIP, FIXED_VOL, CORRECT19, DE_GOES22 = range( 4 )
+# 0       1          2          3         4
+FLIP, FIXED_VOL, CORRECT19, DE_GOES22, MATLAB_FLIP = range( 4 )
 
 class simulation:
     def __init__( self, method ):
         # flags
         self.bScreenShot  = 1
-        self.b_fluid_mesh = 0 # generate mesh for fluid
+        self.b_fluid_mesh = 1 # generate mesh for fluid
         self.bSaveMesh    = 1 # .bobj.gz
         self.bSaveVDB     = 0 # .vdb
         self.bSaveUni     = 0 # .uni
@@ -266,12 +266,12 @@ class simulation:
         self.it_max = 1500 # 300, 500, 1000, 1500, 2500
         self.res = 50 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 1 ) # there's an override in main() for some methods
+        self.narrowBand = bool( 0 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1, revert=2, push=3
 
         self.obs_shape = 0 # box:0, sphere:1
-        self.large_obs = 1
+        self.large_obs = 0
         self.b_test_collision_detection = 1 # enable naive test of collision detection for other methods
 
         if 0: # tall tank
@@ -310,13 +310,13 @@ class simulation:
 
         self.dt = .2 # .2(default), .5, 1(flip5, easier to debug)
 
-        self.gravity = -0.1 # -0.1
+        self.gravity = -0.02 # -0.02
         self.gravity *= math.sqrt( self.res )
         #self.gravity = -0.003 # flip5
 
         self.sol = Solver( name='sol', gridSize=self.gs, dim=self.dim )
 
-        # automatic names are given only if the create is called from global context
+        # automatic names are given to manta c++ objects only if the create is called from global context
         self.flags = self.sol.create( FlagGrid, name='flags' )
         self.flags2 = self.sol.create( FlagGrid)
         self.vel = self.sol.create( MACGrid, name='vel' )
@@ -405,7 +405,7 @@ class simulation:
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
                 fluid_h = 0.2 # 0.2(large box)
-            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0., 0) ), p1=self.gs*( Vec3(1, fluid_h, 1) ) )
+            fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0) ), p1=self.gs*( Vec3(1, fluid_h, 1) ) )
             print( f'- water level h={fluid_h}*res={fluid_h*self.gs.y}' )
             self.phi = fluidbox.computeLevelset()
             self.flags.updateFromLevelset( self.phi )
@@ -454,11 +454,11 @@ class simulation:
 
                 # init force and velocity
                 if 1:
-                    self.obs.force = Vec3( 0, self.gravity, 0 )
+                    self.obs.force = Vec3( 0, 5*self.gravity, 0 )
                     self.obs.vel_vec = Vec3( 0, -0, 0 )
                 else:
                     self.obs.force = Vec3( 0, 0, 0 )
-                    self.obs.vel_vec = Vec3( 0, self.gravity, 0 )
+                    self.obs.vel_vec = Vec3( 0, 5*self.gravity, 0 )
                     self.obs.state = 4 # constant speed
                 self.obs.init( shape )
 
@@ -515,7 +515,7 @@ class simulation:
 
                 # init
                 self.obs.force = Vec3( 0, 0, 0 )
-                self.obs.vel_vec = Vec3( 0, self.gravity*.5, 0 )
+                self.obs.vel_vec = Vec3( 0, 5*self.gravity*.5, 0 )
                 self.obs.state = 4 # constant speed
                 self.obs.init( shape )
 
@@ -574,7 +574,7 @@ class simulation:
 
                 # init
                 self.obs.force = Vec3( 0, 0, 0 )
-                self.obs.vel_vec = Vec3( 0, self.gravity*1, 0 )
+                self.obs.vel_vec = Vec3( 0, 5*self.gravity*1, 0 )
                 self.obs.state = 4 # constant speed
                 self.obs.init( shape )
 
@@ -666,9 +666,9 @@ class simulation:
                         emphasize2( f'  - new obs.state: {self.obs.state}' )
                 
                 if self.obs.state == 2 and abs( self.obs.force.y ) > 0 and self.obs.vel_vec.y < self.obs.terminal_speed:
-                    buoyancy = -1*self.gravity # -1
+                    buoyancy = -5*self.gravity # -1
                     drag = -0.3*self.obs.vel_vec.y # -0.3
-                    self.obs.force.y = buoyancy + drag + self.gravity
+                    self.obs.force.y = buoyancy + drag + 5*self.gravity
                     print( f'  - buoyancy={buoyancy}, drag={drag}, .force={self.obs.force}' )
 
                 self.obs.center = obs_center2
@@ -701,7 +701,7 @@ class simulation:
                         self.obs.vel_vec.y = self.obs.terminal_speed
                         print( '    - terminal velocity in water:', self.obs.vel_vec )
 
-                    max_y_speed = 7*self.gravity # 7, 10
+                    max_y_speed = 35*self.gravity # 7, 10
                     if self.obs.vel_vec.y < max_y_speed:
                         print( f'    - limiting speed to {max_y_speed}' )
                         self.obs.vel_vec.y = max_y_speed
@@ -731,7 +731,6 @@ class simulation:
                             splash_scale *= 1.5
                 else: # 2D
                     splash_scale = 1
-                #obs_vel_vec2.y = splash_scale*self.gravity 
                 obs_vel_vec2.y *= splash_scale
                 print( f'  - set obs.vel.y to {obs_vel_vec2.y} due to state 1, splash_scale={splash_scale}' )
 
@@ -848,6 +847,8 @@ class simulation:
             name += ' idp'
         elif self.method == DE_GOES22:
             name += ' power'
+        elif self.method == MATLAB_FLIP:
+            name += ' matlab flip'
         else:
             name += ' unknown'
         
@@ -961,7 +962,7 @@ class simulation:
         print( '- markFluidCells (update flags) for measure' )
         markFluidCells( parts=self.pp, flags=self.flags )
         self.flags.mark_surface()
-        m = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
+        m = measure( self.pp, pVel, self.flags, self.ppc, V0, volume )
         f_measure.write( f'{m[0]}\n' )
         f_measure.flush()
 
@@ -1038,8 +1039,8 @@ class simulation:
                 V0 += float( n_emitted ) / self.ppc # update volume
                 print( f'- emitted {n_emitted} partices, new V0={V0}, fluid_vol/res^{self.dim}={measu[0] / self.res**self.dim}' )
                 
-            # DE_GOES22
-            if self.method == DE_GOES22:
+            # matlab fluid
+            if self.method in [ DE_GOES22, MATLAB_FLIP ]:
                 assert( self.b2D )
                 it3 = it2
                 # restart matlab
@@ -1052,9 +1053,8 @@ class simulation:
 
                 matlab_eval( rf"mlogn( '\n-----------------\n- time: {it}' );" )
 
-                tic( 'de_goes22' )
-                speed_factor = 1 # de Goes22 is faster?
-                de_goes22( speed_factor*self.dt, self.res, self.part_per_cell_1d, self.gravity, it3, self.pp, pVel )
+                tic( 'matlab_fluid' )
+                matlab_fluid( self.method, speed_factor*self.dt, self.res, self.part_per_cell_1d, self.gravity, it3, self.pp, pVel )
                 toc()
 
             # the rest of the methods
@@ -1096,9 +1096,7 @@ class simulation:
                     # gravity
                     if 1:
                         bscale = 0 # 1:adaptive to grid size; flip5
-                        g =  self.gravity*self.sol.timestep/1 # see addGravity(); assuming sol.mDt=1
-                        #g =  self.gravity
-                        addGravity( flags=self.flags, vel=self.vel, gravity=(0, g, 0), scale=bool(bscale) )
+                        addGravity( flags=self.flags, vel=self.vel, gravity=(0, self.gravity, 0), scale=bool(bscale) )
 
                     # vortex
                     if 0:
@@ -1199,7 +1197,7 @@ class simulation:
                 if self.narrowBand:
                     advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.vel, order=2 )
 
-                # updates pp
+                # limit step (updates pp)
                 self.sol.timestep = limit_time_step_to_one_cell_movement( self.pp, self.sol.timestep )
 
                 # fixed_vol
@@ -1272,7 +1270,7 @@ class simulation:
             toc() # iter
 
             # measure
-            measu = measure( self.pp, pVel, self.flags, self.gravity, self.ppc, V0, volume )
+            measu = measure( self.pp, pVel, self.flags, self.ppc, V0, volume )
             if len( measu ) > 2:
                 stat['measure_min'] = measu[1]*100
                 stat['measure_max'] = measu[2]*100
