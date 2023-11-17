@@ -247,7 +247,7 @@ class mesh_generator:
 
 # methods
 # 0       1          2          3         4
-FLIP, FIXED_VOL, CORRECT19, DE_GOES22, MATLAB_FLIP = range( 4 )
+FLIP, FIXED_VOL, CORRECT19, DE_GOES22, MATLAB_FLIP = range( 5 )
 
 class simulation:
     def __init__( self, method ):
@@ -339,7 +339,6 @@ class simulation:
 
         if 1: # dam
             # my dam
-            #fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.3) ), p1=self.gs*( Vec3(0.4, 0.8, .7) ) )
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
 
             # flip05_nbflip.py
@@ -1054,7 +1053,7 @@ class simulation:
                 matlab_eval( rf"mlogn( '\n-----------------\n- time: {it}' );" )
 
                 tic( 'matlab_fluid' )
-                matlab_fluid( self.method, speed_factor*self.dt, self.res, self.part_per_cell_1d, self.gravity, it3, self.pp, pVel )
+                matlab_fluid( self.method, self.dt, self.res, self.part_per_cell_1d, self.gravity, it3, self.pp, pVel )
                 toc()
 
             # the rest of the methods
