@@ -1411,7 +1411,7 @@ if 1 and __name__ == '__main__':
     if sim.out_dir:
         os.system( f'copy_log.bat "{sim.out_dir}"' )
 
-    # matlab log
+    # move matlab log; also in run.py
     path = Path( r'c:\prj\test_data\relative\_tmp\_matlab_out.txt' )
     if path.exists():
         print( 'moving matlab log' )
