@@ -1,5 +1,5 @@
 
-import os, sys, keyboard, subprocess
+import os, sys, keyboard, subprocess, shutil
 from pathlib import Path
 
 sys.path.append( r'c:\prj\python\\' )
@@ -82,6 +82,12 @@ def main():
         if not log.exists():
             print( f"log doesn't exist (premature/forced/user exit): '{log}'" )
             os.system( f'copy_log.bat "{latest_dir.as_posix()}"' )
+            
+            path = Path( r'c:\prj\test_data\relative\_tmp\_matlab_out.txt' )
+            if path.exists():
+                print( 'moving matlab log' )
+                shutil.move( path.as_posix(), latest_dir.as_posix() )
+            
             #ret = -1
             break
 
