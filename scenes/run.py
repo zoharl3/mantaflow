@@ -10,7 +10,7 @@ lock = FileLock.FileLock('/tmp/manta_run.py.lock')
 #   0       1          2          3           4
 # FLIP, FIXED_VOL, CORRECT19, DE_GOES22, MATLAB_FLIP
 #
-methods = [3]
+methods = [1]
 #methods = [0,1]
 #methods = [2,0]
 #methods = [2,1]
