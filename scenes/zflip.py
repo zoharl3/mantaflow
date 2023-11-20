@@ -261,20 +261,20 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.part_per_cell_1d = 1 # 1, 2(default), 3
+        self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 2 # 2, 3
-        self.it_max = 1500 # 300, 500, 1000, 1500, 2500
-        self.res = 16 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.it_max = 3000 # 300, 500, 1000, 1500, 2500
+        self.res = 50 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 0 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1, revert=2, push=3
 
-        self.large_obs = 1
+        self.large_obs = 0
         self.obs_shape = 0 # box:0, sphere:1
         self.b_test_collision_detection = 1 # enable naive test of collision detection for other methods
 
-        if 1: # tall tank
+        if 0: # tall tank
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else: # square tank
@@ -337,7 +337,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 0: # dam
+        if 1: # dam
             # my dam
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
 
@@ -399,7 +399,7 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 1: # falling obstacle
+        elif 0: # falling obstacle
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
@@ -421,9 +421,9 @@ class simulation:
                     self.obs.rad = 0.15 # 0.1, 0.15
                 if self.large_obs: # large
                     # margin equals to boundary (1 cell) + side path (between obs and tank)
-                    margin = 2 / self.res # one-cell wide side path; for hi-res results in no progress
+                    #margin = 2 / self.res # one-cell wide side path; for hi-res results in no progress
                     #margin = 2 / 50 # fixed margin (and obs width), one-cell wide side path for res50; hi-res is faster than res50
-                    #margin = ( 1 + self.res / 50 ) / self.res # side path changes with res
+                    margin = ( 1 + self.res / 50 ) / self.res # side path changes with res
                     self.obs.rad = 0.5 - margin
                 self.obs.rad *= self.res
                 # shrink a bit if exactly cell size
@@ -655,8 +655,8 @@ class simulation:
                 assert( self.method != FIXED_VOL or obs_naive )
                 obs_stop = 1
 
-        self.obs.increase_vel = 1
-        print( f'  - obs({it}): .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, dt={self.sol.timestep}, .center={self.obs.center}, .force={self.obs.force}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, n_stay={self.obs.n_stay}, start_h={self.obs.start_h}' )
+        print( f'  - before. obs({it}): .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, .force={self.obs.force}, dt={self.sol.timestep}, .center={self.obs.center}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, n_stay={self.obs.n_stay}, start_h={self.obs.start_h}' )
+
         if self.obs.state != 7: # still moving
             if not obs_stop: # not stopped
                 self.obs.n_stay = 0
@@ -666,18 +666,22 @@ class simulation:
                         self.obs.state = 2
                         emphasize2( f'  - new obs.state: {self.obs.state}' )
                 
+                # force due to terminal velocity
                 if self.obs.state == 2 and abs( self.obs.force.y ) > 0 and self.obs.vel_vec.y < self.obs.terminal_speed:
                     buoyancy = -5*self.gravity # -1
                     drag = -0.3*self.obs.vel_vec.y # -0.3
                     self.obs.force.y = buoyancy + drag + 5*self.gravity
-                    print( f'  - buoyancy={buoyancy}, drag={drag}, .force={self.obs.force}' )
+                    print( f'  - update force due to terminal velocity: buoyancy={buoyancy}, drag={drag}, .force={self.obs.force}' )
 
                 self.obs.center = obs_center2
 
-            elif self.obs.state != 4: # was stopped and doesn't have constant speed
-                self.obs.increase_vel = 0
-                self.obs.vel_vec = Vec3( 0 )
-                if int(it) > self.obs.stay_last_it:
+            elif self.obs.state != 4: 
+                # It was stopped and doesn't have a constant speed. It won't be natural if it continues in the same speed. Instead, set to terminal speed since it hit the water already, and the force is 0.
+                # Need also to consider persistent trying (the obstacle keeps trying to make a move and doesn't stop completely) when the obstacle tries to clear the way (so particles won't come back).
+                # The object just reaches terminal velocity instantly, which is also unnatural. I'm disabling this since it looks bad for flip and like I did it on purpose.
+                #self.obs.vel_vec.y = self.obs.terminal_speed
+
+                if int( it ) > self.obs.stay_last_it:
                     self.obs.stay_last_it = int(it)
                     self.obs.n_stay += 1
                 if 0 and self.obs.n_stay > 50: # 50
@@ -687,8 +691,10 @@ class simulation:
                     self.obs.state = 7
                     emphasize2( f'  - new obs.state: {self.obs.state}' )
 
+        print( f'  - after.  obs({it}): .state={self.obs.state}, .vel_vec={self.obs.vel_vec}, .force={self.obs.force}, dt={self.sol.timestep}, .center={self.obs.center}, .increase_vel={self.obs.increase_vel}, obs_center2={obs_center2}, n_stay={self.obs.n_stay}, start_h={self.obs.start_h}' )
+
     def move_obstacle( self ):
-        print( '- move_obstacle()' )
+        print( f'- move_obstacle(), .force={self.obs.force}, .vel_vec={self.obs.vel_vec}' )
         if self.obs.state != 7:
             if self.obs.center.y - self.obs.rad + self.obs.vel_vec.y*self.dt > 1.1: # move
                 print( '  - obstacle still moves' )
@@ -697,11 +703,13 @@ class simulation:
                     self.obs.vel_vec += dv
                     print( f'  - dv={dv}, .vel_vec={self.obs.vel_vec}' )
 
+                    # I apply force due to terminal velocity. It may cause the obs to become too slow or even change direction. I limit the minimal speed after it hits the water.
                     if self.obs.state == 2 and self.obs.vel_vec.y > self.obs.terminal_speed:
-                        self.obs.force = Vec3(0)
                         self.obs.vel_vec.y = self.obs.terminal_speed
-                        print( '    - terminal velocity in water:', self.obs.vel_vec )
+                        self.obs.force = Vec3( 0 )
+                        print( '    - setting minimal speed to terminal speed:', self.obs.vel_vec )
 
+                    # limit max speed 
                     max_y_speed = 35*self.gravity # 7, 10
                     if self.obs.vel_vec.y < max_y_speed:
                         print( f'    - limiting speed to {max_y_speed}' )
@@ -718,7 +726,7 @@ class simulation:
             print( '- obstacle rests' )
 
         # obs.vel for fluid boundary conditions
-        if 0:
+        if 1:
             obs_vel_vec2 = self.obs.vel_vec + Vec3(0) # force copy
 
             # splash speed
@@ -1023,7 +1031,7 @@ class simulation:
                 self.sol.adaptTimestep( maxVel )
 
             # emit
-            if 0 and it > 1e3 and self.pp.pySize() < np_max and ( not measu or measu[0] / self.res**self.dim < 0.9 ): # 1000
+            if 1 and it > 1e3 and self.pp.pySize() < np_max and ( not measu or measu[0] / self.res**self.dim < 0.9 ): # 1000
                 xi = self.gs * Vec3( 0.5, 0.9, 0.5 )
                 v = Vec3( 0, -3.0, 0 ) # -3
                 n_emitted = 0
