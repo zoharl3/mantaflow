@@ -956,7 +956,7 @@ class simulation:
                 gui.setCamRot( 35, -30, 0 )
             
             # hide grid
-            if 0 and self.b2D:
+            if 1 and self.b2D:
                 gui.toggleHideGrids()
 
             gui.show()
