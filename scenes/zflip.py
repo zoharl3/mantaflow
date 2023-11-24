@@ -264,7 +264,7 @@ class simulation:
         self.part_per_cell_1d = 1 # 1, 2(default), 3
         self.dim = 2 # 2, 3
         self.it_max = 1500 # 300, 500, 1000, 1500, 2500
-        self.res = 100 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 50 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 0 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
