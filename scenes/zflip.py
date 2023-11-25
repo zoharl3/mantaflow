@@ -261,10 +261,10 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.part_per_cell_1d = 2 # 1, 2(default), 3
+        self.part_per_cell_1d = 1 # 1, 2(default), 3
         self.dim = 2 # 2, 3
-        self.it_max = 3000 # 300, 500, 1000, 1500, 2500
-        self.res = 50 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.it_max = 1500 # 300, 500, 1000, 1500, 2500
+        self.res = 100 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 0 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
@@ -1031,7 +1031,7 @@ class simulation:
                 self.sol.adaptTimestep( maxVel )
 
             # emit
-            if 1 and it > 1e3 and self.pp.pySize() < np_max and ( not measu or measu[0] / self.res**self.dim < 0.9 ): # 1000
+            if 0 and it > 1e3 and self.pp.pySize() < np_max and ( not measu or measu[0] / self.res**self.dim < 0.9 ): # 1000
                 xi = self.gs * Vec3( 0.5, 0.9, 0.5 )
                 v = Vec3( 0, -3.0, 0 ) # -3
                 n_emitted = 0
