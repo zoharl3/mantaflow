@@ -329,23 +329,26 @@ void ParticlePainter::paintBasicSys() {
 
 	// otherwise draw center
 	if(!drewPoints) {
-		glPointSize(3); // 1.5, 3, 5.5
+		glPointSize(9); // 1.5, 3(default), 5.5
 		glBegin(GL_POINTS);
 
 		for(int i=0; i<(int)bp->size(); i++) {
 			Vec3 pos = (*bp)[i].pos;
 			if (pos[dim] < plane || pos[dim] > plane + 1.0f) continue;
 			
-			if(!bp->isActive(i) ) {
-				glColor3f(1.0, 0., 0.); // deleted, red
-			} else if(bp->getStatus(i) & ParticleBase::PNEW ) {
-				glColor3f(0.0, 1.0, 0.); // new, green
-			} else {
-				//glColor3f(0, 0.0, 1.0); // regular, blue
-				glColor3f(1.0, 1.0, 1.0); // regular, white - high contrast
-			}
-			float c = 0.7; // 0.3, 0.7
-            glColor3f( 0.0, c, c ); // zl
+			if ( 0 ) {
+                if ( !bp->isActive( i ) ) { // deleted
+                    glColor3f( 1.0, 0., 0. ); // red
+                } else if ( bp->getStatus( i ) & ParticleBase::PNEW ) { // new
+                    glColor3f(0.0, 1.0, 0.); // green
+                } else { // regular
+                    // glColor3f(0, 0.0, 1.0); // blue
+                    glColor3f( 1.0, 1.0, 1.0 ); // white - high contrast mode
+                }
+            } else {
+                float c = 0.1; // 0.1, 0.3, 0.7(default)
+                glColor3f( 0.0, c, c ); // zl
+            }
 
 			glVertex(pos, dx);
 		}   

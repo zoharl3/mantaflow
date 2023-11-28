@@ -27,31 +27,35 @@ using namespace std;
 
 namespace Manta {
 
-MainWnd::MainWnd() : QMainWindow(0), mPaused(true), mRequestPause(false), mRequestClose(false), mStep(0),
-						mKbwScene(0), mKbwView(0), mKbwPixmap(0), mMenuBar(0)
-{
-	// Frame info label
-	mInfo = new QLabel;
+MainWnd::MainWnd() : QMainWindow( 0 ), mPaused( true ), mRequestPause( false ), mRequestClose( false ), mStep( 0 ),
+                     mKbwScene( 0 ), mKbwView( 0 ), mKbwPixmap( 0 ), mMenuBar( 0 ) {
+    // Frame info label
+    mInfo = new QLabel;
 
-	QFont font( "Consolas", 12 ); 
+    QFont font( "Consolas", 12 );
     QApplication::setFont( font, "QLabel" );
-	//mInfo->setFont( font ); // doesn't change size
+    // mInfo->setFont( font ); // doesn't change size
 
-	setStep(0,0.);
-	
-	// register GL widget
-	mGlWidget = new GLWidget();
-	setCentralWidget(mGlWidget);  
-	connect(mGlWidget, SIGNAL(clickLine(QPoint,float,float,float,float,float,float)), SLOT(clickLine(QPoint,float,float,float,float,float,float)));
-		
-	// register grid painters
-	mPainterLayout = new QVBoxLayout;    
-	mPainterLayout->setAlignment(Qt::AlignTop);
-	mPainterLayout->addWidget(mInfo);
-	GridPainter<int>* intPainter = new GridPainter<int>(NULL, this);     
-	mPainter.push_back(new GridPainter<Real>((FlagGrid**)intPainter->getGridPtr(), this));    
-	mPainter.push_back(new GridPainter<Vec3>(NULL, this));    
-	mPainter.push_back(intPainter);
+    setStep( 0, 0. );
+
+    // register GL widget
+    mGlWidget = new GLWidget();
+    setCentralWidget( mGlWidget );
+    connect( mGlWidget, SIGNAL( clickLine( QPoint, float, float, float, float, float, float ) ), SLOT( clickLine( QPoint, float, float, float, float, float, float ) ) );
+
+    // register grid painters
+    mPainterLayout = new QVBoxLayout;
+    mPainterLayout->setAlignment( Qt::AlignTop );
+    mPainterLayout->addWidget( mInfo );
+    GridPainter<int> *intPainter = new GridPainter<int>( NULL, this );
+    mPainter.push_back( new GridPainter<Real>( (FlagGrid **)intPainter->getGridPtr(), this ) );
+    if ( 0 ) { // 1(default); different painting order
+        mPainter.push_back( new GridPainter<Vec3>( NULL, this ) );
+        mPainter.push_back( intPainter );
+    } else {
+        mPainter.push_back( intPainter );
+        mPainter.push_back( new GridPainter<Vec3>( NULL, this ) );
+    }	
 	mPainter.push_back(new ParticlePainter(intPainter, this));
 	MeshPainter* ptr = new MeshPainter(this);
 	mPainter.push_back(ptr);    

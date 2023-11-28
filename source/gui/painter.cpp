@@ -399,26 +399,32 @@ template<> void GridPainter<int>::paint() {
 	float dx = mLocalGrid->getDx();
 	Vec3 box[4];
 	glColor3f(0.5,0,0);
-	
-	bool rbox = true;
-	bool skipFluid = mLocalGrid->getSize().max() >= 500; // 64, 500
-	bool drawLines = !mHide && mLocalGrid->getSize().max() <= 500; // 80, 500
-	if (drawLines) {
-		//glDepthFunc(GL_LESS);
-		glBegin(GL_LINES);
-		FOR_P_SLICE(mLocalGrid, mDim, mPlane) {
 
-			int flag = 0;
-			flag = mLocalGrid->get(p);
+    bool rbox = true;
+    bool skipFluid = mLocalGrid->getSize().max() >= 500; // 64, 500
+    bool drawLines = !mHide && mLocalGrid->getSize().max() <= 500; // 80, 500
+    if ( drawLines ) {
+        //glDepthFunc(GL_LESS);
+        //glBegin( GL_LINES );
+        FOR_P_SLICE( mLocalGrid, mDim, mPlane ) {
 
-            if (flag & FlagGrid::TypeObstacle) {
+            int flag = 0;
+            flag = mLocalGrid->get( p );
+
+            if ( 1&& ( flag & FlagGrid::TypeFluid || flag & FlagGrid::TypeObstacle ) )
+                glBegin( GL_QUADS ); // full
+            else
+                glBegin( GL_LINES );
+
+            if ( flag & FlagGrid::TypeObstacle ) {
+                //glColor3f( 0.45, 0, 0.4 ); // purple
                 glColor3f( 0.25, 0, 0.2 ); // dark purple
-            } else if (flag & FlagGrid::TypeOutflow) {
+            } else if ( flag & FlagGrid::TypeOutflow ) {
                 glColor3f( 0.9, 0.3, 0 ); // orange
-            } else if (flag & FlagGrid::TypeEmpty) {
+            } else if ( flag & FlagGrid::TypeEmpty ) {
                 glColor3f( 0.2, 0.2, 0.2 ); // dark gray
-            } else if (flag & FlagGrid::TypeSurface) {
-                if (skipFluid)
+            } else if ( 0&& flag & FlagGrid::TypeSurface ) {
+                if ( skipFluid )
                     continue;
                 //glColor3f( 0, 0.3, 1 ); // light blue
                 glColor3f( 0, .8, 0 ); // green
@@ -426,22 +432,25 @@ template<> void GridPainter<int>::paint() {
                 if ( skipFluid )
                     continue;
                 glColor3f( .8, .8, 0 ); // yellow
-            } else if (flag & FlagGrid::TypeFluid) {
-                if (skipFluid)
+            } else if ( flag & FlagGrid::TypeFluid ) {
+                if ( skipFluid )
                     continue;
-                glColor3f( 0, 0, 0.75 ); // blue
+                glColor3f( 0.52, 0.8, 0.92 ); // skyblue
+                //glColor3f( 0, 0, 0.75 ); // blue
             } else {
                 // unknown
                 glColor3f( 0.5, 0, 0 ); // medium red
             }
 
-			getCellCoordinates(p, box, mDim, true); 
-			for (int n=1;n<=8;n++)
-				glVertex(box[(n/2)%4], dx);
-		}
-		glEnd();
-		//glDepthFunc(GL_ALWAYS);        
-	}
+            getCellCoordinates( p, box, mDim, true );
+            for ( int n = 1; n <= 8; n++ )
+                glVertex( box[( n / 2 ) % 4], dx );
+
+            glEnd();
+        }
+        //glEnd();
+        //glDepthFunc(GL_ALWAYS);
+    }
 	
 	if (rbox) {
 		Vec3 p0(0.0), p1(toVec3(mLocalGrid->getSize())),p(p0);
@@ -535,6 +544,8 @@ template<> void GridPainter<Vec3>::paint() {
 	if( (dm==VecDispCentered) || (dm==VecDispStaggered) ) {
 
 		// regular velocity drawing mode
+        //glPushAttrib( GL_LINE_WIDTH ); // doesn't work
+        glLineWidth( 4.0 ); // 1
 		glBegin(GL_LINES);
 			
 		FOR_P_SLICE(mLocalGrid, mDim, mPlane) {        
@@ -549,10 +560,12 @@ template<> void GridPainter<Vec3>::paint() {
 					if (p.z < mLocalGrid->getSizeZ()-1) 
 						vel.z = 0.5 * (vel.z + scale * mLocalGrid->get(p.x,p.y,p.z+1).z);
 				}
-				glColor3f(0,1,0);
+                glColor3f( .7, .7, 0 );
+				//glColor3f(0,1,0);
 				glVertex(pos, dx);
-				glColor3f(1,1,0);
-				glVertex(pos+vel*1.2, dx);
+                glColor3f( .7, 0, 0 );
+				//glColor3f(1,1,0);
+				glVertex(pos+vel*1.5, dx); // 1.2
 			} else if (dm==VecDispStaggered) {
 				for (int d=0; d<3; d++) {
 					if (fabs(vel[d]) < 1e-2) continue;
@@ -569,7 +582,9 @@ template<> void GridPainter<Vec3>::paint() {
 				}
 			}
 		}
-		glEnd();    
+		glEnd();
+        glLineWidth( 1.0 );
+        //glPopAttrib();
 	
 	} else if (dm==VecDispUv) {
 		// draw as "uv" coordinates (ie rgb), note - this will completely hide the real grid display!

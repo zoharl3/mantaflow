@@ -70,7 +70,7 @@ void GLWidget::paintGL()
 {
 	if (mGridsize.max() == 0) return;
 	glDepthFunc(GL_ALWAYS);
-	float c = .0; // 0, 1
+	float c = 1; // 0, 1
     glClearColor( c, c, c, 1.0f ); // zl background color
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);

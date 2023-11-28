@@ -20,7 +20,9 @@ PYTHON() alias Grid<Real> RealGrid
     - I excluded build/pp from resharper
     - The python script is run from c++ using 
 PyRun_SimpleString(buf);
-    - There are painters for different types
+    - glClearColor( c, c, c, 1.0f ); // zl background color
+    - There are painters for different types. 
+        - The painters order is determined by their insertion order into mPainter in MainWnd::MainWnd().
         - grid color: in painter.cpp, GridPainter<int>::paint()
 glColor3f( 0, 0.3, 1 ); // light blue
         - GridPainter<Real>::paint()
@@ -29,7 +31,7 @@ glColor3f( 0, 0.3, 1 ); // light blue
     - particle color: in particlepainter.cpp, ParticlePainter::paintBasicSys()
 if(!bp->isActive(i) ) {
     glColor3f(1.0, 0., 0.); // deleted, red
-        - There's point size in that code area after
+        - There's glPointSize in that code area after
 if(!drewPoints)
     - The drawing is done in GridPainter<int|Real|Vec3>::paint()
     - color and vector modes
@@ -81,6 +83,7 @@ https://www.youtube.com/watch?v=YdUWqkqcxzw&ab_channel=BlenderMadeEasy
 flip03_gen.py
 
 - maya plugins
+    - bobjloader is fast and simple and works with a compact format. The extracted surface is decent--I'm scaling by 2 the resolution of the grid for the extraction. Better than working with openvdb.
     - I created a cmake
     - densityloader expects grid density not particles (see the 4-byte header).
     
