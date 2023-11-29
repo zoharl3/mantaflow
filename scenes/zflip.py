@@ -263,14 +263,14 @@ class simulation:
         # params
         self.part_per_cell_1d = 1 # 1, 2(default), 3
         self.dim = 2 # 2, 3
-        self.it_max = 1500 # 300, 500, 1000, 1500, 2500
-        self.res = 30 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.it_max = 300 # 300, 500, 1000, 1500, 2500
+        self.res = 14 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 0 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1, revert=2, push=3
 
-        self.large_obs = 0
+        self.large_obs = 1
         self.obs_shape = 0 # box:0, sphere:1
         self.b_test_collision_detection = 1 # enable naive test of collision detection for other methods
 
@@ -337,7 +337,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
 
@@ -399,7 +399,7 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 0: # falling obstacle
+        elif 1: # falling obstacle
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
@@ -421,9 +421,9 @@ class simulation:
                     self.obs.rad = 0.15 # 0.1, 0.15
                 if self.large_obs: # large
                     # margin equals to boundary (1 cell) + side path (between obs and tank)
-                    #margin = 2 / self.res # one-cell wide side path; for hi-res results in no progress
+                    margin = 2 / self.res # one-cell wide side path; for hi-res results in no progress
                     #margin = 2 / 50 # fixed margin (and obs width), one-cell wide side path for res50; hi-res is faster than res50
-                    margin = ( 1 + self.res / 50 ) / self.res # side path changes with res
+                    #margin = ( 1 + self.res / 50 ) / self.res # side path changes with res
                     self.obs.rad = 0.5 - margin
                 self.obs.rad *= self.res
                 # shrink a bit if exactly cell size
@@ -946,7 +946,7 @@ class simulation:
 
             # field
             gui.setRealGridDisplay( 0 ) # 0:none, 1:volume
-            gui.setVec3GridDisplay( 1 ) # 0:none, 1:vel
+            gui.setVec3GridDisplay( 0 ) # 0:none, 1:vel
             for i in range( 0 ): # 0:center, 1:wall, 2:color, 3:none
                 gui.nextVec3Display()
 
@@ -1171,7 +1171,7 @@ class simulation:
                                 warn( 'velocity blew up; reverting to old one' )
                                 self.vel.copyFrom( velOld )
 
-                if 0:
+                if 1:
                     dist = min( int( maxVel*1.25 + 2 ), 8 ) # res
                     print( '- extrapolate MAC Simple (dist=%0.1f)' % dist )
                     extrapolateMACSimple( flags=self.flags, vel=self.vel, distance=dist, intoObs=False )
