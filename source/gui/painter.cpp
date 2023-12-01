@@ -411,8 +411,9 @@ template<> void GridPainter<int>::paint() {
             int flag = 0;
             flag = mLocalGrid->get( p );
 
+			//if ( 1&& ( flag & FlagGrid::TypeSurface || flag & FlagGrid::TypeObstacle ) )
             if ( 1&& ( flag & FlagGrid::TypeFluid || flag & FlagGrid::TypeObstacle ) )
-                glBegin( GL_QUADS ); // full
+                glBegin( GL_QUADS ); // full (fig)
             else
                 glBegin( GL_LINES );
 
@@ -423,11 +424,12 @@ template<> void GridPainter<int>::paint() {
                 glColor3f( 0.9, 0.3, 0 ); // orange
             } else if ( flag & FlagGrid::TypeEmpty ) {
                 glColor3f( 0.2, 0.2, 0.2 ); // dark gray
-            } else if ( 0&& flag & FlagGrid::TypeSurface ) {
+            } else if ( 1&& flag & FlagGrid::TypeSurface ) {
                 if ( skipFluid )
                     continue;
                 //glColor3f( 0, 0.3, 1 ); // light blue
-                glColor3f( 0, .8, 0 ); // green
+                glColor3f( .13, .54, .13 ); // (fig) forest green
+                //glColor3f( 0, .8, 0 ); // (default)green
             } else if ( flag & FlagGrid::TypeBandInterface ) {
                 if ( skipFluid )
                     continue;
@@ -435,8 +437,8 @@ template<> void GridPainter<int>::paint() {
             } else if ( flag & FlagGrid::TypeFluid ) {
                 if ( skipFluid )
                     continue;
-                glColor3f( 0.52, 0.8, 0.92 ); // skyblue
-                //glColor3f( 0, 0, 0.75 ); // blue
+                glColor3f( 0.52, 0.8, 0.92 ); // (fig) skyblue
+                //glColor3f( 0, 0, 0.75 ); // (default) blue
             } else {
                 // unknown
                 glColor3f( 0.5, 0, 0 ); // medium red
@@ -545,7 +547,7 @@ template<> void GridPainter<Vec3>::paint() {
 
 		// regular velocity drawing mode
         //glPushAttrib( GL_LINE_WIDTH ); // doesn't work
-        glLineWidth( 4.0 ); // 1
+        glLineWidth( 1.0 ); // 1(default), 4(fig)
 		glBegin(GL_LINES);
 			
 		FOR_P_SLICE(mLocalGrid, mDim, mPlane) {        
@@ -560,11 +562,11 @@ template<> void GridPainter<Vec3>::paint() {
 					if (p.z < mLocalGrid->getSizeZ()-1) 
 						vel.z = 0.5 * (vel.z + scale * mLocalGrid->get(p.x,p.y,p.z+1).z);
 				}
-                glColor3f( .7, .7, 0 );
-				//glColor3f(0,1,0);
+                //glColor3f( .7, .7, 0 ); // fig
+				glColor3f(0,1,0);
 				glVertex(pos, dx);
-                glColor3f( .7, 0, 0 );
-				//glColor3f(1,1,0);
+                //glColor3f( .7, 0, 0 ); // fig
+				glColor3f(1,1,0);
 				glVertex(pos+vel*1.5, dx); // 1.2
 			} else if (dm==VecDispStaggered) {
 				for (int d=0; d<3; d++) {

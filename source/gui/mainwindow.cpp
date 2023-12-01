@@ -49,7 +49,7 @@ MainWnd::MainWnd() : QMainWindow( 0 ), mPaused( true ), mRequestPause( false ), 
     mPainterLayout->addWidget( mInfo );
     GridPainter<int> *intPainter = new GridPainter<int>( NULL, this );
     mPainter.push_back( new GridPainter<Real>( (FlagGrid **)intPainter->getGridPtr(), this ) );
-    if ( 0 ) { // 1(default); different painting order
+    if ( 1 ) { // 1(default); different painting order
         mPainter.push_back( new GridPainter<Vec3>( NULL, this ) );
         mPainter.push_back( intPainter );
     } else {

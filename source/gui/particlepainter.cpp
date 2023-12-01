@@ -329,7 +329,7 @@ void ParticlePainter::paintBasicSys() {
 
 	// otherwise draw center
 	if(!drewPoints) {
-		glPointSize(9); // 1.5, 3(default), 5.5
+		glPointSize(3); // 1.5, 3(default), 5.5, 9
 		glBegin(GL_POINTS);
 
 		for(int i=0; i<(int)bp->size(); i++) {
@@ -346,7 +346,7 @@ void ParticlePainter::paintBasicSys() {
                     glColor3f( 1.0, 1.0, 1.0 ); // white - high contrast mode
                 }
             } else {
-                float c = 0.1; // 0.1, 0.3, 0.7(default)
+                float c = 0.1; // 0.1(fig), 0.3, 0.7(default)
                 glColor3f( 0.0, c, c ); // zl
             }
 

@@ -313,10 +313,10 @@ public:
 		TypeOpen     = 32,
 		TypeStick    = 64,
 		TypeSurface = 128,
-        TypeBandInterface = 256,
-		// internal use only, for fast marching
-		TypeReserved = 512,
+		TypeReserved = 256, // internal use only, for fast marching
+        TypeBandInterface = 512,
 		// 2^10 - 2^14 reserved for moving obstacles
+		TypeTemp = 0, // temporary flag, e.g. used for drawing deep
 	};
 		
 	//! access for particles
