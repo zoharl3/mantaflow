@@ -70,23 +70,23 @@ void GLWidget::paintGL()
 {
 	if (mGridsize.max() == 0) return;
 	glDepthFunc(GL_ALWAYS);
-	float c = 1; // 0, 1
+	float c = 0; // 0(default), 1
     glClearColor( c, c, c, 1.0f ); // zl background color
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	glEnable( GL_DEPTH_TEST );
 	//glEnable(GL_POLYGON_OFFSET_FILL);
-	//glPolygonOffset(0,0);    
+	//glPolygonOffset(0,0);
 	
 	// camera transform
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(mCamPos.x, mCamPos.y, mCamPos.z);
-	glRotatef(mRotX,  1.,0.,0.);
+	glTranslatef( mCamPos.x, mCamPos.y, mCamPos.z );
+	glRotatef( mRotX, 1., 0., 0. );
 	glRotatef(mRotY,  0.,1.,0.);
-	Real dx = 1.0 / (Real) mGridsize.max();
+	Real dx = 1.0 / (Real)mGridsize.max();
 	Vec3 sz = toVec3(mGridsize) * (-0.5f * dx);
 	
-	glTranslatef(sz.x, sz.y, sz.z);
+	glTranslatef( sz.x, sz.y, sz.z );
 	emit paintSub();
 }
 

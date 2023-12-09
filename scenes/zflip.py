@@ -263,10 +263,10 @@ class simulation:
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 2 # 2, 3
-        self.it_max = 600 # 300, 500, 1000, 1500, 2500
+        self.it_max = 350 # 350, 500, 1000, 1500, 2500
         self.res = 50 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 1 ) # there's an override in main() for some methods
+        self.narrowBand = bool( 0 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1, revert=2, push=3
 
@@ -337,7 +337,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
 
@@ -956,7 +956,7 @@ class simulation:
                 gui.setCamRot( 35, -30, 0 )
             
             # hide grid
-            if 0 and self.b2D:
+            if 1 and self.b2D:
                 gui.toggleHideGrids()
 
             gui.show()
@@ -1279,6 +1279,10 @@ class simulation:
 
             toc() # iter
 
+            # mark deep for drawing
+            if 0 and self.narrowBand:
+                set_grid_temp_flag( self.flags, bfs, self.narrowBandWidth )
+
             # measure
             measu = measure( self.pp, pVel, self.flags, self.ppc, V0, volume )
             if len( measu ) > 2:
@@ -1319,8 +1323,9 @@ class simulation:
             # print
             if 0:
                 self.flags.printGrid()
+                bfs.printGrid()
                 #self.vel.printGrid()
-                self.phiObs.printGrid()
+                #self.phiObs.printGrid()
 
                 #self.pp.printParts()
                 #self.pp.writeParticlesText( self.out_dir + 'particles_%04d.txt' % it )

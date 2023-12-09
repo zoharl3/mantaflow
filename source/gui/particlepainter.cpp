@@ -346,7 +346,7 @@ void ParticlePainter::paintBasicSys() {
                     glColor3f( 1.0, 1.0, 1.0 ); // white - high contrast mode
                 }
             } else {
-                float c = 0.1; // 0.1(fig), 0.3, 0.7(default)
+                float c = 0.7; // 0.1(fig), 0.3, 0.7(default)
                 glColor3f( 0.0, c, c ); // zl
             }
 
