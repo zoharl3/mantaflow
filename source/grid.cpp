@@ -951,7 +951,9 @@ void FlagGrid::mark_surface() {
 				//if ( 0&& mData[index( idx2 )] & TypeObstacle ) continue;
 				// If the fluid touches the obstacle from the top, then it's not a surface. Not really needed. This creates empty bubbles, maybe due to a sudden jump in the bfs when the obstacle moves?
                 //if ( 0&& dir[d].y < 0 && mData[index( idx2 )] & TypeObstacle ) continue;
-                // to distinguish from a moving obstacle; I should have separated the obstacle markings to static and dynamic; this only concerns the spiral scene, where I use resolution of tunnel of a cell wide
+				// like above, but only below obs (assuming obs goes down)
+				//if ( !( dir[d].y > 0 ) && mData[index( idx2 )] & TypeObstacle ) continue;
+                // to distinguish from a moving obstacle; I should have separated the obstacle markings to static and dynamic; this only concerns the spiral scene, where I use resolution of a cell-wide tunnel
                 if ( is_boundary( idx2 ) )
                     continue;
 

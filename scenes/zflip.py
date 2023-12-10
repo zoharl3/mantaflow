@@ -264,7 +264,7 @@ class simulation:
         self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 3 # 2, 3
         self.it_max = 1300 # 350, 500, 1000, 1500, 2500
-        self.res = 50 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 100 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
@@ -930,7 +930,7 @@ class simulation:
             if self.obs.exists and self.large_obs and self.narrowBand:
                 mesh_gen = mesh_generator( self.dim, self.gs, self.sol, self.narrowBand, self.out_dir, 1 )
                 mesh_gen.union_method = 0 # might not be needed, just for good measure
-                emphasize( f'setting mesh_gen.upres={mesh_gen.upres} (and mesh_gen.union_method={mesh_gen.union_method}) due to large obs' )
+                emphasize3( f'setting mesh_gen.upres={mesh_gen.upres} (and mesh_gen.union_method={mesh_gen.union_method}) due to large obs' )
             mesh_gen.update_phi( self.phi )
             mesh_gen.generate( self.pp )
 
@@ -1408,7 +1408,7 @@ if 1 and __name__ == '__main__':
     out_dir_root = r'c:/prj-external-libs/mantaflow/out/'
 
     # (debug) for a consistent result; for large res, step() hangs?
-    if 1:
+    if 0:
         limit_to_one_core()
 
     # so kernels won't hog the cpu
