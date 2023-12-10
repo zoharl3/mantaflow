@@ -1407,8 +1407,8 @@ if 1 and __name__ == '__main__':
 
     out_dir_root = r'c:/prj-external-libs/mantaflow/out/'
 
-    # (debug) for a consistent result; for large res, the step() hangs?
-    if 0:
+    # (debug) for a consistent result; for large res, step() hangs?
+    if 1:
         limit_to_one_core()
 
     # so kernels won't hog the cpu
