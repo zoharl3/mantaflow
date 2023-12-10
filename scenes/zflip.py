@@ -262,19 +262,19 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 2 # 2, 3
-        self.it_max = 350 # 350, 500, 1000, 1500, 2500
+        self.dim = 3 # 2, 3
+        self.it_max = 1300 # 350, 500, 1000, 1500, 2500
         self.res = 50 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 0 ) # there's an override in main() for some methods
+        self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1, revert=2, push=3
 
-        self.large_obs = 0
+        self.large_obs = 1
         self.obs_shape = 0 # box:0, sphere:1
         self.b_test_collision_detection = 1 # enable naive test of collision detection for other methods
 
-        if 0: # tall tank
+        if 1: # tall tank
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
         else: # square tank
@@ -399,7 +399,7 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 0: # falling obstacle
+        elif 1: # falling obstacle
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
@@ -582,6 +582,9 @@ class simulation:
                 #self.scene['type'] = 5
                 self.scene['name'] = 'spiral'
 
+        else:
+            assert( 0 ) # needs some water
+
         # common
         #self.phiObs.printGrid()
         #self.flags.printGrid()
@@ -753,6 +756,7 @@ class simulation:
             #self.obs.vel.printGrid()
 
         else:
+            print( '- zero obs vel boundary condition' )
             if self.obs.state < 2:
                 self.obs.state = 2
                 emphasize2( f'  - new obs.state: {self.obs.state}' )
@@ -1414,7 +1418,7 @@ if 1 and __name__ == '__main__':
     #setDebugLevel( 10 )
 
     # init matlab
-    if 1:
+    if 0:
         init_matlab()
 
     # test
