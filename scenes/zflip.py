@@ -681,8 +681,9 @@ class simulation:
             elif self.obs.state != 4: 
                 # It was stopped and doesn't have a constant speed. It won't be natural if it continues in the same speed. Instead, set to terminal speed since it hit the water already, and the force is 0.
                 # Need also to consider persistent trying (the obstacle keeps trying to make a move and doesn't stop completely) when the obstacle tries to clear the way (so particles won't come back).
-                # The object just reaches terminal velocity instantly, which is also unnatural. I'm disabling this since it looks bad for flip and like I did it on purpose. I still need it for my method, else there's a delay of the fluid for large obs (I didn't check why yet).
-                if self.method == FIXED_VOL:
+                # The object just reaches terminal velocity instantly, which is also unnatural. I'm disabling this since it looks bad for flip and like I did it on purpose. 
+                # I enable it for my method for large obs, else there's a delay of the fluid in the beginning. The difference is progress in terminal speed vs impact speed that decreases gradually to terminal speed. The higher speed pushes the particles and creates a crater in the fluid. Not sure why it matters, but it's not critical in this case.
+                if self.large_obs and self.method == FIXED_VOL:
                     self.obs.vel_vec.y = self.obs.terminal_speed
 
                 if int( it ) > self.obs.stay_last_it:
@@ -1212,7 +1213,7 @@ class simulation:
                 if self.narrowBand:
                     advectSemiLagrange( flags=self.flags, vel=self.vel, grid=self.vel, order=2 )
 
-                # limit step (updates pp)
+                # limit time step (updates pp)
                 self.sol.timestep = limit_time_step_to_one_cell_movement( self.pp, self.sol.timestep )
 
                 # fixed_vol
