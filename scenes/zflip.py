@@ -681,8 +681,9 @@ class simulation:
             elif self.obs.state != 4: 
                 # It was stopped and doesn't have a constant speed. It won't be natural if it continues in the same speed. Instead, set to terminal speed since it hit the water already, and the force is 0.
                 # Need also to consider persistent trying (the obstacle keeps trying to make a move and doesn't stop completely) when the obstacle tries to clear the way (so particles won't come back).
-                # The object just reaches terminal velocity instantly, which is also unnatural. I'm disabling this since it looks bad for flip and like I did it on purpose.
-                #self.obs.vel_vec.y = self.obs.terminal_speed
+                # The object just reaches terminal velocity instantly, which is also unnatural. I'm disabling this since it looks bad for flip and like I did it on purpose. I still need it for my method, else there's a delay of the fluid for large obs (I didn't check why yet).
+                if self.method == FIXED_VOL:
+                    self.obs.vel_vec.y = self.obs.terminal_speed
 
                 if int( it ) > self.obs.stay_last_it:
                     self.obs.stay_last_it = int(it)
