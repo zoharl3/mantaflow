@@ -264,7 +264,7 @@ class simulation:
         self.part_per_cell_1d = 2 # 1, 2(default), 3
         self.dim = 3 # 2, 3
         self.it_max = 1300 # 350, 500, 1000, 1500, 2500
-        self.res = 50 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 100 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
@@ -682,7 +682,7 @@ class simulation:
                 # It was stopped and doesn't have a constant speed. It won't be natural if it continues in the same speed. Instead, set to terminal speed since it hit the water already, and the force is 0.
                 # Need also to consider persistent trying (the obstacle keeps trying to make a move and doesn't stop completely) when the obstacle tries to clear the way (so particles won't come back).
                 # The object just reaches terminal velocity instantly, which is also unnatural. I'm disabling this since it looks bad for flip and like I did it on purpose. 
-                # I enable it for my method for large obs, else there's a delay of the fluid in the beginning. The difference is progress in terminal speed vs impact speed that decreases gradually to terminal speed. The higher speed pushes the particles and creates a crater in the fluid. Not sure why it matters, but it's not critical in this case.
+                # I enable it for my method for large obs, else there's a delay of the fluid in the beginning. The difference is progress in terminal speed vs impact speed that decreases gradually to terminal speed. The higher speed pushes the particles and creates a crater in the fluid. Not sure why it matters, but it's not critical in this case. Maybe it's due to the optimality of pushing paths.
                 if self.large_obs and self.method == FIXED_VOL:
                     self.obs.vel_vec.y = self.obs.terminal_speed
 
