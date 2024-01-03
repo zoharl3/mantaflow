@@ -266,13 +266,13 @@ class simulation:
         self.it_max = 2000 # 350, 500, 1000, 1500, 2500
         self.res = 100 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
-        self.narrowBand = bool( 1 ) # there's an override in main() for some methods
+        self.narrowBand = bool( 0 ) # there's an override in main() for some methods
         self.narrowBandWidth = 6 # 3(default,large obs), 6(dam)
-        self.inter_control_method = 1 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1, revert=2, push=3
+        self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1, revert=2, push=3
 
         self.large_obs = 1
         self.obs_shape = 0 # box:0, sphere:1
-        self.b_test_collision_detection = 1 # enable naive test of collision detection for other methods
+        self.b_test_collision_detection = 1 # enables naive test of collision detection for other methods
 
         if 0: # tall tank
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
