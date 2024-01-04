@@ -411,7 +411,7 @@ template<> void GridPainter<int>::paint() {
             int flag = 0;
             flag = mLocalGrid->get( p );
 
-			bool fig = 1;
+			bool fig = 0;
 
             if ( fig && ( flag & FlagGrid::TypeFluid || flag & FlagGrid::TypeObstacle ) )
                 glBegin( GL_QUADS ); // full (fig)
@@ -440,7 +440,7 @@ template<> void GridPainter<int>::paint() {
             } else if ( flag & FlagGrid::TypeFluid ) {
                 if ( skipFluid )
                     continue;
-                if ( 0|| ( flag & FlagGrid::TypeTemp ) ) { // 1(default)
+                if ( 1 || ( flag & FlagGrid::TypeTemp ) ) { // 0(fig), 1(default)
 					if ( fig )
                         glColor3f( 0, 0.3, 1 ); // (fig) light blue
                     else
@@ -555,7 +555,7 @@ template<> void GridPainter<Vec3>::paint() {
 
 		// regular velocity drawing mode
         //glPushAttrib( GL_LINE_WIDTH ); // doesn't work
-        glLineWidth( 4.0 ); // 1(default), 4(fig)
+        glLineWidth( 1.0 ); // 1(default), 4(fig)
 		glBegin(GL_LINES);
 			
 		FOR_P_SLICE(mLocalGrid, mDim, mPlane) {        
@@ -570,7 +570,9 @@ template<> void GridPainter<Vec3>::paint() {
 					if (p.z < mLocalGrid->getSizeZ()-1) 
 						vel.z = 0.5 * (vel.z + scale * mLocalGrid->get(p.x,p.y,p.z+1).z);
 				}
-				bool fig = 1;
+
+				bool fig = 0;
+
 				if ( fig )
                     glColor3f( .7, .7, 0 ); // fig
                 else
