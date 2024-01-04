@@ -261,22 +261,24 @@ class simulation:
             self.bSaveMesh = 0
 
         # params
-        self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 3 # 2, 3
+        self.part_per_cell_1d = 1 # 1, 2(default), 3
+        self.dim = 2 # 2, 3
         self.it_max = 2000 # 350, 500, 1000, 1500, 2500
-        self.res = 100 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.res = 26 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
 
         self.narrowBand = bool( 0 ) # there's an override in main() for some methods
-        self.narrowBandWidth = 6 # 3(default,large obs), 6(dam)
-        self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1, revert=2, push=3
+        self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
+        self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1(not updated for obs), revert=2, push=3
 
         self.large_obs = 1
         self.obs_shape = 0 # box:0, sphere:1
         self.b_test_collision_detection = 1 # enables naive test of collision detection for other methods
 
-        if 0: # tall tank
+        if 1: # tall tank
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
-            self.gs = Vec3( self.res, int(1.5*self.res), self.res ) # tall tank
+            yscale = 1.3
+            #yscale = 1.5
+            self.gs = Vec3( self.res, int(yscale*self.res), self.res ) # tall tank
         else: # square tank
             self.gs = Vec3( self.res, self.res, self.res ) # iso
 
@@ -337,7 +339,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 1: # dam
+        if 0: # dam
             # my dam
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
 
@@ -399,11 +401,12 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 0: # falling obstacle
+        elif 1: # falling obstacle
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
                 fluid_h = 0.2 # 0.2(large box)
+            fluid_h = .3 # override
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0) ), p1=self.gs*( Vec3(1, fluid_h, 1) ) )
             print( f'- water level h={fluid_h}*res={fluid_h*self.gs.y}' )
             self.phi = fluidbox.computeLevelset()
@@ -420,10 +423,15 @@ class simulation:
                 else: 
                     self.obs.rad = 0.15 # 0.1, 0.15
                 if self.large_obs: # large
+                    margin_one = 2 / self.res # one-cell wide side path; for hi-res results in no progress
+
                     # margin equals to boundary (1 cell) + side path (between obs and tank)
-                    #margin = 2 / self.res # one-cell wide side path; for hi-res results in no progress
+                    #margin = margin_one
                     #margin = 2 / 50 # fixed margin (and obs width), one-cell wide side path for res50; hi-res is faster than res50
                     margin = ( 1 + self.res / 50 ) / self.res # (default) side path changes with res
+
+                    if margin < margin_one:
+                        margin = margin_one
                     self.obs.rad = 0.5 - margin
                 self.obs.rad *= self.res
                 # shrink a bit if exactly cell size
@@ -1286,7 +1294,7 @@ class simulation:
             toc() # iter
 
             # mark deep for drawing
-            if 0 and self.narrowBand:
+            if 1 and self.narrowBand:
                 set_grid_temp_flag( self.flags, bfs, self.narrowBandWidth )
 
             # measure
