@@ -262,12 +262,12 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 2 # 2, 3
-        self.it_max = 2000 # 350, 500, 1000, 1500, 2500
-        self.res = 50 # 32, 48/50, 64, 96/100, 128(large), 150, 250/256(, 512 is too large)
+        self.dim = 3 # 2, 3
+        self.it_max = 2000 # 1000
+        self.res = 100 # 100
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
-        self.narrowBandWidth = 3 # 3(default,large obs), 6(dam)
+        self.narrowBandWidth = 6 # 3(default,large obs), 6(dam)
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1(not updated for obs), revert=2, push=3
 
         self.large_obs = 1
@@ -339,7 +339,7 @@ class simulation:
         #self.flags.initDomain( boundaryWidth=self.boundary_width ) 
         self.flags.initDomain( boundaryWidth=self.boundary_width, phiWalls=self.phiObs ) 
 
-        if 0: # dam
+        if 1: # dam
             # my dam
             fluidbox = Box( parent=self.sol, p0=self.gs*( Vec3(0, 0, 0.35) ), p1=self.gs*( Vec3(0.3, 0.6, .65) ) ) # new dam (smaller, less crazy)
 
@@ -401,7 +401,7 @@ class simulation:
                 self.phiObs.join( mesh_phi )
                 self.phi.subtract( self.phiObs ) # not to sample particles inside obstacle
 
-        elif 1: # falling obstacle
+        elif 0: # falling obstacle
             # water
             fluid_h = 0.5 # 0.5(default)
             if self.large_obs:
@@ -807,7 +807,7 @@ class simulation:
 
     def main( self ):
         if self.method != FIXED_VOL:
-            if 1 or self.method != FLIP:
+            if 0 or self.method != FLIP:
                 self.narrowBand = bool( 0 )
                 self.narrowBandWidth = -1
 
