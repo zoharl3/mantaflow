@@ -262,19 +262,19 @@ class simulation:
 
         # params
         self.part_per_cell_1d = 2 # 1, 2(default), 3
-        self.dim = 3 # 2, 3
+        self.dim = 2 # 2, 3
         self.it_max = 2000 # 1000
-        self.res = 100 # 100
+        self.res = 50 # 100
 
         self.narrowBand = bool( 1 ) # there's an override in main() for some methods
         self.narrowBandWidth = 6 # 3(default,large obs), 6(dam)
         self.inter_control_method = 3 # BAND_INTERFACE_CONTROL_METHOD: full=0, one-sided=1(not updated for obs), revert=2, push=3
 
-        self.large_obs = 1
+        self.large_obs = 0
         self.obs_shape = 0 # box:0, sphere:1
         self.b_test_collision_detection = 1 # enables naive test of collision detection for other methods
 
-        if 1: # tall tank
+        if 0: # tall tank
             #self.gs = Vec3( self.res, self.res, 5 ) # debug thin 3D; at least z=5 if with obstacle (otherwise, it has 0 velocity?)
             #yscale = 1.3
             yscale = 1.5
