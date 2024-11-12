@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    { "name": "openvdb" },
+    { "name": "tbb" },
+    { "name": "qt5" },
+    { "name": "cgal" }
+  ],
+  "builtin-baseline": "edc84ff66e6262a9f7565c28eb76577aeab9c5aa",
+  "overrides": [
+    { "name": "openvdb", "version": "10.0.0#6" }
+  ]
+}
