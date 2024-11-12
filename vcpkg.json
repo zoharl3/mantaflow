@@ -4,6 +4,7 @@
     { "name": "tbb" },
     { "name": "qt5" },
     { "name": "cgal" },
-    { "name": "eigen3" }
+    { "name": "eigen3" },
+    { "name": "boost" }
   ]
 }
