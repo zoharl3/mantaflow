@@ -17,7 +17,7 @@ cmake ^
 -DDEBUG_PYTHON_WITH_RELEASE=ON ^
 -DOPENVDB=ON ^
 -DOPENVDB_BLOSC=ON ^
--DHOUDINI_ROOT="C:/Program Files/Side Effects Software/Houdini 19.0.657/" ^
+-DHOUDINI_ROOT="C:/Program Files/Side Effects Software/Houdini 20.5.410/" ^
 -DTBB=ON ^
 -DNUMPY=ON ^
 -Wno-dev -G "Visual Studio 17 2022" ..
