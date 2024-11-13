@@ -765,10 +765,6 @@ if(NOT NOPYTHON)
         add_executable(${EXECCMD} ${SOURCES} ${GITINFO})
     endif()
     
-    # zl in c++17, Houdini has trouble with byte
-    message( "EXECCMD=${EXECCMD}" )
-    set_property( TARGET ${EXECCMD} PROPERTY CXX_STANDARD 14 )
-    
     message( "F_LIBS: ${F_LIBS}" )
     target_link_libraries( ${EXECCMD} ${F_LIBS} )
 
