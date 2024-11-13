@@ -117,7 +117,7 @@ void GridPainter<T>::update() {
 		mLocalGrid   = new Grid<T>(src->getParent());
 		// int grid is base for resolution
 		if (src->getType() & GridBase::TypeInt)
-			emit setViewport(src->getSize());
+			Q_EMIT setViewport(src->getSize());
 	}
 	// reallocate if dimensions changed (or solver)
 	if ( (mLocalGrid->getSize() != src->getSize()) || (mLocalGrid->getParent() != src->getParent()) ) { 
@@ -125,7 +125,7 @@ void GridPainter<T>::update() {
 		mLocalGrid = new Grid<T>(src->getParent());
 		// int grid is base for resolution
 		if (src->getType() & GridBase::TypeInt)
-			emit setViewport(src->getSize());
+			Q_EMIT setViewport(src->getSize());
 	}
 	
 	mLocalGrid->copyFrom( *src , true ); // copy grid data and type marker

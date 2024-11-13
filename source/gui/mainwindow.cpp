@@ -87,7 +87,7 @@ MainWnd::MainWnd() : QMainWindow( 0 ), mPaused( true ), mRequestPause( false ), 
 	mAcPause = toolbar->addAction(QIcon(":/pause.png"),"Pause");
 	mAcPause->setStatusTip("Pause simulation");
 	connect(mAcPause, SIGNAL(triggered()), SLOT(pause()));
-	emit play();
+	Q_EMIT play();
 	
 	// build menu
 	/*QAction* a = new QAction(this);
@@ -125,7 +125,7 @@ MainWnd::MainWnd() : QMainWindow( 0 ), mPaused( true ), mRequestPause( false ), 
 	}
 
 	// uncomment to start  paused
-	//emit pause();
+	//Q_EMIT pause();
 }
 
 void MainWnd::clickLine(QPoint pos, float p0, float p1,float p2, float q0, float q1, float q2) {
@@ -179,43 +179,43 @@ bool MainWnd::event(QEvent* e) {
             //int screen_width = QApplication::desktop()->screenGeometry().width();
             //this->setMinimumSize( screen_width - 10, screen_height - 10 );
 
-            emit painterEvent( Painter::UpdateFull );
+            Q_EMIT painterEvent( Painter::UpdateFull );
             mGlWidget->updateGL();
 
 			// if happens before the paint then I get "QOpenGLContext::swapBuffers() called with non-exposed window, behavior is undefined?"
 			this->showMinimized();
 		}
-		emit wakeMain();
+		Q_EMIT wakeMain();
 		return true;
 	}
 	else if (e->type() == (QEvent::Type)EventFullUpdate) {
 		if (!mRequestClose) {
-			emit painterEvent(Painter::UpdateFull);
+			Q_EMIT painterEvent(Painter::UpdateFull);
 			mGlWidget->updateGL();
 		}
-		emit wakeMain();
+		Q_EMIT wakeMain();
 		return true;
 	}
 	else if (e->type() == (QEvent::Type)EventStepUpdate) {        
 		if (!mRequestClose) {
 			if (mRequestPause) {
-				emit painterEvent(Painter::UpdateFull);
+				Q_EMIT painterEvent(Painter::UpdateFull);
 				mGlWidget->updateGL();
 			} else {
-				emit painterEvent(Painter::UpdateStep);
+				Q_EMIT painterEvent(Painter::UpdateStep);
 				// redraw not necessary? old: mGlWidget->updateGL();
 			}
 		}
-		emit wakeMain();
+		Q_EMIT wakeMain();
 		return true;
 	}
 	else if (e->type() == (QEvent::Type)EventFinalUpdate) {        
 		if (!mRequestClose) {
-			emit painterEvent(Painter::UpdateFull);
+			Q_EMIT painterEvent(Painter::UpdateFull);
 			mGlWidget->updateGL();
 		}
 		mRequestClose = true;
-		emit wakeMain();
+		Q_EMIT wakeMain();
 		return true;
 	}
 	else if (e->type() == (QEvent::Type)EventSet2DCam) {        
@@ -223,8 +223,8 @@ bool MainWnd::event(QEvent* e) {
 		return true;
 	}
 	else if (e->type() == (QEvent::Type)EventInstantKill) {        
-		emit killMain();
-		emit exitApp();
+		Q_EMIT killMain();
+		Q_EMIT exitApp();
 		return true;
 	}
 
@@ -246,35 +246,35 @@ void MainWnd::keyPressEvent(QKeyEvent* e) {
 	if ( e->key() == Qt::Key_Escape ) {
 		exit(0); // zl
 		mRequestClose = true;
-		emit killMain();
+		Q_EMIT killMain();
 		this->close();
 	} else if (0&& e->key() == Qt::Key_Space) {
 		if (mRequestClose) {
-			emit killMain();
+			Q_EMIT killMain();
 			this->close();
 		} else {
-			emit painterEvent(mPaused ? Painter::UpdateFull : Painter::UpdateRequest);
+			Q_EMIT painterEvent(mPaused ? Painter::UpdateFull : Painter::UpdateRequest);
 			mGlWidget->updateGL();
 		}
 	} else if (e->key() == Qt::Key_P || e->key() == Qt::Key_Space) {
 		if (mRequestClose) {
-			emit killMain();
+			Q_EMIT killMain();
 			this->close();
 		} else if (mRequestPause)
-			emit play();
+			Q_EMIT play();
 		else    
-			emit pause();
+			Q_EMIT pause();
 	} else if (e->key() == Qt::Key_L || e->key() == Qt::Key_Right) {
 		if (mRequestClose) {
-			emit killMain();
+			Q_EMIT killMain();
 			this->close();
 		} else if (mRequestPause) {
 			mRequestPause = false;
 			mStep = (e->modifiers() & Qt::ShiftModifier) ? 1 : 2;                
 		} else
-			emit pause();
+			Q_EMIT pause();
 	} else if (e->key() == Qt::Key_H) {
-		emit showHelp();
+		Q_EMIT showHelp();
 	} else { 
 		mGlWidget->keyPressEvent(e); // let gl widget take care of keyboard shortcuts
 		//QMainWindow::keyPressEvent(e);
@@ -306,39 +306,39 @@ void MainWnd::showHelp() {
 }
 
 void MainWnd::setRealGridDisplay( int dm ) {
-	emit painterEvent(Painter::EventSetRealGridDisplayMode, dm); 
+	Q_EMIT painterEvent(Painter::EventSetRealGridDisplayMode, dm); 
 }
 
 void MainWnd::setVec3GridDisplay( int dm ) {
-	emit painterEvent(Painter::EventSetVecGridDisplayMode, dm); 
+	Q_EMIT painterEvent(Painter::EventSetVecGridDisplayMode, dm); 
 }
 
 void MainWnd::nextRealGrid() {
-	emit painterEvent(Painter::EventNextReal); 
+	Q_EMIT painterEvent(Painter::EventNextReal); 
 }
 void MainWnd::nextVec3Grid() {
-	emit painterEvent(Painter::EventNextVec); 
+	Q_EMIT painterEvent(Painter::EventNextVec); 
 }
 void MainWnd::nextMesh() {
-	emit painterEvent(Painter::EventNextMesh); 
+	Q_EMIT painterEvent(Painter::EventNextMesh); 
 }
 void MainWnd::nextParts() {
-	emit painterEvent(Painter::EventNextSystem); 
+	Q_EMIT painterEvent(Painter::EventNextSystem); 
 }
 void MainWnd::nextPdata() {
-	emit painterEvent(Painter::EventToggleParticles); 
+	Q_EMIT painterEvent(Painter::EventToggleParticles); 
 }
 void MainWnd::nextVec3Display() {
-	emit painterEvent(Painter::EventNextVecDisplayMode); 
+	Q_EMIT painterEvent(Painter::EventNextVecDisplayMode); 
 }
 void MainWnd::nextPartDisplay() {
-	emit painterEvent(Painter::EventNextParticleDisplayMode); 
+	Q_EMIT painterEvent(Painter::EventNextParticleDisplayMode); 
 }
 void MainWnd::nextMeshDisplay() {
-	emit painterEvent(Painter::EventMeshMode); 
+	Q_EMIT painterEvent(Painter::EventMeshMode); 
 }
 void MainWnd::toggleHideGrids() {
-	emit painterEvent(Painter::EventToggleGridDisplay); 
+	Q_EMIT painterEvent(Painter::EventToggleGridDisplay); 
 }
 void MainWnd::setCamPos(float x, float y, float z) {
 	mGlWidget->setCamPos( Vec3(x, y, z) );

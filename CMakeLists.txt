@@ -26,7 +26,7 @@ set(MANTAVERSION "0.13")
 
 if(WIN32)
     #set(WIN_QT_PATH        "C:/Qt/5.9/msvc2013_64_opengl") # qt5/win64
-    set(WIN_PYTHON_PATH    "C:/Python37") # choose python version with PYTHON_VERSION above
+    #set(WIN_PYTHON_PATH    "C:/Python37") # choose python version with PYTHON_VERSION above
     #set(CMAKE_LIBRARY_PATH "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64") # messes vcpkg's boost
     #set(CMAKE_PREFIX_PATH ${WIN_QT_PATH}) # messes vcpkg's boost
     
@@ -97,7 +97,7 @@ if(TBB AND OPENMP)
 endif()
 
 # make sure debug settings match...
-if(NOT DEBUG)
+if(NOT DEBUG AND NOT WIN32)
     if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
         set(DEBUG 1)
     endif()
@@ -105,7 +105,7 @@ endif()
 
 add_definitions ( -DMANTAVERSION="${MANTAVERSION}" )
 
-if(DEBUG)
+if(DEBUG AND NOT WIN32)
     set(CMAKE_BUILD_TYPE "Debug")
     add_definitions ( -DDEBUG=1 )
 endif()
@@ -340,26 +340,15 @@ endif()
 if(MT)
     add_definitions( -DMANTA_MT=1 )
     if(TBB)
-        if( 1 )
-            # Intel TBB
-            add_definitions( -DTBB=1 )
+        # Intel TBB
+        add_definitions( -DTBB=1 )
 
-            if(DEBUG)
-                add_definitions( -DTBB_USE_DEBUG=1 )
-            endif()
-            list(APPEND F_LIBS tbb)
-            if(WIN32)
-                find_package(TBB REQUIRED)
-                message( "TBB_INCLUDE_DIRS:" ${TBB_INCLUDE_DIRS} )
-                message( "TBB_LIBRARY_DIRS:" ${TBB_LIBRARY_DIRS}, ${TBB_DEBUG_LIBRARY_DIRS} )
-                list(APPEND INCLUDE_PATHS ${TBB_INCLUDE_DIRS})
-                list(APPEND F_LIB_PATHS ${TBB_LIBRARY_DIRS} ${TBB_DEBUG_LIBRARY_DIRS})
-            elseif(APPLE)
-                find_package(TBB REQUIRED)
-                list(APPEND INCLUDE_PATHS ${TBB_INCLUDE_DIRS})
-                list(APPEND F_LIB_PATHS ${TBB_LIBRARY_DIRS})
-            endif()
+        if(DEBUG AND NOT WIN32)
+            add_definitions( -DTBB_USE_DEBUG=1 )
         endif()
+        find_package( TBB CONFIG REQUIRED ) # zl
+        list( APPEND F_LIB TBB::tbb )
+        add_link_options( "/NODEFAULTLIB:tbb_debug.lib" )
     else()
         # OpenMP
         add_definitions( -DOPENMP=1 )
@@ -393,9 +382,11 @@ if(OPENVDB)
         message("Found OpenVDB") 
         #list(APPEND INCLUDE_PATHS ${OPENVDB_INCLUDE_DIR})
         #list(APPEND F_LIB_PATHS ${OPENVDB_LIBRARY_DIR})
-        #list(APPEND F_LIBS ${OPENVDB_LIBRARY})
-        #add_definitions(${OPENVDB_DEFINITIONS})
-        link_libraries( OpenVDB::openvdb )
+        list(APPEND F_LIBS ${OPENVDB_LIBRARY})
+        message( "OPENVDB_DEFINITIONS=${OPENVDB_DEFINITIONS}" )
+        add_definitions(${OPENVDB_DEFINITIONS})
+        
+        list( APPEND F_LIBS OpenVDB::openvdb ) # zl
     else()
         if(WIN32)
             message(FATAL_ERROR "Cannot find OpenVDB")
@@ -407,7 +398,7 @@ if(OPENVDB)
     endif()
     
     # for windows try houdini, otherwise use openExr directly
-    if(WIN32)
+    if(0 AND WIN32)
         find_package(Houdini REQUIRED)
         if(HOUDINI_FOUND)
             message("Found Houdini") 
@@ -417,7 +408,8 @@ if(OPENVDB)
             #list(APPEND F_LIBS "Half.lib")
         endif()
     else()
-        # for open exr - should be in the default path, add includes if necessary
+        find_package( OpenEXR CONFIG REQUIRED )
+        list( APPEND F_LIBS OpenEXR::OpenEXR )
     endif()
 endif()
 
@@ -468,7 +460,7 @@ if(WIN32)
     find_package(Python COMPONENTS Development REQUIRED)
     message(STATUS "Python:")
     message(STATUS "    Python_INCLUDE_DIRS: ${Python_INCLUDE_DIRS}")
-    message(STATUS "    Python_LIBRARIES: ${Python_LIBRARIES}")
+    message(STATUS "    Python_LIBRARY_RELEASE: ${Python_LIBRARY_RELEASE}")
     message(STATUS "    Python_LIBRARY_DIRS: ${Python_LIBRARY_DIRS}")
 else()
     # try to configure from python itself first
@@ -497,8 +489,8 @@ else()
 endif()
 # end auto block, python config done
 list(APPEND INCLUDE_PATHS ${Python_INCLUDE_DIRS})
-list(APPEND F_LIBS ${Python_LIBRARIES})
-message("Using python include path '${Python_INCLUDE_DIRS}' and libs '${Python_LIBRARIES}' ") 
+list(APPEND F_LIBS ${Python_LIBRARY_RELEASE})
+message("Using python include path '${Python_INCLUDE_DIRS}' and libs '${Python_LIBRARY_RELEASE}' ") 
 
 #******************************************************************************
 # optional - compile with numpy support?
@@ -526,7 +518,7 @@ if(NUMPY)
 endif()
 
 #******************************************************************************
-# Z lib compression
+# zlib compression
 if(1)
     # default: build from own sources
     set(ZLIB_SRC adler32.c compress.c crc32.c deflate.c gzclose.c gzlib.c gzread.c gzwrite.c
@@ -644,7 +636,7 @@ list(APPEND SOURCES ${PREPPED_SOURCES})
 # zl
 list(APPEND SOURCES ${sources2})
 
-# link reg files , for python glue code
+# link reg files for python glue code
 if(NOT NOPYTHON)
     add_custom_command(OUTPUT ${PP_REGCPP}
                     COMMAND prep link ${PP_REGS}
@@ -839,14 +831,12 @@ endif()
 
 # MSVC compiler settings
 if(WIN32)
-    #add_definitions( /std:c++20 )
-
     # get rid of some MSVC warnings
     add_definitions( /wd4018 /wd4146 /wd4800 )
 
     # for zlib
-    add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
-    add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
+    #add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
+    #add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
 
     # unsigned to signed conversions
     add_definitions( /wd4267 )
@@ -854,6 +844,8 @@ if(WIN32)
     add_definitions( /wd4244 /wd4305 )
     # disable warnings for unsecure functions
     add_definitions( /D "_CRT_SECURE_NO_WARNINGS" )
+    add_definitions( /D "_CRT_SECURE_NO_DEPRECATE" )
+    add_definitions( /D "_CRT_NONSTDC_NO_DEPRECATE" )
 
     add_definitions( /bigobj )
 
@@ -866,17 +858,19 @@ if(WIN32)
 
     # enable when using Qt creator:
     #add_definitions(/FS)
+    
+    # zl
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${EXECCMD})
+    set_target_properties( ${EXECCMD} PROPERTIES 
+        VS_DEBUGGER_COMMAND_ARGUMENTS "c:/prj-external-libs/mantaflow/scenes/zflip.py" 
+        #VS_DEBUGGER_COMMAND "debug_command"
+        )
+    add_definitions( /D "WIN32_LEAN_AND_MEAN" ) # resolves clash with std::byte
+    add_definitions( /D "QT_NO_KEYWORDS" ) # resolves clash with tbb emit
 endif()
 
 # print debug summary
 # MESSAGE(STATUS "DEBUG Flag-Summary - Includes: '${INCLUDE_PATHS}' | Libs: '${F_LIBS}' | LibPaths: '${F_LIB_PATHS}' ")
-
-# zl not working?
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${EXECCMD})
-set_target_properties( ${EXECCMD} PROPERTIES 
-    VS_DEBUGGER_COMMAND_ARGUMENTS "c:/prj-external-libs/mantaflow/scenes/zflip.py" 
-    #VS_DEBUGGER_COMMAND "debug_command"
-    )
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
     include(FeatureSummary)

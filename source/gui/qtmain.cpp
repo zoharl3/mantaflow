@@ -38,10 +38,10 @@ void MainThread::run() {
 void MainThread::sendAndWait( int e ) {
     QMutexLocker locker( &mMutex ); // zl
     //mMutex.lock();
-    emit sendToGui( e );
+    Q_EMIT sendToGui( e );
 	if ( 1 ) // zl
 		// "Releases the lockedMutex and waits on the wait condition... The lockedMutex will be returned to the same locked state. This function is provided to allow the atomic transition from the locked state to the wait state."
-		// the waking up is done in emit wakeMain()
+		// the waking up is done in Q_EMIT wakeMain()
         mWait.wait( &mMutex );
     else
 		// may be responsible for the hangs
@@ -54,7 +54,7 @@ void MainThread::sendAndWait( int e ) {
 }
 
 void MainThread::send(int e) {
-	emit sendToGui(e);    
+	Q_EMIT sendToGui(e);    
 }
 
 void MainThread::killMe() {

@@ -13,6 +13,8 @@
  *
  ******************************************************************************/
 
+#include <random>
+
 #include "particle.h"
 #include "grid.h"
 #include "commonkernels.h"
@@ -250,6 +252,9 @@ PYTHON() void mapMACToPartPositions(const FlagGrid& flags, const MACGrid& deltaX
 PYTHON() void resampeOverfullCells(const MACGrid& vel, Grid<Real>& density, const Grid<int> &index, 
 	                                const ParticleIndexSystem& indexSys, BasicParticleSystem& part, ParticleDataImpl<Vec3> &pVel, Real dt)
 {
+    std::random_device rd;
+    std::mt19937 g( rd() );
+
 	FOR_IJK(density)
 	{
 		IndexInt idx = density.index(i, j, k);
@@ -286,10 +291,11 @@ PYTHON() void resampeOverfullCells(const MACGrid& vel, Grid<Real>& density, cons
 						cellIndicesJ[l * nCellsPerDir + m] = l;
 					}
 			}
-				
-			std::random_shuffle(cellIndicesI.begin(), cellIndicesI.end());
-			std::random_shuffle(cellIndicesJ.begin(), cellIndicesJ.end());
-			if(density.is3D()) std::random_shuffle(cellIndicesK.begin(), cellIndicesK.end());
+
+            std::shuffle( cellIndicesI.begin(), cellIndicesI.end(), g );
+            std::shuffle( cellIndicesJ.begin(), cellIndicesJ.end(), g );
+            if ( density.is3D() )
+                std::shuffle( cellIndicesK.begin(), cellIndicesK.end(), g );
 			int l = 0;	//position in the cellIndices vector
 			Vec3 cellPos(i, j, k);
 				

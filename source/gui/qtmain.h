@@ -33,7 +33,7 @@ public:
 	//! obtain window handle
 	inline MainWnd* getWindow() { return &mWnd; }
 	
-public slots:
+public Q_SLOTS:
 	void sendEvent(int e);
 	void exitApp();
 	
@@ -57,11 +57,11 @@ public:
 	inline bool isFinished() { return mFinished; }
 	inline void setFinished() { mFinished = true; }
 	
-public slots:
+public Q_SLOTS:
 	void wakeUp();
 	void killMe();
 	
-signals:
+Q_SIGNALS:
 	void sendToGui(int event);
 	
 protected:

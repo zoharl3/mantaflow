@@ -42,9 +42,9 @@ public:
 	void stepReset(bool fullUpdate) { if (mStep == 1 || (mStep == 2 && fullUpdate)) {mRequestPause = true; mStep = 0;} }
 	void requestClose() { mRequestClose =true; }
 	void setStep(int f, float time);
-	void setBackground(Mesh *m) { emit setBackgroundMesh(m); }
+	void setBackground(Mesh *m) { Q_EMIT setBackgroundMesh(m); }
 
-public slots:
+public Q_SLOTS:
 	void pause();
 	void play();
 	void step();
@@ -76,7 +76,7 @@ public slots:
         mGlWidget->set_2D( b2D );
     }
 
-signals:
+Q_SIGNALS:
 	void painterEvent(int e, int param=0);    
 	void wakeMain();
 	void setBackgroundMesh(Mesh* bgr);

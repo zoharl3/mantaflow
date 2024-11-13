@@ -53,10 +53,10 @@ public:
 	
 	virtual std::string clickLine(const Vec3& p0, const Vec3& p1) { return ""; }
 	virtual void attachWidget(QLayout* layout) {}
-signals:
+Q_SIGNALS:
 	void setViewport(const Vec3i& gridsize);
 	
-public slots:
+public Q_SLOTS:
 	virtual void paint() = 0;
 	virtual void doEvent(int e, int param=0) = 0;
 };

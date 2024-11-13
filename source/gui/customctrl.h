@@ -47,7 +47,7 @@ public:
 	void set(bool v);
 	bool get();
 	
-public slots:
+public Q_SLOTS :
 	void update(int v);
 		
 protected:
@@ -65,7 +65,7 @@ public:
 	void set(float v);
 	float get();
 	
-public slots:
+public Q_SLOTS :
 	void update(int v);
 		
 protected:

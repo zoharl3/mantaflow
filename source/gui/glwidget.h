@@ -58,13 +58,13 @@ public:
 
 	void setPlane(int plane) { updatePlane(plane); }
 
-public slots:
+public Q_SLOTS :
 	void setViewport(const Vec3i& gridsize);
 	void keyPressEvent(QKeyEvent* e);
 	void keyReleaseEvent(QKeyEvent* e);
 	void windowSize(int w, int h);
 	 
-signals:
+Q_SIGNALS:
 	void paintSub();
 	void clickLine(QPoint pos, float p0, float p1,float p2, float q0, float q1, float q2);
 	void painterEvent(int e, int param=0);

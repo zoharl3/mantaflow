@@ -39,7 +39,7 @@ public:
 	void paint();
 	void attachWidget(QLayout* layout);
 	
-public slots:
+public Q_SLOTS:
 	void setBackgroundMesh(Mesh* bgr);
 	
 protected:
