@@ -346,6 +346,9 @@ if(MT)
         if(DEBUG AND NOT WIN32)
             add_definitions( -DTBB_USE_DEBUG=1 )
         endif()
+        if(WIN32)
+            add_compile_options("$<$<CONFIG:Debug>:-DTBB_USE_DEBUG=1>")
+        endif()
         find_package( TBB CONFIG REQUIRED ) # zl
         list( APPEND F_LIB TBB::tbb )
         add_link_options( "/NODEFAULTLIB:tbb_debug.lib" )
@@ -495,7 +498,7 @@ message("Using python include path '${Python_INCLUDE_DIRS}' and libs '${Python_L
 #******************************************************************************
 # optional - compile with numpy support?
 if(NUMPY)
-    # if the python command below doesnt work, manually set path, e.g., use "numpy.get_include()" to find path 
+    # if the python command below doesn't work, manually set path, e.g., use "numpy.get_include()" to find path 
     # set(NUMPY_INCLUDE_DIR "${Python_INCLUDE_DIRS}/dist-packages/numpy/core/include") 
     
     #set( CMD python${PYTHON_VER_ID} " -c import numpy, sys\; sys.stdout.write( numpy.get_include() )" )
