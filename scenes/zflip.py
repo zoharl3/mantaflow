@@ -2,12 +2,13 @@
 # flip5 in the comments refers to the scene script flip05_nbflip.py
 
 import os, sys, math, shutil
-import keyboard
+#import keyboard
 from pathlib import Path
 
 from manta import *
 
 sys.path.append( r'c:\prj\python\\' )
+sys.path.append( r'C:\Python311\Lib\site-packages\\' )
 from text_color import *
 from tictoc import *
 
@@ -1415,7 +1416,7 @@ if 1 and __name__ == '__main__':
     # auto-flush
     sys.stdout.reconfigure( line_buffering=True )
 
-    out_dir_root = r'c:/prj-external-libs/mantaflow/out/'
+    out_dir_root = r'c:/prj-external/mantaflow/out/'
 
     # (debug) for a consistent result; for large res, step() hangs?
     if 0:

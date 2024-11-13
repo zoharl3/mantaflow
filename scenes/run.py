@@ -23,7 +23,7 @@ if 1: # release
     exe = r'..\build\RelWithDebInfo\manta'
 
 script = 'zflip.py'
-out_dir_root = r'c:/prj-external-libs/mantaflow/out/'
+out_dir_root = r'c:/prj-external/mantaflow/out/'
 
 cmd_base = f'"{exe}" {script}'
 

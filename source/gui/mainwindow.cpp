@@ -182,7 +182,7 @@ bool MainWnd::event(QEvent* e) {
             Q_EMIT painterEvent( Painter::UpdateFull );
             mGlWidget->updateGL();
 
-			// if happens before the paint then I get "QOpenGLContext::swapBuffers() called with non-exposed window, behavior is undefined?"
+			// if happens before the paint, then I get "QOpenGLContext::swapBuffers() called with non-exposed window, behavior is undefined"
 			this->showMinimized();
 		}
 		Q_EMIT wakeMain();
