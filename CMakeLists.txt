@@ -671,31 +671,25 @@ if(GUI)
                 ${CMAKE_CURRENT_BINARY_DIR}/${PP_PATH}/source/gui source/gui)
 
     cmake_policy(SET CMP0020 NEW)
-    find_package(Qt5Core QUIET)
-    if(Qt5Core_FOUND)
+    
+    if(1)
+        find_package( QT NAMES Qt6 Qt5 COMPONENTS Core Widgets Gui REQUIRED )
+        list( APPEND F_LIBS Qt::Core Qt::Gui Qt::Widgets )
+        list( APPEND SOURCES ${QT_REMAP} resources/res.qrc )
+        
+    else()
+        find_package(Qt5Core REQUIRED)
         message("Using Qt5")
         find_package(Qt5Widgets REQUIRED)
         find_package(Qt5OpenGL REQUIRED)
-
         qt5_wrap_cpp(MOC_OUTFILES ${QT_REMAP} )
         qt5_add_resources(QT_RES resources/res.qrc )
         add_definitions(${Qt5Widgets_DEFINITIONS})
         list(APPEND INCLUDE_PATHS ${Qt5Widgets_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS})
         list(APPEND F_LIBS ${Qt5Core_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES})
         list(APPEND SOURCES ${MOC_OUTFILES} ${QT_RES})
-    else()
-        message("No Qt5 found (recommended!), trying to use Qt4")
-        find_package(Qt4 REQUIRED)
-        set(QT_USE_QTOPENGL TRUE)
-
-        qt4_wrap_cpp(MOC_OUTFILES ${QT_REMAP} )
-        qt4_add_resources(QT_RES resources/res.qrc )
-        include(${QT_USE_FILE})
-        add_definitions(${QT_DEFINITIONS})
-        list(APPEND F_LIBS ${QT_LIBRARIES})
-        list(APPEND SOURCES ${MOC_OUTFILES} ${QT_RES})
     endif()
-
+    
     if(APPLE)
         # mac opengl framework
         set(F_LINKADD "${F_LINKADD} -framework OpenGL ")
@@ -780,6 +774,13 @@ elseif(BUILD_STATIC)
     ADD_LIBRARY (core OBJECT ${SOURCES} ${GITINFO})
     ADD_LIBRARY (${EXECCMD} STATIC $<TARGET_OBJECTS:core>)
 endif()
+
+# qt
+set_target_properties( ${EXECCMD} PROPERTIES
+    AUTOMOC ON
+    AUTOUIC ON
+    AUTORCC ON
+)
 
 # gcc compiler flags 
 if(NOT WIN32)
