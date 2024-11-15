@@ -672,7 +672,7 @@ if(GUI)
 
     cmake_policy(SET CMP0020 NEW)
     
-    if(1)
+    if(0)
         # see tips.txt for where the include dirs are put in vs
         find_package( QT NAMES Qt6 Qt5 COMPONENTS Core REQUIRED )
         find_package( Qt${QT_VERSION_MAJOR}Core REQUIRED )
@@ -680,6 +680,9 @@ if(GUI)
         find_package( Qt${QT_VERSION_MAJOR}OpenGL REQUIRED )
         list( APPEND F_LIBS Qt::Core Qt::Widgets Qt::OpenGL )
         
+        qt5_wrap_cpp(MOC_OUTFILES ${QT_REMAP} )
+        qt5_add_resources(QT_RES resources/res.qrc )
+
         list( APPEND SOURCES ${QT_REMAP} resources/res.qrc )
         
     else()
@@ -781,12 +784,14 @@ elseif(BUILD_STATIC)
     ADD_LIBRARY (${EXECCMD} STATIC $<TARGET_OBJECTS:core>)
 endif()
 
-# qt
-set_target_properties( ${EXECCMD} PROPERTIES
-    AUTOMOC ON
-    AUTOUIC ON
-    AUTORCC ON
-)
+# zl qt6?
+if(0)
+    set_target_properties( ${EXECCMD} PROPERTIES
+        AUTOMOC ON
+        AUTOUIC ON
+        AUTORCC ON
+    )
+endif()
 
 # gcc compiler flags 
 if(NOT WIN32)

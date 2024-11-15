@@ -1,6 +1,6 @@
 {
   "dependencies": [
-    { "name": "qt" },
+    { "name": "qt5" },
     { "name": "openvdb" },
     { "name": "cgal" },
     { "name": "eigen3" },
