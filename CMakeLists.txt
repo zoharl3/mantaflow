@@ -672,25 +672,14 @@ if(GUI)
 
     cmake_policy(SET CMP0020 NEW)
     
-    if(0)
-        find_package( QT NAMES Qt6 Qt5 COMPONENTS Core Widgets Gui REQUIRED )
-        list( APPEND F_LIBS Qt::Core Qt::Gui Qt::Widgets )
+    if(1)
+        # see tips.txt for where the include dirs are put in vs
+        find_package( QT NAMES Qt6 Qt5 COMPONENTS Core REQUIRED )
+        find_package( Qt${QT_VERSION_MAJOR}Core REQUIRED )
+        find_package( Qt${QT_VERSION_MAJOR}Widgets REQUIRED )
+        find_package( Qt${QT_VERSION_MAJOR}OpenGL REQUIRED )
+        list( APPEND F_LIBS Qt::Core Qt::Widgets Qt::OpenGL )
         
-        #find_package( QT NAMES Qt6 Qt5 COMPONENTS Core REQUIRED )
-        #find_package( Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Gui Core REQUIRED )
-        
-        # this removes the (manually) added include paths below--probably a bug of vcpkg and qt5
-        #target_link_libraries( ${PRJ_NAME} Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets )
-        
-        #list( APPEND F_LIBS ${Qt${QT_VERSION_MAJOR}Core_LIBRARIES} ${Qt${QT_VERSION_MAJOR}Widgets_LIBRARIES} ${Qt${QT_VERSION_MAJOR}OpenGL_LIBRARIES} )
-        #target_link_libraries( ${PRJ_NAME} ${F_LIBS} )
-        #message( "libs after Qt: ${F_LIBS}" )
-        
-        #list(APPEND INCLUDE_PATHS ${Qt${QT_VERSION_MAJOR}Widgets_INCLUDE_DIRS} ${Qt${QT_VERSION_MAJOR}OpenGL_INCLUDE_DIRS})
-        #message( "include paths after Qt: ${INCLUDE_PATHS}" )
-        
-        #target_include_directories( ${PRJ_NAME} PRIVATE ${INCLUDE_PATHS} )
-
         list( APPEND SOURCES ${QT_REMAP} resources/res.qrc )
         
     else()

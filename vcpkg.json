@@ -1,7 +1,7 @@
 {
   "dependencies": [
+    { "name": "qt" },
     { "name": "openvdb" },
-    { "name": "qt5" },
     { "name": "cgal" },
     { "name": "eigen3" },
     { "name": "boost" },
